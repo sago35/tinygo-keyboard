@@ -1,0 +1,4 @@
+{
+    "inherits": ["xiao-ble"],
+    "build-tags": ["kb_left"]
+}
