@@ -7,6 +7,7 @@ import (
 	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
+	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
 func run() error {
@@ -22,13 +23,13 @@ func run() error {
 		machine.D8,
 		machine.D7,
 	}, [][]k.Keycode{
-		{k.KeyEsc, k.KeyTab, k.KeyLeftCtrl, k.KeyLeftShift},
-		{k.Key1, k.KeyQ, k.KeyA, k.KeyZ, keyboard.KeyWindows},
-		{k.Key2, k.KeyW, k.KeyS, k.KeyX, k.KeyLeftAlt},
-		{k.Key3, k.KeyE, k.KeyD, k.KeyC, keyboard.KeyMuhenkan},
-		{k.Key4, k.KeyR, k.KeyF, k.KeyV, k.KeySpace},
-		{k.Key5, k.KeyT, k.KeyG},
-		{k.Key6},
+		{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift},
+		{jp.Key1, jp.KeyQ, jp.KeyA, jp.KeyZ, jp.KeyWindows},
+		{jp.Key2, jp.KeyW, jp.KeyS, jp.KeyX, jp.KeyLeftAlt},
+		{jp.Key3, jp.KeyE, jp.KeyD, jp.KeyC, jp.KeyMuhenkan},
+		{jp.Key4, jp.KeyR, jp.KeyF, jp.KeyV, jp.KeySpace},
+		{jp.Key5, jp.KeyT, jp.KeyG},
+		{jp.Key6},
 	},
 	)
 

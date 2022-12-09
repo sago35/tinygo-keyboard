@@ -23,14 +23,14 @@ func run() error {
 		machine.D8,
 		machine.D7,
 	}, [][]k.Keycode{
-		{k.KeyB, k.KeyY, k.KeyH, k.KeyN},
-		{k.Key7, k.KeyU, k.KeyJ, k.KeyM, jp.KeyHenkan},
-		{k.Key8, k.KeyI, k.KeyK, k.KeyComma},
-		{k.Key9, k.KeyO, k.KeyL, k.KeyPeriod},
-		{k.Key0, k.KeyP, k.KeySemicolon, k.KeySlash},
-		{k.KeyMinus, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, k.KeyLeft},
-		{jp.KeyHat, jp.KeyLeftBrace, jp.KeyRightBrace, k.KeyUp, k.KeyDown},
-		{jp.KeyBackslash2, k.KeyBackspace, k.KeyEnter, 0, k.KeyRight},
+		{jp.KeyB, jp.KeyY, jp.KeyH, jp.KeyN},
+		{jp.Key7, jp.KeyU, jp.KeyJ, jp.KeyM, jp.KeyHenkan},
+		{jp.Key8, jp.KeyI, jp.KeyK, jp.KeyComma},
+		{jp.Key9, jp.KeyO, jp.KeyL, jp.KeyPeriod},
+		{jp.Key0, jp.KeyP, jp.KeySemicolon, jp.KeySlash},
+		{jp.KeyMinus, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyLeft},
+		{jp.KeyHat, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyUp, jp.KeyDown},
+		{jp.KeyBackslash2, jp.KeyBackspace, jp.KeyEnter, 0, jp.KeyRight},
 	},
 	)
 	// @ : KeyLeftBrace
