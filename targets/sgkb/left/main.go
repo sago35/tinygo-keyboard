@@ -30,18 +30,30 @@ func run() error {
 		machine.D9,
 		machine.D8,
 		machine.D7,
-	}, [][]k.Keycode{
-		{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift},
-		{jp.Key1, jp.KeyQ, jp.KeyA, jp.KeyZ, jp.KeyWindows},
-		{jp.Key2, jp.KeyW, jp.KeyS, jp.KeyX, jp.KeyLeftAlt},
-		{jp.Key3, jp.KeyE, jp.KeyD, jp.KeyC, jp.KeyMuhenkan},
-		{jp.Key4, jp.KeyR, jp.KeyF, jp.KeyV, jp.KeySpace},
-		{jp.Key5, jp.KeyT, jp.KeyG},
-		{jp.Key6},
+	}, [][][]k.Keycode{
+		{
+			{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift},
+			{jp.Key1, jp.KeyQ, jp.KeyA, jp.KeyZ, jp.KeyWindows},
+			{jp.Key2, jp.KeyW, jp.KeyS, jp.KeyX, jp.KeyLeftAlt},
+			{jp.Key3, jp.KeyE, jp.KeyD, jp.KeyC, jp.KeyMuhenkan},
+			{jp.Key4, jp.KeyR, jp.KeyF, jp.KeyV, jp.KeySpace},
+			{jp.Key5, jp.KeyT, jp.KeyG},
+			{jp.Key6},
+		},
+		{
+			{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift},
+			{jp.Key1, jp.KeyQ, jp.KeyHome, jp.KeyZ, jp.KeyWindows},
+			{jp.Key2, jp.KeyW, jp.KeyS, jp.KeyX, jp.KeyLeftAlt},
+			{jp.Key3, jp.KeyEnd, jp.KeyD, jp.KeyC, jp.KeyMuhenkan},
+			{jp.Key4, jp.KeyR, jp.KeyF, jp.KeyV, jp.KeySpace},
+			{jp.Key5, jp.KeyT, jp.KeyG},
+			{jp.Key6},
+		},
 	})
 
 	kb := k.Port()
 
+	layer := 0
 	for {
 		d.Get()
 
@@ -51,12 +63,20 @@ func run() error {
 				case keyboard.None:
 					// skip
 				case keyboard.NoneToPress:
-					kb.Down(d.Keys[row][col])
-					fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[row][col])
+					if d.Keys[layer][row][col] == jp.KeyLeftAlt {
+						layer = 1
+					} else {
+						kb.Down(d.Keys[layer][row][col])
+					}
+					fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[0][row][col])
 				case keyboard.Press:
 				case keyboard.PressToRelease:
-					kb.Up(d.Keys[row][col])
-					fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[row][col])
+					if d.Keys[layer][row][col] == jp.KeyLeftAlt {
+						layer = 0
+					} else {
+						kb.Up(d.Keys[layer][row][col])
+					}
+					fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[0][row][col])
 				}
 			}
 		}

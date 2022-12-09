@@ -10,7 +10,7 @@ type Device struct {
 	Col   []machine.Pin
 	Row   []machine.Pin
 	State [][]State
-	Keys  [][]k.Keycode
+	Keys  [][][]k.Keycode
 }
 
 type State uint8
@@ -22,7 +22,7 @@ const (
 	PressToRelease
 )
 
-func New(colPins, rowPins []machine.Pin, keys [][]k.Keycode) *Device {
+func New(colPins, rowPins []machine.Pin, keys [][][]k.Keycode) *Device {
 	state := [][]State{}
 	col := len(colPins)
 	row := len(rowPins)
