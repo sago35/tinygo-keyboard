@@ -1,4 +1,4 @@
-package main
+package jp
 
 import (
 	k "machine/usb/hid/keyboard"
