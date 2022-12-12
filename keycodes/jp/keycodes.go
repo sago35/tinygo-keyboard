@@ -1,6 +1,8 @@
 package jp
 
-import "github.com/sago35/tinygo-keyboard/keycodes"
+import (
+	"github.com/sago35/tinygo-keyboard/keycodes"
+)
 
 // for Japanese Keyboard
 // based on machine/usb/hid/keyboard/keycode.go
@@ -127,6 +129,14 @@ const (
 	KeyWindows     = 0xF000 | 0xE3
 	KeyRightCtrl   = 0xF000 | 0xE4
 	KeyRightShift  = 0xF000 | 0xE5
+)
+
+const (
+	MouseLeft   = 0xD000 | 0x01 // mouse.Left
+	MouseRight  = 0xD000 | 0x02 // mouse.Right
+	MouseMiddle = 0xD000 | 0x03 // mouse.Middle
+	WheelDown   = 0xD000 | 0x04
+	WheelUp     = 0xD000 | 0x05
 )
 
 const (
