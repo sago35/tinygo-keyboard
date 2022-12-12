@@ -141,4 +141,7 @@ const (
 
 const (
 	KeyMod1 = keycodes.ModKeyMask | 0x01
+	KeyMod2 = keycodes.ModKeyMask | 0x02
+	KeyMod3 = keycodes.ModKeyMask | 0x03
+	KeyMod4 = keycodes.ModKeyMask | 0x04
 )
