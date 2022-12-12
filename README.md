@@ -8,6 +8,7 @@ The following are supported.
 
 * matrix scan / duplex-matrix scan
 * layer feature by mod key
+* mouse click / mouse wheel
 
 ## Microcontrollers
 
