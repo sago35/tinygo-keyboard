@@ -7,7 +7,7 @@ import (
 	k "machine/usb/hid/keyboard"
 	"time"
 
-	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	"github.com/sago35/tinygo-keyboard/keycodes"
 )
 
 type Device struct {
@@ -80,7 +80,7 @@ func (d *Device) Loop(ctx context.Context) error {
 				case None:
 					// skip
 				case NoneToPress:
-					if d.Keys[layer][row][col] == jp.KeyMod1 {
+					if d.Keys[layer][row][col]&keycodes.ModKeyMask == keycodes.ModKeyMask {
 						layer = int(d.Keys[layer][row][col]) & 0x0F
 					} else {
 						d.Keyboard.Down(k.Keycode(d.Keys[layer][row][col]))
@@ -90,7 +90,7 @@ func (d *Device) Loop(ctx context.Context) error {
 					}
 				case Press:
 				case PressToRelease:
-					if d.Keys[layer][row][col] == jp.KeyMod1 {
+					if d.Keys[layer][row][col]&keycodes.ModKeyMask == keycodes.ModKeyMask {
 						layer = 0
 					} else {
 						d.Keyboard.Up(k.Keycode(d.Keys[layer][row][col]))

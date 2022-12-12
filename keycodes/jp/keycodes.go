@@ -1,6 +1,9 @@
 package jp
 
+import "github.com/sago35/tinygo-keyboard/keycodes"
+
 // for Japanese Keyboard
+// based on machine/usb/hid/keyboard/keycode.go
 const (
 	KeyA           = 0xF000 | 0x04
 	KeyB           = 0xF000 | 0x05
@@ -127,5 +130,5 @@ const (
 )
 
 const (
-	KeyMod1 = 0xFF00 | 0x01
+	KeyMod1 = keycodes.ModKeyMask | 0x01
 )
