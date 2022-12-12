@@ -17,6 +17,8 @@ type Device struct {
 	Keys     [][][]Keycode
 	Keyboard UpDowner
 	Debug    bool
+
+	modKeyCallback func(layer int, down bool)
 }
 
 type UpDowner interface {
@@ -61,6 +63,10 @@ func New(colPins, rowPins []machine.Pin, keys [][][]Keycode) *Device {
 	return d
 }
 
+func (d *Device) Callback(fn func(layer int, down bool)) {
+	d.modKeyCallback = fn
+}
+
 func (d *Device) Loop(ctx context.Context) error {
 	layer := 0
 	cont := true
@@ -82,6 +88,9 @@ func (d *Device) Loop(ctx context.Context) error {
 				case NoneToPress:
 					if d.Keys[layer][row][col]&keycodes.ModKeyMask == keycodes.ModKeyMask {
 						layer = int(d.Keys[layer][row][col]) & 0x0F
+						if d.modKeyCallback != nil {
+							d.modKeyCallback(layer, true)
+						}
 					} else {
 						d.Keyboard.Down(k.Keycode(d.Keys[layer][row][col]))
 					}
@@ -91,6 +100,9 @@ func (d *Device) Loop(ctx context.Context) error {
 				case Press:
 				case PressToRelease:
 					if d.Keys[layer][row][col]&keycodes.ModKeyMask == keycodes.ModKeyMask {
+						if d.modKeyCallback != nil {
+							d.modKeyCallback(layer, false)
+						}
 						layer = 0
 					} else {
 						d.Keyboard.Up(k.Keycode(d.Keys[layer][row][col]))
