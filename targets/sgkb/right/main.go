@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"machine"
-	k "machine/usb/hid/keyboard"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
@@ -18,7 +17,7 @@ func main() {
 }
 
 func run() error {
-	d := keyboard.New(k.Port(), []machine.Pin{
+	d := keyboard.New([]machine.Pin{
 		machine.D0,
 		machine.D1,
 		machine.D2,
@@ -29,7 +28,7 @@ func run() error {
 		machine.D9,
 		machine.D8,
 		machine.D7,
-	}, [][][]k.Keycode{
+	}, [][][]keyboard.Keycode{
 		{
 			{jp.KeyB, jp.KeyY, jp.KeyH, jp.KeyN},
 			{jp.Key7, jp.KeyU, jp.KeyJ, jp.KeyM, jp.KeyHenkan},

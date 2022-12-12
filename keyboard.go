@@ -14,8 +14,9 @@ type Device struct {
 	Col      []machine.Pin
 	Row      []machine.Pin
 	State    [][]State
-	Keys     [][][]k.Keycode
+	Keys     [][][]Keycode
 	Keyboard UpDowner
+	Debug    bool
 }
 
 type UpDowner interface {
@@ -32,7 +33,7 @@ const (
 	PressToRelease
 )
 
-func New(kb UpDowner, colPins, rowPins []machine.Pin, keys [][][]k.Keycode) *Device {
+func New(colPins, rowPins []machine.Pin, keys [][][]Keycode) *Device {
 	state := [][]State{}
 	col := len(colPins)
 	row := len(rowPins)
@@ -54,7 +55,7 @@ func New(kb UpDowner, colPins, rowPins []machine.Pin, keys [][][]k.Keycode) *Dev
 		Row:      rowPins,
 		State:    state,
 		Keys:     keys,
-		Keyboard: kb,
+		Keyboard: k.Port(),
 	}
 
 	return d
@@ -82,17 +83,21 @@ func (d *Device) Loop(ctx context.Context) error {
 					if d.Keys[layer][row][col] == jp.KeyMod1 {
 						layer = int(d.Keys[layer][row][col]) & 0x0F
 					} else {
-						d.Keyboard.Down(d.Keys[layer][row][col])
+						d.Keyboard.Down(k.Keycode(d.Keys[layer][row][col]))
 					}
-					fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[0][row][col])
+					if d.Debug {
+						fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[0][row][col])
+					}
 				case Press:
 				case PressToRelease:
 					if d.Keys[layer][row][col] == jp.KeyMod1 {
 						layer = 0
 					} else {
-						d.Keyboard.Up(d.Keys[layer][row][col])
+						d.Keyboard.Up(k.Keycode(d.Keys[layer][row][col]))
 					}
-					fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[0][row][col])
+					if d.Debug {
+						fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[0][row][col])
+					}
 				}
 			}
 		}
@@ -100,7 +105,6 @@ func (d *Device) Loop(ctx context.Context) error {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	return nil
 	return nil
 }
 
@@ -181,3 +185,5 @@ func (d *Device) Get() [][]State {
 
 	return d.State
 }
+
+type Keycode k.Keycode
