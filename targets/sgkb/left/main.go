@@ -33,21 +33,26 @@ func run() error {
 			{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift},
 			{jp.Key1, jp.KeyQ, jp.KeyA, jp.KeyZ, jp.KeyWindows},
 			{jp.Key2, jp.KeyW, jp.KeyS, jp.KeyX, jp.KeyLeftAlt},
-			{jp.Key3, jp.KeyE, jp.KeyD, jp.KeyC, jp.KeyMuhenkan},
+			{jp.Key3, jp.KeyE, jp.KeyD, jp.KeyC, jp.KeyMod1},
 			{jp.Key4, jp.KeyR, jp.KeyF, jp.KeyV, jp.KeySpace},
 			{jp.Key5, jp.KeyT, jp.KeyG},
 			{jp.Key6},
 		},
 		{
 			{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift},
-			{jp.Key1, jp.KeyQ, jp.KeyHome, jp.KeyZ, jp.KeyWindows},
-			{jp.Key2, jp.KeyW, jp.KeyS, jp.KeyX, jp.KeyLeftAlt},
-			{jp.Key3, jp.KeyEnd, jp.KeyD, jp.KeyC, jp.KeyMuhenkan},
-			{jp.Key4, jp.KeyR, jp.KeyF, jp.KeyV, jp.KeySpace},
-			{jp.Key5, jp.KeyT, jp.KeyG},
-			{jp.Key6},
+			{jp.KeyF1, jp.KeyQ, jp.KeyHome, jp.KeyF13, jp.KeyWindows},
+			{jp.KeyF2, jp.KeyF15, jp.KeyS, jp.KeyF14, jp.KeyLeft},
+			{jp.KeyF3, jp.KeyEnd, jp.MouseRight, jp.MouseMiddle, jp.KeyMod1},
+			{jp.KeyF4, jp.KeyF17, jp.MouseLeft, jp.KeyF16, jp.KeySpace},
+			{jp.KeyF5, jp.KeyF18, jp.KeyG},
+			{jp.KeyF6},
 		},
 	})
+
+	err := initialize(d)
+	if err != nil {
+		return err
+	}
 
 	return d.Loop(context.Background())
 }
