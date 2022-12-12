@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"machine"
 	k "machine/usb/hid/keyboard"
-	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
@@ -19,7 +18,7 @@ func main() {
 }
 
 func run() error {
-	d := keyboard.New([]machine.Pin{
+	d := keyboard.New(k.Port(), []machine.Pin{
 		machine.D0,
 		machine.D1,
 		machine.D2,
@@ -51,38 +50,5 @@ func run() error {
 		},
 	})
 
-	kb := k.Port()
-
-	layer := 0
-	for {
-		d.Get()
-
-		for row := range d.State {
-			for col := range d.State[row] {
-				switch d.State[row][col] {
-				case keyboard.None:
-					// skip
-				case keyboard.NoneToPress:
-					if d.Keys[layer][row][col] == jp.KeyLeftAlt {
-						layer = 1
-					} else {
-						kb.Down(d.Keys[layer][row][col])
-					}
-					fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[0][row][col])
-				case keyboard.Press:
-				case keyboard.PressToRelease:
-					if d.Keys[layer][row][col] == jp.KeyLeftAlt {
-						layer = 0
-					} else {
-						kb.Up(d.Keys[layer][row][col])
-					}
-					fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[0][row][col])
-				}
-			}
-		}
-
-		time.Sleep(10 * time.Millisecond)
-	}
-
-	return nil
+	return d.Loop(context.Background())
 }

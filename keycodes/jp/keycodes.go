@@ -125,3 +125,7 @@ const (
 	KeyRightCtrl   = 0xF000 | 0xE4
 	KeyRightShift  = 0xF000 | 0xE5
 )
+
+const (
+	KeyMod1 = 0xFF00 | 0x01
+)
