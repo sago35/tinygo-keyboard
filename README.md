@@ -2,6 +2,8 @@
 
 **The API is not yet fixed.**  
 
+![](./img/sgkb-0.1.0.jpg)
+
 The following are supported.  
 
 * matrix scan / duplex-matrix scan
@@ -11,9 +13,18 @@ The following are supported.
 
 The following microcontrollers are supported.  
 
-* atsamd51
 * nrf52840
 * rp2040
+
+## sgkb-0.1.0
+
+left:
+
+![](./img/sgkb-0.1.0.left.png)
+
+right:
+
+![](./img/sgkb-0.1.0.right.png)
 
 ## LICENSE
 
