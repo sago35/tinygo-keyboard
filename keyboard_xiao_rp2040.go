@@ -181,7 +181,7 @@ func (d *Device) LoopUartRx(ctx context.Context) error {
 						d.Keyboard.Up(k.Keycode(p))
 					}
 				}
-				d.pressed = d.pressed[:]
+				d.pressed = d.pressed[:0]
 
 			} else if x&0xF000 == 0xD000 {
 				switch x & 0x00FF {
