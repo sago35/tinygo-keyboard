@@ -16,6 +16,8 @@ type Device struct {
 	Row      []machine.Pin
 	State    [][]State
 	Keys     [][][]Keycode
+	State2   [][]State     // for UART
+	Keys2    [][][]Keycode // for UART
 	Keyboard UpDowner
 	Mouse    Mouser
 	Debug    bool
@@ -67,6 +69,18 @@ func New(colPins, rowPins []machine.Pin, keys [][][]Keycode) *Device {
 	}
 
 	return d
+}
+
+func (d *Device) AddUartKeyboard(row, col int, keys [][][]Keycode) {
+	state := [][]State{}
+
+	for r := 0; r < row*2; r++ {
+		column := make([]State, col)
+		state = append(state, column)
+	}
+
+	d.State2 = state
+	d.Keys2 = keys
 }
 
 func (d *Device) Callback(fn func(layer int, down bool)) {
