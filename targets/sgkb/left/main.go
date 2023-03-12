@@ -83,11 +83,6 @@ func run() error {
 		},
 	})
 
-	err := initialize(d)
-	if err != nil {
-		return err
-	}
-
 	// 後で、いい感じの場所に移動する
 	uart := machine.UART0
 	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
