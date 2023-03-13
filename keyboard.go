@@ -317,7 +317,8 @@ func (k *Keyboard) Up(c k.Keycode) error {
 		}
 		k.override = k.override[:0]
 		for _, p := range k.pressed {
-			if c != p {
+			// When overriding, do not press the last key again
+			if c != p && p != k.pressed[len(k.pressed)-1] {
 				k.Port.Down(p)
 			}
 		}
