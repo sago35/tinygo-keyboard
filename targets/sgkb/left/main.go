@@ -87,5 +87,8 @@ func run() error {
 	uart := machine.UART0
 	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
 
+	// override ctrl-h to BackSpace
+	d.OverrideCtrlH()
+
 	return d.LoopUartRx(context.Background())
 }
