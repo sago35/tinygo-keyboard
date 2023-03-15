@@ -76,9 +76,9 @@ func run() error {
 			{jp.KeyF8, jp.KeyTab, jp.KeyUp, jp.KeyComma, jp.KeyMod1},
 			{jp.KeyF9, jp.KeyO, jp.KeyRight, jp.KeyPeriod, jp.KeyLeftAlt},
 			{jp.KeyF10, jp.WheelUp, jp.KeySemicolon, jp.KeySlash, jp.KeyPrintscreen},
-			{jp.KeyF11, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyEnd},
+			{jp.KeyF11, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyHome},
 			{jp.KeyF12, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyPageUp, jp.KeyPageDown},
-			{jp.KeyBackslash2, jp.KeyEnter, 0, jp.KeyDelete, jp.KeyHome},
+			{jp.KeyBackslash2, jp.KeyEnter, 0, jp.KeyDelete, jp.KeyEnd},
 			{jp.KeyDelete},
 		},
 	})

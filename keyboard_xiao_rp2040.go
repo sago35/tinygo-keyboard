@@ -1,4 +1,4 @@
-//go:build xiao_rp2040
+//go:build xiao_rp2040 || xiao_rp2040_sgkb
 
 package keyboard
 
@@ -197,7 +197,7 @@ func (d *Device) LoopUartRx(ctx context.Context) error {
 			}
 		}
 
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	return nil
