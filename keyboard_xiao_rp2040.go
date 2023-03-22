@@ -167,6 +167,7 @@ func (d *Device) LoopUartRx(ctx context.Context) error {
 				}
 				d.layer = 0
 
+				pressed := []Keycode{}
 				for _, p := range d.pressed {
 					if p&0xF000 == 0xD000 {
 						switch p & 0x00FF {
@@ -178,10 +179,16 @@ func (d *Device) LoopUartRx(ctx context.Context) error {
 							//d.Mouse.WheelUp()
 						}
 					} else {
-						d.Keyboard.Up(k.Keycode(p))
+						switch k.Keycode(p) {
+						case keycodes.KeyLeftCtrl, keycodes.KeyRightCtrl:
+							pressed = append(pressed, p)
+						default:
+							d.Keyboard.Up(k.Keycode(p))
+						}
 					}
 				}
 				d.pressed = d.pressed[:0]
+				d.pressed = append(d.pressed, pressed...)
 
 			} else if x&0xF000 == 0xD000 {
 				switch x & 0x00FF {
