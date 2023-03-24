@@ -24,37 +24,40 @@ func run() error {
 		machine.D3,
 		machine.D4,
 	}, []machine.Pin{
+		machine.D5,
 		machine.D10,
 		machine.D9,
 		machine.D8,
 		machine.D7,
 	}, [][][]keyboard.Keycode{
 		{
-			{jp.KeyB, jp.KeyY, jp.KeyH, jp.KeyN},
+			{0, 0, 0, jp.KeyB},
+			{jp.Key6, jp.KeyY, jp.KeyH, jp.KeyN, jp.KeySpace},
 			{jp.Key7, jp.KeyU, jp.KeyJ, jp.KeyM, jp.KeyHenkan},
-			{jp.Key8, jp.KeyI, jp.KeyK, jp.KeyComma},
-			{jp.Key9, jp.KeyO, jp.KeyL, jp.KeyPeriod},
-			{jp.Key0, jp.KeyP, jp.KeySemicolon, jp.KeySlash},
+			{jp.Key8, jp.KeyI, jp.KeyK, jp.KeyComma, jp.KeyKana},
+			{jp.Key9, jp.KeyO, jp.KeyL, jp.KeyPeriod, jp.KeyLeftAlt},
+			{jp.Key0, jp.KeyP, jp.KeySemicolon, jp.KeySlash, jp.KeyPrintscreen},
 			{jp.KeyMinus, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyLeft},
 			{jp.KeyHat, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyUp, jp.KeyDown},
-			{jp.KeyBackslash2, jp.KeyBackspace, jp.KeyEnter, 0, jp.KeyRight},
+			{jp.KeyBackslash2, jp.KeyEnter, 0, jp.KeyDelete, jp.KeyRight},
+			{jp.KeyBackspace},
 		},
 		{
-			{jp.KeyB, jp.KeyY, jp.KeyLeft, jp.WheelDown},
+			{0, 0, 0, jp.KeyB},
+			{jp.KeyF6, jp.KeyY, jp.KeyLeft, jp.KeyN, jp.KeySpace},
 			{jp.KeyF7, jp.KeyU, jp.KeyDown, jp.KeyM, jp.KeyHenkan},
-			{jp.KeyF8, jp.KeyTab, jp.KeyUp, jp.KeyComma},
-			{jp.KeyF9, jp.KeyO, jp.KeyRight, jp.KeyPeriod},
-			{jp.KeyF10, jp.WheelUp, jp.KeySemicolon, jp.KeySlash},
-			{jp.KeyF11, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyHome},
-			{jp.KeyF12, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyPageUp, jp.KeyPageDown},
-			{jp.KeyBackslash2, jp.KeyDelete, jp.KeyEnter, 0, jp.KeyEnd},
+			{jp.KeyF8, jp.KeyI, jp.KeyUp, jp.KeyComma, jp.KeyKana},
+			{jp.KeyF9, jp.KeyO, jp.KeyRight, jp.KeyPeriod, jp.KeyLeftAlt},
+			{jp.KeyF10, jp.KeyP, jp.KeySemicolon, jp.KeySlash, jp.KeyPrintscreen},
+			{jp.KeyF11, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyLeft},
+			{jp.KeyF12, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyUp, jp.KeyDown},
+			{jp.KeyBackslash2, jp.KeyEnter, 0, jp.KeyDelete, jp.KeyRight},
+			{jp.KeyDelete},
 		},
 	})
 
-	err := initialize(d)
-	if err != nil {
-		return err
-	}
+	uart := machine.UART0
+	uart.Configure(machine.UARTConfig{TX: machine.UART_TX_PIN, RX: machine.NoPin})
 
-	return d.Loop(context.Background())
+	return d.LoopUartTx(context.Background())
 }

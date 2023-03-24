@@ -16,8 +16,11 @@ type Device struct {
 	Row      []machine.Pin
 	State    [][]State
 	Keys     [][][]Keycode
+	State2   [][]State     // for UART
+	Keys2    [][][]Keycode // for UART
 	Keyboard UpDowner
 	Mouse    Mouser
+	Override [][]Keycode
 	Debug    bool
 
 	modKeyCallback func(layer int, down bool)
@@ -56,17 +59,39 @@ func New(colPins, rowPins []machine.Pin, keys [][][]Keycode) *Device {
 		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 
+	kb := &Keyboard{
+		Port: k.Port(),
+	}
 	d := &Device{
 		Col:      colPins,
 		Row:      rowPins,
 		State:    state,
 		Keys:     keys,
-		Keyboard: k.Port(),
+		Keyboard: kb,
 		Mouse:    mouse.Port(),
 		pressed:  make([]Keycode, 0, 10),
 	}
 
 	return d
+}
+
+func (d *Device) OverrideCtrlH() {
+	d.Keyboard = &Keyboard{
+		Port:          k.Port(),
+		overrideCtrlH: true,
+	}
+}
+
+func (d *Device) AddUartKeyboard(row, col int, keys [][][]Keycode) {
+	state := [][]State{}
+
+	for r := 0; r < row*2; r++ {
+		column := make([]State, col)
+		state = append(state, column)
+	}
+
+	d.State2 = state
+	d.Keys2 = keys
 }
 
 func (d *Device) Callback(fn func(layer int, down bool)) {
@@ -277,3 +302,65 @@ func (d *Device) Get() [][]State {
 }
 
 type Keycode k.Keycode
+
+type Keyboard struct {
+	pressed       []k.Keycode
+	override      []k.Keycode
+	Port          UpDowner
+	overrideCtrlH bool
+}
+
+func (k *Keyboard) Up(c k.Keycode) error {
+	if len(k.override) > 0 {
+		for _, p := range k.override {
+			k.Port.Up(p)
+		}
+		k.override = k.override[:0]
+		for _, p := range k.pressed {
+			// When overriding, do not press the last key again
+			if c != p && p != k.pressed[len(k.pressed)-1] {
+				k.Port.Down(p)
+			}
+		}
+	}
+
+	for i, p := range k.pressed {
+		if c == p {
+			k.pressed = append(k.pressed[:i], k.pressed[i+1:]...)
+			return k.Port.Up(c)
+		}
+	}
+	return nil
+}
+
+func (k *Keyboard) Down(c k.Keycode) error {
+	found := false
+	for _, p := range k.pressed {
+		if c == p {
+			found = true
+		}
+	}
+	if !found {
+		k.pressed = append(k.pressed, c)
+
+		if k.overrideCtrlH && len(k.pressed) == 2 && k.pressed[0] == keycodes.KeyLeftCtrl && k.pressed[1] == keycodes.KeyH {
+			for _, p := range k.pressed {
+				k.Port.Up(p)
+			}
+			k.override = append(k.override, keycodes.KeyBackspace)
+			return k.Port.Down(keycodes.KeyBackspace)
+		} else {
+			if len(k.override) > 0 {
+				for _, p := range k.override {
+					k.Port.Up(p)
+				}
+				k.override = k.override[:0]
+				for _, p := range k.pressed {
+					k.Port.Down(p)
+				}
+			}
+			return k.Port.Down(c)
+		}
+	}
+	return nil
+}
