@@ -2,7 +2,7 @@
 
 **The API is not yet fixed.**  
 
-![](./img/sgkb-0.2.0.jpg)
+![](./img/top.jpg)
 
 The following are supported.  
 
