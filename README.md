@@ -2,7 +2,7 @@
 
 **The API is not yet fixed.**  
 
-![](./img/sgkb-0.1.0.jpg)
+![](./img/sgkb-0.2.0.jpg)
 
 The following are supported.  
 
@@ -17,15 +17,15 @@ The following microcontrollers are supported.
 * nrf52840
 * rp2040
 
-## sgkb-0.1.0
+## sgkb-0.2.0
 
 left:
 
-![](./img/sgkb-0.1.0.left.png)
+![](./img/sgkb-0.2.0.left.png)
 
 right:
 
-![](./img/sgkb-0.1.0.right.png)
+![](./img/sgkb-0.2.0.right.png)
 
 ## Note
 
