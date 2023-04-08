@@ -1,31 +1,38 @@
 package keyboard
 
 import (
-	"context"
-	"fmt"
 	"machine"
 	k "machine/usb/hid/keyboard"
 	"machine/usb/hid/mouse"
-	"time"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
 )
 
 type Device struct {
-	Col      []machine.Pin
-	Row      []machine.Pin
-	State    [][]State
-	Keys     [][][]Keycode
-	State2   [][]State     // for UART
-	Keys2    [][][]Keycode // for UART
 	Keyboard UpDowner
 	Mouse    Mouser
 	Override [][]Keycode
 	Debug    bool
 
+	dmk []*DuplexMatrixKeyboard
+	uk  []*UartKeyboard
+
 	modKeyCallback func(layer int, down bool)
 	layer          int
 	pressed        []Keycode
+}
+
+type DuplexMatrixKeyboard struct {
+	State [][]State
+	Keys  [][][]Keycode
+
+	Col []machine.Pin
+	Row []machine.Pin
+}
+
+type UartKeyboard struct {
+	State [][]State
+	Keys  [][][]Keycode
 }
 
 type UpDowner interface {
@@ -42,7 +49,20 @@ const (
 	PressToRelease
 )
 
-func New(colPins, rowPins []machine.Pin, keys [][][]Keycode) *Device {
+func New() *Device {
+	kb := &Keyboard{
+		Port: k.Port(),
+	}
+	d := &Device{
+		Keyboard: kb,
+		Mouse:    mouse.Port(),
+		pressed:  make([]Keycode, 0, 10),
+	}
+
+	return d
+}
+
+func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode) {
 	state := [][]State{}
 	col := len(colPins)
 	row := len(rowPins)
@@ -59,20 +79,14 @@ func New(colPins, rowPins []machine.Pin, keys [][][]Keycode) *Device {
 		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 
-	kb := &Keyboard{
-		Port: k.Port(),
-	}
-	d := &Device{
-		Col:      colPins,
-		Row:      rowPins,
-		State:    state,
-		Keys:     keys,
-		Keyboard: kb,
-		Mouse:    mouse.Port(),
-		pressed:  make([]Keycode, 0, 10),
+	k := &DuplexMatrixKeyboard{
+		Col:   colPins,
+		Row:   rowPins,
+		State: state,
+		Keys:  keys,
 	}
 
-	return d
+	d.dmk = append(d.dmk, k)
 }
 
 func (d *Device) OverrideCtrlH() {
@@ -90,8 +104,11 @@ func (d *Device) AddUartKeyboard(row, col int, keys [][][]Keycode) {
 		state = append(state, column)
 	}
 
-	d.State2 = state
-	d.Keys2 = keys
+	u := &UartKeyboard{
+		State: state,
+		Keys:  keys,
+	}
+	d.uk = append(d.uk, u)
 }
 
 func (d *Device) Callback(fn func(layer int, down bool)) {
@@ -121,113 +138,113 @@ func (d *Device) Mod(layer int, down bool) {
 	}
 }
 
-func (d *Device) Loop(ctx context.Context) error {
-	cont := true
-	for cont {
-		select {
-		case <-ctx.Done():
-			cont = false
-			continue
-		default:
-		}
+//func (d *Device) Loop(ctx context.Context) error {
+//	cont := true
+//	for cont {
+//		select {
+//		case <-ctx.Done():
+//			cont = false
+//			continue
+//		default:
+//		}
+//
+//		d.Get()
+//
+//		for row := range d.State {
+//			for col := range d.State[row] {
+//				switch d.State[row][col] {
+//				case None:
+//					// skip
+//				case NoneToPress:
+//					x := d.Keys[d.layer][row][col]
+//					found := false
+//					for _, p := range d.pressed {
+//						if x == p {
+//							found = true
+//						}
+//					}
+//					if !found {
+//						d.pressed = append(d.pressed, x)
+//					}
+//
+//					if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
+//						d.layer = int(x) & 0x0F
+//						if d.modKeyCallback != nil {
+//							d.modKeyCallback(d.layer, true)
+//						}
+//					} else if x&0xF000 == 0xD000 {
+//						switch x & 0x00FF {
+//						case 0x01, 0x02, 0x03:
+//							d.Mouse.Press(mouse.Button(x & 0x00FF))
+//						case 0x04:
+//							d.Mouse.WheelDown()
+//						case 0x05:
+//							d.Mouse.WheelUp()
+//						}
+//					} else {
+//						d.Keyboard.Down(k.Keycode(x))
+//					}
+//					if d.Debug {
+//						fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[0][row][col])
+//					}
+//				case Press:
+//				case PressToRelease:
+//					x := d.Keys[d.layer][row][col]
+//
+//					for i, p := range d.pressed {
+//						if x == p {
+//							d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
+//						}
+//					}
+//
+//					if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
+//						if d.modKeyCallback != nil {
+//							d.modKeyCallback(d.layer, false)
+//						}
+//						d.layer = 0
+//
+//						for _, p := range d.pressed {
+//							if p&0xF000 == 0xD000 {
+//								switch p & 0x00FF {
+//								case 0x01, 0x02, 0x03:
+//									d.Mouse.Release(mouse.Button(p & 0x00FF))
+//								case 0x04:
+//									//d.Mouse.WheelDown()
+//								case 0x05:
+//									//d.Mouse.WheelUp()
+//								}
+//							} else {
+//								d.Keyboard.Up(k.Keycode(p))
+//							}
+//						}
+//						d.pressed = d.pressed[:]
+//
+//					} else if x&0xF000 == 0xD000 {
+//						switch x & 0x00FF {
+//						case 0x01, 0x02, 0x03:
+//							d.Mouse.Release(mouse.Button(x & 0x00FF))
+//						case 0x04:
+//							//d.Mouse.WheelDown()
+//						case 0x05:
+//							//d.Mouse.WheelUp()
+//						}
+//					} else {
+//						d.Keyboard.Up(k.Keycode(x))
+//					}
+//					if d.Debug {
+//						fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[0][row][col])
+//					}
+//				}
+//			}
+//		}
+//
+//		time.Sleep(5 * time.Millisecond)
+//	}
+//
+//	return nil
+//}
 
-		d.Get()
-
-		for row := range d.State {
-			for col := range d.State[row] {
-				switch d.State[row][col] {
-				case None:
-					// skip
-				case NoneToPress:
-					x := d.Keys[d.layer][row][col]
-					found := false
-					for _, p := range d.pressed {
-						if x == p {
-							found = true
-						}
-					}
-					if !found {
-						d.pressed = append(d.pressed, x)
-					}
-
-					if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-						d.layer = int(x) & 0x0F
-						if d.modKeyCallback != nil {
-							d.modKeyCallback(d.layer, true)
-						}
-					} else if x&0xF000 == 0xD000 {
-						switch x & 0x00FF {
-						case 0x01, 0x02, 0x03:
-							d.Mouse.Press(mouse.Button(x & 0x00FF))
-						case 0x04:
-							d.Mouse.WheelDown()
-						case 0x05:
-							d.Mouse.WheelUp()
-						}
-					} else {
-						d.Keyboard.Down(k.Keycode(x))
-					}
-					if d.Debug {
-						fmt.Printf("%2d %2d %04X down\r\n", row, col, d.Keys[0][row][col])
-					}
-				case Press:
-				case PressToRelease:
-					x := d.Keys[d.layer][row][col]
-
-					for i, p := range d.pressed {
-						if x == p {
-							d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-						}
-					}
-
-					if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-						if d.modKeyCallback != nil {
-							d.modKeyCallback(d.layer, false)
-						}
-						d.layer = 0
-
-						for _, p := range d.pressed {
-							if p&0xF000 == 0xD000 {
-								switch p & 0x00FF {
-								case 0x01, 0x02, 0x03:
-									d.Mouse.Release(mouse.Button(p & 0x00FF))
-								case 0x04:
-									//d.Mouse.WheelDown()
-								case 0x05:
-									//d.Mouse.WheelUp()
-								}
-							} else {
-								d.Keyboard.Up(k.Keycode(p))
-							}
-						}
-						d.pressed = d.pressed[:]
-
-					} else if x&0xF000 == 0xD000 {
-						switch x & 0x00FF {
-						case 0x01, 0x02, 0x03:
-							d.Mouse.Release(mouse.Button(x & 0x00FF))
-						case 0x04:
-							//d.Mouse.WheelDown()
-						case 0x05:
-							//d.Mouse.WheelUp()
-						}
-					} else {
-						d.Keyboard.Up(k.Keycode(x))
-					}
-					if d.Debug {
-						fmt.Printf("%2d %2d %04X up\r\n", row, col, d.Keys[0][row][col])
-					}
-				}
-			}
-		}
-
-		time.Sleep(5 * time.Millisecond)
-	}
-
-	return nil
-}
-
-func (d *Device) Get() [][]State {
+func (d *DuplexMatrixKeyboard) Get() [][]State {
 	for c := range d.Col {
 		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
 		d.Col[c].High()

@@ -17,7 +17,9 @@ func main() {
 }
 
 func run() error {
-	d := keyboard.New([]machine.Pin{
+	d := keyboard.New()
+
+	d.AddDuplexMatrixKeyboard([]machine.Pin{
 		machine.D0,
 		machine.D1,
 		machine.D2,
