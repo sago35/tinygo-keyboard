@@ -58,7 +58,10 @@ func run() error {
 		},
 	})
 
-	d.AddUartKeyboard(5, 5, [][][]keyboard.Keycode{
+	uart := machine.UART0
+	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
+
+	d.AddUartKeyboard(5, 5, uart, [][][]keyboard.Keycode{
 		{
 			{0, 0, 0, jp.KeyB},
 			{jp.Key6, jp.KeyY, jp.KeyH, jp.KeyN, jp.KeySpace},
@@ -85,12 +88,8 @@ func run() error {
 		},
 	})
 
-	// 後で、いい感じの場所に移動する
-	uart := machine.UART0
-	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
+	//// override ctrl-h to BackSpace
+	//d.OverrideCtrlH()
 
-	// override ctrl-h to BackSpace
-	d.OverrideCtrlH()
-
-	return d.LoopUartRx(context.Background())
+	return d.Loop(context.Background())
 }
