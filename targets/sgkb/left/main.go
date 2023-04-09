@@ -17,19 +17,25 @@ func main() {
 }
 
 func run() error {
-	d := keyboard.New([]machine.Pin{
+	d := keyboard.New()
+
+	colPins := []machine.Pin{
 		machine.D0,
 		machine.D1,
 		machine.D2,
 		machine.D3,
 		machine.D4,
-	}, []machine.Pin{
+	}
+
+	rowPins := []machine.Pin{
 		machine.D5,
 		machine.D10,
 		machine.D9,
 		machine.D8,
 		machine.D6,
-	}, [][][]keyboard.Keycode{
+	}
+
+	d.AddDuplexMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
 			{0, 0, 0, 0, jp.KeyMod1},
 			{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift, jp.KeyLeftCtrl},
@@ -56,7 +62,10 @@ func run() error {
 		},
 	})
 
-	d.AddUartKeyboard(5, 5, [][][]keyboard.Keycode{
+	uart := machine.UART0
+	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
+
+	d.AddUartKeyboard(5, 5, uart, [][][]keyboard.Keycode{
 		{
 			{0, 0, 0, jp.KeyB},
 			{jp.Key6, jp.KeyY, jp.KeyH, jp.KeyN, jp.KeySpace},
@@ -83,12 +92,8 @@ func run() error {
 		},
 	})
 
-	// 後で、いい感じの場所に移動する
-	uart := machine.UART0
-	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
-
 	// override ctrl-h to BackSpace
 	d.OverrideCtrlH()
 
-	return d.LoopUartRx(context.Background())
+	return d.Loop(context.Background())
 }
