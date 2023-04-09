@@ -17,14 +17,20 @@ func main() {
 }
 
 func run() error {
-	d := keyboard.New([]machine.Pin{
+	d := keyboard.New()
+
+	colPins := []machine.Pin{
 		machine.BCM5,
 		machine.BCM6,
-	}, []machine.Pin{
+	}
+
+	rowPins := []machine.Pin{
 		machine.BCM13,
 		machine.BCM19,
 		machine.BCM26,
-	}, [][][]keyboard.Keycode{
+	}
+
+	d.AddDuplexMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
 			{jp.KeyT, jp.KeyY},
 			{jp.KeyI, jp.KeyG},
