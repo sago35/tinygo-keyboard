@@ -286,6 +286,10 @@ func (k *Keyboard) Down(c k.Keycode) error {
 	return nil
 }
 
+// UartTxKeyboard is a keyboard that simply sends row/col corresponding to key
+// placement via UART. For instructions on how to set it up, see bellow.
+//
+//	./target/sgkb/right
 type UartTxKeyboard struct {
 	pressed []k.Keycode
 	Uart    *machine.UART
