@@ -48,7 +48,6 @@ func run() error {
 		machine.WIO_5S_DOWN,
 		machine.WIO_5S_PRESS,
 	}
-	machine.WIO_KEY_A.Get()
 
 	for c := range gpioPins {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInput})
