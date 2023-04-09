@@ -38,7 +38,7 @@ func run() error {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
-	d.AddGpKeyboard(gpioPins, [][][]keyboard.Keycode{
+	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
 		{
 			{
 				jp.Key1,

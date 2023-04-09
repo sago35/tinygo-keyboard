@@ -53,7 +53,7 @@ func run() error {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInput})
 	}
 
-	d.AddGpKeyboard(gpioPins, [][][]keyboard.Keycode{
+	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
 		{
 			{jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyMediaVolumeInc, jp.KeyMediaPrevTrack, jp.KeyMediaNextTrack, jp.KeyMediaVolumeDec, jp.KeyMediaPlayPause},
 		},

@@ -11,7 +11,7 @@ type GpioKeyboard struct {
 	Col []machine.Pin
 }
 
-func (d *Device) AddGpKeyboard(pins []machine.Pin, keys [][][]Keycode) {
+func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode) {
 	state := [][]State{}
 	col := len(pins)
 
