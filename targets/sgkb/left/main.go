@@ -19,19 +19,23 @@ func main() {
 func run() error {
 	d := keyboard.New()
 
-	d.AddDuplexMatrixKeyboard([]machine.Pin{
+	colPins := []machine.Pin{
 		machine.D0,
 		machine.D1,
 		machine.D2,
 		machine.D3,
 		machine.D4,
-	}, []machine.Pin{
+	}
+
+	rowPins := []machine.Pin{
 		machine.D5,
 		machine.D10,
 		machine.D9,
 		machine.D8,
 		machine.D6,
-	}, [][][]keyboard.Keycode{
+	}
+
+	d.AddDuplexMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
 			{0, 0, 0, 0, jp.KeyMod1},
 			{jp.KeyEsc, jp.KeyTab, jp.KeyLeftCtrl, jp.KeyLeftShift, jp.KeyLeftCtrl},
@@ -88,8 +92,8 @@ func run() error {
 		},
 	})
 
-	//// override ctrl-h to BackSpace
-	//d.OverrideCtrlH()
+	// override ctrl-h to BackSpace
+	d.OverrideCtrlH()
 
 	return d.Loop(context.Background())
 }
