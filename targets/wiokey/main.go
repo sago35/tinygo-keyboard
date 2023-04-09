@@ -32,9 +32,31 @@ func run() error {
 
 	d.AddDuplexMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
-			{jp.KeyT, jp.KeyY},
-			{jp.KeyI, jp.KeyG},
-			{jp.KeyN, jp.KeyO},
+			{jp.KeyT, jp.KeyI},
+			{jp.KeyN, jp.KeyY},
+			{jp.KeyG, jp.KeyO},
+		},
+	})
+
+	gpioPins := []machine.Pin{
+		machine.WIO_KEY_A,
+		machine.WIO_KEY_B,
+		machine.WIO_KEY_C,
+		machine.WIO_5S_UP,
+		machine.WIO_5S_LEFT,
+		machine.WIO_5S_RIGHT,
+		machine.WIO_5S_DOWN,
+		machine.WIO_5S_PRESS,
+	}
+	machine.WIO_KEY_A.Get()
+
+	for c := range gpioPins {
+		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInput})
+	}
+
+	d.AddGpKeyboard(gpioPins, [][][]keyboard.Keycode{
+		{
+			{jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyMediaVolumeInc, jp.KeyMediaPrevTrack, jp.KeyMediaNextTrack, jp.KeyMediaVolumeDec, jp.KeyMediaPlayPause},
 		},
 	})
 

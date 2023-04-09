@@ -132,6 +132,24 @@ const (
 )
 
 const (
+	KeyMediaPlay        = 0xB0 | 0xE400
+	KeyMediaPause       = 0xB1 | 0xE400
+	KeyMediaRecord      = 0xB2 | 0xE400
+	KeyMediaFastForward = 0xB3 | 0xE400
+	KeyMediaRewind      = 0xB4 | 0xE400
+	KeyMediaNextTrack   = 0xB5 | 0xE400
+	KeyMediaPrevTrack   = 0xB6 | 0xE400
+	KeyMediaStop        = 0xB7 | 0xE400
+	KeyMediaEject       = 0xB8 | 0xE400
+	KeyMediaRandomPlay  = 0xB9 | 0xE400
+	KeyMediaPlayPause   = 0xCD | 0xE400
+	KeyMediaPlaySkip    = 0xCE | 0xE400
+	KeyMediaMute        = 0xE2 | 0xE400
+	KeyMediaVolumeInc   = 0xE9 | 0xE400
+	KeyMediaVolumeDec   = 0xEA | 0xE400
+)
+
+const (
 	MouseLeft   = 0xD000 | 0x01 // mouse.Left
 	MouseRight  = 0xD000 | 0x02 // mouse.Right
 	MouseMiddle = 0xD000 | 0x03 // mouse.Middle
