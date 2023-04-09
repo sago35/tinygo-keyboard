@@ -3,6 +3,7 @@ module github.com/sago35/tinygo-keyboard
 go 1.19
 
 require (
+	github.com/bgould/tinygo-rotary-encoder v0.0.0-20221224155058-c26fcc9a3d20 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
