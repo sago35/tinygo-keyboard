@@ -16,12 +16,19 @@ type Device struct {
 	Override [][]Keycode
 	Debug    bool
 
+	kb []KBer
+
 	dmk []*DuplexMatrixKeyboard
 	uk  []*UartKeyboard
 
 	modKeyCallback func(layer int, down bool)
 	layer          int
 	pressed        []Keycode
+}
+
+type KBer interface {
+	Get() [][]State
+	Key(layer, row, col int) Keycode
 }
 
 type DuplexMatrixKeyboard struct {
@@ -91,7 +98,7 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 		Keys:  keys,
 	}
 
-	d.dmk = append(d.dmk, k)
+	d.kb = append(d.kb, k)
 }
 
 func (d *Device) OverrideCtrlH() {
@@ -109,12 +116,13 @@ func (d *Device) AddUartKeyboard(row, col int, uart *machine.UART, keys [][][]Ke
 		state = append(state, column)
 	}
 
-	u := &UartKeyboard{
+	k := &UartKeyboard{
 		State: state,
 		Keys:  keys,
 		uart:  uart,
 	}
-	d.uk = append(d.uk, u)
+
+	d.kb = append(d.kb, k)
 }
 
 func (d *Device) Callback(fn func(layer int, down bool)) {
@@ -164,7 +172,7 @@ func (d *Device) Loop(ctx context.Context) error {
 		pressToRelease := []Keycode{}
 
 		// read from key matrix
-		for _, k := range d.dmk {
+		for _, k := range d.kb {
 			state := k.Get()
 			for row := range state {
 				for col := range state[row] {
@@ -172,7 +180,7 @@ func (d *Device) Loop(ctx context.Context) error {
 					case None:
 						// skip
 					case NoneToPress:
-						x := k.Keys[d.layer][row][col]
+						x := k.Key(d.layer, row, col)
 						found := false
 						for _, p := range d.pressed {
 							if x == p {
@@ -185,42 +193,7 @@ func (d *Device) Loop(ctx context.Context) error {
 
 					case Press:
 					case PressToRelease:
-						x := k.Keys[d.layer][row][col]
-
-						for i, p := range d.pressed {
-							if x == p {
-								d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-								pressToRelease = append(pressToRelease, x)
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// read from uart
-		for _, k := range d.uk {
-			state := k.Get()
-			for row := range state {
-				for col := range state[row] {
-					switch state[row][col] {
-					case None:
-						// skip
-					case NoneToPress:
-						x := k.Keys[d.layer][row][col]
-						found := false
-						for _, p := range d.pressed {
-							if x == p {
-								found = true
-							}
-						}
-						if !found {
-							d.pressed = append(d.pressed, x)
-						}
-
-					case Press:
-					case PressToRelease:
-						x := k.Keys[d.layer][row][col]
+						x := k.Key(d.layer, row, col)
 
 						for i, p := range d.pressed {
 							if x == p {
@@ -383,6 +356,10 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 	return d.State
 }
 
+func (d *DuplexMatrixKeyboard) Key(layer, row, col int) Keycode {
+	return d.Keys[layer][row][col]
+}
+
 func (d *UartKeyboard) Get() [][]State {
 	buf := d.buf[:0]
 	uart := d.uart
@@ -432,6 +409,10 @@ func (d *UartKeyboard) Get() [][]State {
 		}
 	}
 	return d.State
+}
+
+func (d *UartKeyboard) Key(layer, row, col int) Keycode {
+	return d.Keys[layer][row][col]
 }
 
 type Keycode k.Keycode
