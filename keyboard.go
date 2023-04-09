@@ -165,10 +165,10 @@ func (d *Device) Loop(ctx context.Context) error {
 
 		// read from key matrix
 		for _, k := range d.dmk {
-			k.Get()
-			for row := range k.State {
-				for col := range k.State[row] {
-					switch k.State[row][col] {
+			state := k.Get()
+			for row := range state {
+				for col := range state[row] {
+					switch state[row][col] {
 					case None:
 						// skip
 					case NoneToPress:
@@ -200,10 +200,10 @@ func (d *Device) Loop(ctx context.Context) error {
 
 		// read from uart
 		for _, k := range d.uk {
-			k.Get()
-			for row := range k.State {
-				for col := range k.State[row] {
-					switch k.State[row][col] {
+			state := k.Get()
+			for row := range state {
+				for col := range state[row] {
+					switch state[row][col] {
 					case None:
 						// skip
 					case NoneToPress:
