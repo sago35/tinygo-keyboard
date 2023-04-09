@@ -37,6 +37,7 @@ type UartKeyboard struct {
 	Keys  [][][]Keycode
 
 	uart *machine.UART
+	buf  [3]byte
 }
 
 type UpDowner interface {
@@ -144,8 +145,6 @@ func (d *Device) Mod(layer int, down bool) {
 }
 
 func (d *Device) Loop(ctx context.Context) error {
-	buf := make([]byte, 0, 3)
-
 	for _, k := range d.uk {
 		uart := k.uart
 		for uart.Buffered() > 0 {
@@ -201,50 +200,9 @@ func (d *Device) Loop(ctx context.Context) error {
 
 		// read from uart
 		for _, k := range d.uk {
-			uart := k.uart
-			for uart.Buffered() > 0 {
-				data, _ := uart.ReadByte()
-				buf = append(buf, data)
-
-				if len(buf) == 3 {
-					row, col := buf[1], buf[2]
-					current := false
-					switch buf[0] {
-					case 0xAA: // press
-						current = true
-					case 0x55: // release
-						current = false
-					default:
-						buf[0], buf[1] = buf[1], buf[2]
-						buf = buf[:2]
-						continue
-					}
-
-					switch k.State[row][col] {
-					case None:
-						if current {
-							k.State[row][col] = NoneToPress
-						} else {
-						}
-					case NoneToPress:
-						if current {
-							k.State[row][col] = Press
-						} else {
-							k.State[row][col] = PressToRelease
-						}
-					case Press:
-						if current {
-						} else {
-							k.State[row][col] = PressToRelease
-						}
-					case PressToRelease:
-						if current {
-							k.State[row][col] = NoneToPress
-						} else {
-							k.State[row][col] = None
-						}
-					}
-
+			k.Get()
+			for row := range k.State {
+				for col := range k.State[row] {
 					switch k.State[row][col] {
 					case None:
 						// skip
@@ -259,9 +217,11 @@ func (d *Device) Loop(ctx context.Context) error {
 						if !found {
 							d.pressed = append(d.pressed, x)
 						}
+
 					case Press:
 					case PressToRelease:
 						x := k.Keys[d.layer][row][col]
+
 						for i, p := range d.pressed {
 							if x == p {
 								d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
@@ -269,7 +229,6 @@ func (d *Device) Loop(ctx context.Context) error {
 							}
 						}
 					}
-					buf = buf[:0]
 				}
 			}
 		}
@@ -421,6 +380,57 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 		d.Row[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 
+	return d.State
+}
+
+func (d *UartKeyboard) Get() [][]State {
+	buf := d.buf[:0]
+	uart := d.uart
+	for uart.Buffered() > 0 {
+		data, _ := uart.ReadByte()
+		buf = append(buf, data)
+
+		if len(buf) == 3 {
+			row, col := buf[1], buf[2]
+			current := false
+			switch buf[0] {
+			case 0xAA: // press
+				current = true
+			case 0x55: // release
+				current = false
+			default:
+				buf[0], buf[1] = buf[1], buf[2]
+				buf = buf[:2]
+				continue
+			}
+
+			switch d.State[row][col] {
+			case None:
+				if current {
+					d.State[row][col] = NoneToPress
+				} else {
+				}
+			case NoneToPress:
+				if current {
+					d.State[row][col] = Press
+				} else {
+					d.State[row][col] = PressToRelease
+				}
+			case Press:
+				if current {
+				} else {
+					d.State[row][col] = PressToRelease
+				}
+			case PressToRelease:
+				if current {
+					d.State[row][col] = NoneToPress
+				} else {
+					d.State[row][col] = None
+				}
+			}
+			buf = buf[:0]
+		}
+	}
 	return d.State
 }
 
