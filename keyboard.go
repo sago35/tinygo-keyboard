@@ -2,6 +2,7 @@ package keyboard
 
 import (
 	"context"
+	"machine"
 	k "machine/usb/hid/keyboard"
 	"machine/usb/hid/mouse"
 	"time"
@@ -281,6 +282,41 @@ func (k *Keyboard) Down(c k.Keycode) error {
 			}
 			return k.Port.Down(c)
 		}
+	}
+	return nil
+}
+
+type UartTxKeyboard struct {
+	pressed []k.Keycode
+	Uart    *machine.UART
+}
+
+func (k *UartTxKeyboard) Up(c k.Keycode) error {
+	for i, p := range k.pressed {
+		if c == p {
+			k.pressed = append(k.pressed[:i], k.pressed[i+1:]...)
+			row := byte(c >> 8)
+			col := byte(c)
+			_, err := k.Uart.Write([]byte{0x55, byte(row), byte(col)})
+			return err
+		}
+	}
+	return nil
+}
+
+func (k *UartTxKeyboard) Down(c k.Keycode) error {
+	found := false
+	for _, p := range k.pressed {
+		if c == p {
+			found = true
+		}
+	}
+	if !found {
+		k.pressed = append(k.pressed, c)
+		row := byte(c >> 8)
+		col := byte(c)
+		_, err := k.Uart.Write([]byte{0xAA, byte(row), byte(col)})
+		return err
 	}
 	return nil
 }
