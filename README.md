@@ -6,7 +6,11 @@
 
 The following are supported.  
 
-* matrix scan / duplex-matrix scan
+* key input
+    * matrix scan / duplex-matrix scan
+    * rotary encoder
+    * GPIO
+    * UART
 * layer feature by mod key
 * mouse click / mouse wheel
 * support TRRS (UART)
@@ -86,6 +90,17 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
 | xiao-rp2040 | 1 |
 | i2c ssd1306 | 1 |
 | register 10k ohm | 2 |
+
+## MacroPad RP2040
+
+![](./img/macropad-rp2040.jpg)
+
+```
+$ tinygo flash --target macropad-rp2040 --size short ./targets/macropad-rp2040/
+```
+
+* schema
+    * https://learn.adafruit.com/adafruit-macropad-rp2040/overview
 
 
 ## Note
