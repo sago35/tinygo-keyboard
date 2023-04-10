@@ -32,7 +32,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 ```
 
 * files
-    * [./kicad/sgkb](./kicad/sgkb/)
+    * [./kicad/sgkb](./kicad/sgkb/) for KiCad 7.0
 
 | name | amount |
 | ---- | ------ |
@@ -61,7 +61,7 @@ $ tinygo flash --target wioterminal --size short ./targets/wiokey/
 ```
 
 * files
-    * [./kicad/wiokey](./kicad/wiokey/)
+    * [./kicad/wiokey](./kicad/wiokey/) for KiCad 7.0
 
 | name | amount |
 | ---- | ------ |
@@ -80,7 +80,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
 ```
 
 * files
-    * [./kicad/sgkey](./kicad/sgkey/)
+    * [./kicad/sgkey](./kicad/sgkey/) for KiCad 7.0
 
 | name | amount |
 | ---- | ------ |
