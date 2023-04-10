@@ -116,3 +116,7 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 func (d *DuplexMatrixKeyboard) Key(layer, row, col int) Keycode {
 	return d.Keys[layer][row][col]
 }
+
+func (d *DuplexMatrixKeyboard) Init() error {
+	return nil
+}

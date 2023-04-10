@@ -64,3 +64,7 @@ func (d *GpioKeyboard) Get() [][]State {
 func (d *GpioKeyboard) Key(layer, row, col int) Keycode {
 	return d.Keys[layer][row][col]
 }
+
+func (d *GpioKeyboard) Init() error {
+	return nil
+}

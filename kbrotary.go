@@ -79,3 +79,7 @@ func (d *RotaryKeyboard) Get() [][]State {
 func (d *RotaryKeyboard) Key(layer, row, col int) Keycode {
 	return d.Keys[layer][row][col]
 }
+
+func (d *RotaryKeyboard) Init() error {
+	return nil
+}

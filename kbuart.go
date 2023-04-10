@@ -95,3 +95,10 @@ func (d *UartKeyboard) Get() [][]State {
 func (d *UartKeyboard) Key(layer, row, col int) Keycode {
 	return d.Keys[layer][row][col]
 }
+
+func (d *UartKeyboard) Init() error {
+	for d.uart.Buffered() > 0 {
+		d.uart.ReadByte()
+	}
+	return nil
+}
