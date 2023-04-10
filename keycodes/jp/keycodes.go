@@ -150,11 +150,13 @@ const (
 )
 
 const (
-	MouseLeft   = 0xD000 | 0x01 // mouse.Left
-	MouseRight  = 0xD000 | 0x02 // mouse.Right
-	MouseMiddle = 0xD000 | 0x03 // mouse.Middle
-	WheelDown   = 0xD000 | 0x04
-	WheelUp     = 0xD000 | 0x05
+	MouseLeft    = 0xD000 | 0x01 // mouse.Left
+	MouseRight   = 0xD000 | 0x02 // mouse.Right
+	MouseMiddle  = 0xD000 | 0x04 // mouse.Middle
+	MouseBack    = 0xD000 | 0x08 // mouse.Back
+	MouseForward = 0xD000 | 0x10 // mouse.Forward
+	WheelDown    = 0xD000 | 0x20
+	WheelUp      = 0xD000 | 0x40
 )
 
 const (

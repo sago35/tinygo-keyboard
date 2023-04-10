@@ -115,14 +115,14 @@ func (d *Device) Tick() error {
 			d.layer = int(x) & 0x0F
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
-			case 0x01, 0x02, 0x03:
+			case 0x01, 0x02, 0x04, 0x08, 0x10:
 				d.Mouse.Press(mouse.Button(x & 0x00FF))
-			case 0x04:
+			case 0x20:
 				d.Mouse.WheelDown()
 				// ここ上手にキーリピートさせたい感じはある
 				d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
 				pressToRelease = append(pressToRelease, x)
-			case 0x05:
+			case 0x40:
 				d.Mouse.WheelUp()
 				// ここ上手にキーリピートさせたい感じはある
 				d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
@@ -141,11 +141,11 @@ func (d *Device) Tick() error {
 			for _, p := range d.pressed {
 				if p&0xF000 == 0xD000 {
 					switch p & 0x00FF {
-					case 0x01, 0x02, 0x03:
+					case 0x01, 0x02, 0x04, 0x08, 0x10:
 						d.Mouse.Release(mouse.Button(p & 0x00FF))
-					case 0x04:
+					case 0x20:
 						//d.Mouse.WheelDown()
-					case 0x05:
+					case 0x40:
 						//d.Mouse.WheelUp()
 					}
 				} else {
@@ -162,11 +162,11 @@ func (d *Device) Tick() error {
 
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
-			case 0x01, 0x02, 0x03:
+			case 0x01, 0x02, 0x04, 0x08, 0x10:
 				d.Mouse.Release(mouse.Button(x & 0x00FF))
-			case 0x04:
+			case 0x20:
 				//d.Mouse.WheelDown()
-			case 0x05:
+			case 0x40:
 				//d.Mouse.WheelUp()
 			}
 		} else {
