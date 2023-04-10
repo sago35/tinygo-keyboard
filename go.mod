@@ -13,4 +13,5 @@ require (
 	github.com/tinygo-org/cbgo v0.0.4 // indirect
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	tinygo.org/x/bluetooth v0.6.0 // indirect
+	tinygo.org/x/drivers v0.24.0 // indirect
 )
