@@ -19,8 +19,10 @@ The following are supported.
 
 The following microcontrollers are supported.  
 
-* nrf52840
 * rp2040
+* nrf52840
+* samd51
+* samd21
 
 ## sgkb-0.2.0
 
