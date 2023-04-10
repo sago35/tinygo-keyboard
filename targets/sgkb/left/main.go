@@ -55,7 +55,7 @@ func run() error {
 			{jp.KeyF2, jp.KeyF15, jp.KeyS, jp.KeyF14, jp.KeyLeftAlt},
 			{jp.KeyF3, jp.KeyEnd, jp.MouseRight, jp.MouseMiddle, jp.KeyMod1},
 			{jp.KeyF4, jp.KeyF17, jp.MouseLeft, jp.KeyF16, jp.KeySpace},
-			{jp.KeyF5, jp.KeyF18, jp.KeyG, jp.KeyB},
+			{jp.KeyF5, jp.KeyF18, jp.MouseBack, jp.MouseForward},
 			{jp.KeyF6},
 			{},
 			{},
@@ -79,7 +79,7 @@ func run() error {
 			{jp.KeyBackspace},
 		},
 		{
-			{0, 0, 0, jp.KeyB},
+			{0, 0, 0, jp.MouseForward},
 			{jp.KeyF6, jp.KeyY, jp.KeyLeft, jp.WheelDown, jp.KeySpace},
 			{jp.KeyF7, jp.KeyU, jp.KeyDown, jp.KeyM, jp.KeyHenkan},
 			{jp.KeyF8, jp.KeyTab, jp.KeyUp, jp.KeyComma, jp.KeyMod1},
