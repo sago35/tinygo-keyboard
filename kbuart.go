@@ -32,6 +32,18 @@ func (d *Device) AddUartKeyboard(row, col int, uart *machine.UART, keys [][][]Ke
 
 func (d *UartKeyboard) Get() [][]State {
 	uart := d.uart
+
+	for row := range d.State {
+		for col := range d.State[row] {
+			switch d.State[row][col] {
+			case NoneToPress:
+				d.State[row][col] = Press
+			case PressToRelease:
+				d.State[row][col] = None
+			}
+		}
+	}
+
 	for uart.Buffered() > 0 {
 		data, _ := uart.ReadByte()
 		d.buf = append(d.buf, data)
