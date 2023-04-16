@@ -1,3 +1,5 @@
+//go:build macropad_rp2040
+
 package keyboard
 
 import (
