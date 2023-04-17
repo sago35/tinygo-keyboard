@@ -1,4 +1,4 @@
-//go:build macropad_rp2040
+//go:build tinygo && macropad_rp2040
 
 package keyboard
 
