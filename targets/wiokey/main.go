@@ -25,7 +25,7 @@ func run() error {
 	}
 
 	rowPins := []machine.Pin{
-		machine.BCM13,
+		machine.PA04, // BCM13,
 		machine.BCM19,
 		machine.BCM26,
 	}
@@ -53,6 +53,7 @@ func run() error {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInput})
 	}
 
+	// KeyMediaXXX will be supported starting with tinygo-0.28.
 	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
 		{
 			{jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyMediaVolumeInc, jp.KeyMediaPrevTrack, jp.KeyMediaNextTrack, jp.KeyMediaVolumeDec, jp.KeyMediaPlayPause},
