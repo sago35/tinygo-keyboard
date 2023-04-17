@@ -7,23 +7,32 @@ import (
 )
 
 type GpioKeyboard struct {
-	State [][]State
-	Keys  [][][]Keycode
+	State   [][]State
+	Keys    [][][]Keycode
+	options Options
 
 	Col []machine.Pin
 }
 
-func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode) {
+func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode, opt ...Option) {
 	state := [][]State{}
 	col := len(pins)
 
 	column := make([]State, col)
 	state = append(state, column)
 
+	o := Options{
+		InvertButtonState: true,
+	}
+	for _, f := range opt {
+		f(&o)
+	}
+
 	k := &GpioKeyboard{
-		Col:   pins,
-		State: state,
-		Keys:  keys,
+		Col:     pins,
+		State:   state,
+		Keys:    keys,
+		options: o,
 	}
 
 	d.kb = append(d.kb, k)
@@ -32,7 +41,10 @@ func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode) {
 func (d *GpioKeyboard) Get() [][]State {
 	for c := range d.Col {
 		current := d.Col[c].Get()
-		current = !current
+
+		if d.options.InvertButtonState {
+			current = !current
+		}
 
 		switch d.State[0][c] {
 		case None:
