@@ -7,14 +7,15 @@ import (
 )
 
 type MatrixKeyboard struct {
-	State [][]State
-	Keys  [][][]Keycode
+	State   [][]State
+	Keys    [][][]Keycode
+	options Options
 
 	Col []machine.Pin
 	Row []machine.Pin
 }
 
-func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode) {
+func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode, opt ...Option) {
 	state := [][]State{}
 	col := len(colPins)
 	row := len(rowPins)
@@ -25,17 +26,23 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Ke
 	}
 
 	for c := range colPins {
-		colPins[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
+		colPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 	for r := range rowPins {
 		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 
+	o := Options{}
+	for _, f := range opt {
+		f(&o)
+	}
+
 	k := &MatrixKeyboard{
-		Col:   colPins,
-		Row:   rowPins,
-		State: state,
-		Keys:  keys,
+		Col:     colPins,
+		Row:     rowPins,
+		State:   state,
+		Keys:    keys,
+		options: o,
 	}
 
 	d.kb = append(d.kb, k)
@@ -43,11 +50,18 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Ke
 
 func (d *MatrixKeyboard) Get() [][]State {
 	for c := range d.Col {
-		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
-		d.Col[c].High()
 		for r := range d.Row {
 			//d.State[r][c] = d.Row[r].Get()
-			current := d.Row[r].Get()
+			current := false
+			if !d.options.InvertDiode {
+				d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
+				d.Col[c].High()
+				current = d.Row[r].Get()
+			} else {
+				d.Row[r].Configure(machine.PinConfig{Mode: machine.PinOutput})
+				d.Row[r].High()
+				current = d.Col[c].Get()
+			}
 			switch d.State[r][c] {
 			case None:
 				if current {
@@ -72,9 +86,14 @@ func (d *MatrixKeyboard) Get() [][]State {
 					d.State[r][c] = None
 				}
 			}
+			if !d.options.InvertDiode {
+				d.Col[c].Low()
+				d.Col[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+			} else {
+				d.Row[r].Low()
+				d.Row[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+			}
 		}
-		d.Col[c].Low()
-		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 
 	return d.State
