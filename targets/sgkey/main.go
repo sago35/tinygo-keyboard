@@ -20,21 +20,20 @@ func run() error {
 	d := keyboard.New()
 
 	colPins := []machine.Pin{
-		machine.D1,
-		machine.D2,
-	}
-
-	rowPins := []machine.Pin{
 		machine.D8,
 		machine.D9,
 		machine.D10,
 	}
 
-	d.AddDuplexMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
+	rowPins := []machine.Pin{
+		machine.D1,
+		machine.D2,
+	}
+
+	d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
-			{jp.KeyT, jp.KeyY},
-			{jp.KeyI, jp.KeyG},
-			{jp.KeyN, jp.KeyO},
+			{jp.KeyT, jp.KeyI, jp.KeyN},
+			{jp.KeyY, jp.KeyG, jp.KeyO},
 		},
 	})
 
