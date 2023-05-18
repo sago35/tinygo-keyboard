@@ -30,13 +30,13 @@ func run() error {
 		machine.BCM26,
 	}
 
-	d.AddDuplexMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
+	d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
 			{jp.KeyT, jp.KeyI},
 			{jp.KeyN, jp.KeyY},
 			{jp.KeyG, jp.KeyO},
 		},
-	})
+	}, keyboard.InvertDiode(true))
 
 	gpioPins := []machine.Pin{
 		machine.WIO_KEY_A,
