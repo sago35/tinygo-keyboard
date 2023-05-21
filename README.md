@@ -83,6 +83,8 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
 
 * files
     * [./kicad/sgkey](./kicad/sgkey/) for KiCad 7.0
+* build guide
+    * [./targets/sgkey/README.md](./targets/sgkey/README.md)
 
 | name | amount |
 | ---- | ------ |
