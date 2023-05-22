@@ -95,6 +95,26 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
 | i2c ssd1306 | 1 |
 | register 10k ohm | 2 |
 
+## fric10key-0.1.0
+
+![](./img/fric10key-0.1.0.jpg)
+
+```
+$ tinygo flash --target xiao-rp2040 --size short ./targets/fric10key/
+```
+
+* files
+    * [./kicad/fric10key](./kicad/fric10key/) for KiCad 7.0
+
+| name | amount |
+| ---- | ------ |
+| Cherry MX / Kailh Choc V1 | 27 |
+| key cap (1u) | 26 |
+| key cap (2u) | 1 |
+| Stabilizer (2u) | 1 |
+| diode 1N4148 | 27 |
+| xiao-rp2040 | 1 |
+
 ## MacroPad RP2040
 
 ![](./img/macropad-rp2040.jpg)
