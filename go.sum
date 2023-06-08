@@ -16,6 +16,8 @@ github.com/go-ole/go-ole v1.2.6/go.mod h1:pprOEPIfldk/42T2oK7lQ4v4JSDwmV0As9GaiU
 github.com/godbus/dbus/v5 v5.0.3 h1:ZqHaoEF7TBzh4jzPmqVhE/5A1z9of6orkAe5uHoAeME=
 github.com/godbus/dbus/v5 v5.0.3/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/google/go-cmp v0.5.2/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
+github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
+github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/hajimehoshi/go-jisx0208 v1.0.0/go.mod h1:yYxEStHL7lt9uL+AbdWgW9gBumwieDoZCiB1f/0X0as=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -109,6 +111,10 @@ tinygo.org/x/drivers v0.19.0/go.mod h1:uJD/l1qWzxzLx+vcxaW0eY464N5RAgFi1zTVzASFd
 tinygo.org/x/drivers v0.23.0/go.mod h1:J4+51Li1kcfL5F93kmnDWEEzQF3bLGz0Am3Q7E2a8/E=
 tinygo.org/x/drivers v0.24.0 h1:9yOV/GbdDXg+EKOWJl+FHLKMSfSI/skQ8Gmo8N/KzQo=
 tinygo.org/x/drivers v0.24.0/go.mod h1:J4+51Li1kcfL5F93kmnDWEEzQF3bLGz0Am3Q7E2a8/E=
+tinygo.org/x/drivers v0.24.1-0.20230520223205-95f0ca8c3ee0 h1:zDzbTUAG311K+/z7ZbWk7uD3xlo5K6O9XZ0Q0FIM0nw=
+tinygo.org/x/drivers v0.24.1-0.20230520223205-95f0ca8c3ee0/go.mod h1:v+mXaA4cgpz/YZJ3ZPm/86bYQJAXTaYtMkHlVwbodbw=
+tinygo.org/x/tinydraw v0.3.0 h1:OjsdMcES5+7IIs/4diFpq/pWFsa0VKtbi1mURuj2q64=
+tinygo.org/x/tinydraw v0.3.0/go.mod h1:Yz0vLSP2rHsIKpLYkEmLnE+2zyhhITu2LxiVtLRiW6I=
 tinygo.org/x/tinyfont v0.2.1/go.mod h1:eLqnYSrFRjt5STxWaMeOWJTzrKhXqpWw7nU3bPfKOAM=
 tinygo.org/x/tinyfont v0.3.0/go.mod h1:+TV5q0KpwSGRWnN+ITijsIhrWYJkoUCp9MYELjKpAXk=
 tinygo.org/x/tinyfs v0.1.0/go.mod h1:ysc8Y92iHfhTXeyEM9+c7zviUQ4fN9UCFgSOFfMWv20=
