@@ -7,14 +7,15 @@ import (
 )
 
 type GpioKeyboard struct {
-	State   [][]State
-	Keys    [][][]Keycode
-	options Options
+	State    [][]State
+	Keys     [][][]Keycode
+	options  Options
+	callback Callback
 
 	Col []machine.Pin
 }
 
-func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode, opt ...Option) {
+func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode, opt ...Option) *GpioKeyboard {
 	state := [][]State{}
 	col := len(pins)
 
@@ -29,13 +30,19 @@ func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][][]Keycode, opt ...
 	}
 
 	k := &GpioKeyboard{
-		Col:     pins,
-		State:   state,
-		Keys:    keys,
-		options: o,
+		Col:      pins,
+		State:    state,
+		Keys:     keys,
+		options:  o,
+		callback: func(layer, row, col int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)
+	return k
+}
+
+func (d *GpioKeyboard) SetCallback(fn Callback) {
+	d.callback = fn
 }
 
 func (d *GpioKeyboard) Get() [][]State {
@@ -55,17 +62,22 @@ func (d *GpioKeyboard) Get() [][]State {
 		case NoneToPress:
 			if current {
 				d.State[0][c] = Press
+				d.callback(0, 0, c, Press)
 			} else {
 				d.State[0][c] = PressToRelease
+				d.callback(0, 0, c, Press)
+				d.callback(0, 0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
 				d.State[0][c] = PressToRelease
+				d.callback(0, 0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
 				d.State[0][c] = NoneToPress
+				d.callback(0, 0, c, Press)
 			} else {
 				d.State[0][c] = None
 			}

@@ -7,15 +7,16 @@ import (
 )
 
 type MatrixKeyboard struct {
-	State   [][]State
-	Keys    [][][]Keycode
-	options Options
+	State    [][]State
+	Keys     [][][]Keycode
+	options  Options
+	callback Callback
 
 	Col []machine.Pin
 	Row []machine.Pin
 }
 
-func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode, opt ...Option) {
+func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode, opt ...Option) *MatrixKeyboard {
 	state := [][]State{}
 	col := len(colPins)
 	row := len(rowPins)
@@ -46,6 +47,11 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Ke
 	}
 
 	d.kb = append(d.kb, k)
+	return k
+}
+
+func (d *MatrixKeyboard) SetCallback(fn Callback) {
+	d.callback = fn
 }
 
 func (d *MatrixKeyboard) Get() [][]State {
@@ -71,17 +77,22 @@ func (d *MatrixKeyboard) Get() [][]State {
 			case NoneToPress:
 				if current {
 					d.State[r][c] = Press
+					d.callback(0, r, c, Press)
 				} else {
 					d.State[r][c] = PressToRelease
+					d.callback(0, r, c, Press)
+					d.callback(0, r, c, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
 					d.State[r][c] = PressToRelease
+					d.callback(0, r, c, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
 					d.State[r][c] = NoneToPress
+					d.callback(0, r, c, Press)
 				} else {
 					d.State[r][c] = None
 				}

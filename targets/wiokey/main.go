@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"machine"
 
@@ -30,13 +31,17 @@ func run() error {
 		machine.BCM26,
 	}
 
-	d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
+	mk := d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
 		{
 			{jp.KeyT, jp.KeyI},
 			{jp.KeyN, jp.KeyY},
 			{jp.KeyG, jp.KeyO},
 		},
 	}, keyboard.InvertDiode(true))
+
+	mk.SetCallback(func(layer, row, col int, state keyboard.State) {
+		fmt.Printf("mk: %d %d %d %d\n", layer, row, col, state)
+	})
 
 	gpioPins := []machine.Pin{
 		machine.WIO_KEY_A,
@@ -54,10 +59,14 @@ func run() error {
 	}
 
 	// KeyMediaXXX will be supported starting with tinygo-0.28.
-	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
+	gk := d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
 		{
 			{jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyMediaVolumeInc, jp.KeyMediaPrevTrack, jp.KeyMediaNextTrack, jp.KeyMediaVolumeDec, jp.KeyMediaPlayPause},
 		},
+	})
+
+	gk.SetCallback(func(layer, row, col int, state keyboard.State) {
+		fmt.Printf("gk: %d %d %d %d\n", layer, row, col, state)
 	})
 
 	d.Debug = true

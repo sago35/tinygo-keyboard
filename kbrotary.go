@@ -3,21 +3,21 @@
 package keyboard
 
 import (
-	"fmt"
 	"machine"
 
 	rotary_encoder "github.com/bgould/tinygo-rotary-encoder"
 )
 
 type RotaryKeyboard struct {
-	State [][]State
-	Keys  [][][]Keycode
+	State    [][]State
+	Keys     [][][]Keycode
+	callback Callback
 
 	enc      *rotary_encoder.Device
 	oldValue int
 }
 
-func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][][]Keycode) {
+func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][][]Keycode) *RotaryKeyboard {
 	state := [][]State{}
 
 	column := make([]State, 2)
@@ -34,6 +34,11 @@ func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][][]Keycode) {
 	}
 
 	d.kb = append(d.kb, k)
+	return k
+}
+
+func (d *RotaryKeyboard) SetCallback(fn Callback) {
+	d.callback = fn
 }
 
 func (d *RotaryKeyboard) Get() [][]State {
@@ -44,7 +49,6 @@ func (d *RotaryKeyboard) Get() [][]State {
 		} else {
 			rot[1] = true
 		}
-		fmt.Printf("%#v\n", rot)
 		d.oldValue = newValue
 	}
 
@@ -58,17 +62,22 @@ func (d *RotaryKeyboard) Get() [][]State {
 		case NoneToPress:
 			if current {
 				d.State[0][c] = Press
+				d.callback(0, 0, c, Press)
 			} else {
 				d.State[0][c] = PressToRelease
+				d.callback(0, 0, c, Press)
+				d.callback(0, 0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
 				d.State[0][c] = PressToRelease
+				d.callback(0, 0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
 				d.State[0][c] = NoneToPress
+				d.callback(0, 0, c, Press)
 			} else {
 				d.State[0][c] = None
 			}

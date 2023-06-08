@@ -7,14 +7,15 @@ import (
 )
 
 type UartKeyboard struct {
-	State [][]State
-	Keys  [][][]Keycode
+	State    [][]State
+	Keys     [][][]Keycode
+	callback Callback
 
 	uart *machine.UART
 	buf  []byte
 }
 
-func (d *Device) AddUartKeyboard(row, col int, uart *machine.UART, keys [][][]Keycode) {
+func (d *Device) AddUartKeyboard(row, col int, uart *machine.UART, keys [][][]Keycode) *UartKeyboard {
 	state := [][]State{}
 
 	for r := 0; r < row*2; r++ {
@@ -30,6 +31,11 @@ func (d *Device) AddUartKeyboard(row, col int, uart *machine.UART, keys [][][]Ke
 	}
 
 	d.kb = append(d.kb, k)
+	return k
+}
+
+func (d *UartKeyboard) SetCallback(fn Callback) {
+	d.callback = fn
 }
 
 func (d *UartKeyboard) Get() [][]State {
@@ -51,7 +57,7 @@ func (d *UartKeyboard) Get() [][]State {
 		d.buf = append(d.buf, data)
 
 		if len(d.buf) == 3 {
-			row, col := d.buf[1], d.buf[2]
+			row, col := int(d.buf[1]), int(d.buf[2])
 			current := false
 			switch d.buf[0] {
 			case 0xAA: // press
@@ -68,6 +74,7 @@ func (d *UartKeyboard) Get() [][]State {
 			case None:
 				if current {
 					d.State[row][col] = NoneToPress
+					d.callback(0, row, col, Press)
 				} else {
 				}
 			case NoneToPress:
@@ -75,15 +82,18 @@ func (d *UartKeyboard) Get() [][]State {
 					d.State[row][col] = Press
 				} else {
 					d.State[row][col] = PressToRelease
+					d.callback(0, row, col, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
 					d.State[row][col] = PressToRelease
+					d.callback(0, row, col, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
 					d.State[row][col] = NoneToPress
+					d.callback(0, row, col, Press)
 				} else {
 					d.State[row][col] = None
 				}

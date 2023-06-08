@@ -10,6 +10,9 @@ import (
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 	"tinygo.org/x/drivers/sh1106"
+	"tinygo.org/x/drivers/ws2812"
+	"tinygo.org/x/tinyfont"
+	"tinygo.org/x/tinyfont/freemono"
 )
 
 func main() {
@@ -19,7 +22,30 @@ func main() {
 	}
 }
 
+var (
+	white = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}
+	black = color.RGBA{0x00, 0x00, 0x00, 0xFF}
+)
+
 func run() error {
+	machine.SPI1.Configure(machine.SPIConfig{
+		Frequency: 48000000,
+	})
+	display := sh1106.NewSPI(machine.SPI1, machine.OLED_DC, machine.OLED_RST, machine.OLED_CS)
+	display.Configure(sh1106.Config{
+		Width:  128,
+		Height: 64,
+	})
+	display.ClearDisplay()
+
+	neo := machine.WS2812
+	neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	ws := ws2812.New(neo)
+	wsLeds := [12]color.RGBA{}
+	for i := range wsLeds {
+		wsLeds[i] = black
+	}
+
 	d := keyboard.New()
 
 	gpioPins := []machine.Pin{
@@ -41,7 +67,7 @@ func run() error {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
-	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
+	gk := d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
 		{
 			{
 				jp.Key1,
@@ -59,68 +85,42 @@ func run() error {
 			},
 		},
 	})
+	gk.SetCallback(func(layer, row, col int, state keyboard.State) {
+		fmt.Printf("gk: %d %d %d %d\n", layer, row, col, state)
+		c := white
+		wsLeds[col] = white
+		if state == keyboard.PressToRelease {
+			wsLeds[col] = black
+			c = black
+		}
+		display.ClearBuffer()
+		tinyfont.WriteLine(&display, &freemono.Regular9pt7b, 10, 20, fmt.Sprintf("Key%d", col+1), c)
+		display.Display()
+	})
 
-	d.AddRotaryKeyboard(machine.ROT_A, machine.ROT_B, [][][]keyboard.Keycode{
+	rk := d.AddRotaryKeyboard(machine.ROT_A, machine.ROT_B, [][][]keyboard.Keycode{
 		{
 			{jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc},
 		},
 	})
-
-	machine.SPI1.Configure(machine.SPIConfig{
-		Frequency: 48000000,
+	rk.SetCallback(func(layer, row, col int, state keyboard.State) {
+		fmt.Printf("rk: %d %d %d %d\n", layer, row, col, state)
 	})
-	display := sh1106.NewSPI(machine.SPI1, machine.OLED_DC, machine.OLED_RST, machine.OLED_CS)
-	display.Configure(sh1106.Config{
-		Width:  128,
-		Height: 64,
-	})
-	display.ClearDisplay()
 
 	err := d.Init()
 	if err != nil {
 		return err
 	}
 
-	ticker := time.Tick(10 * time.Millisecond)
-	x := int16(0)
-	y := int16(0)
-	deltaX := int16(1)
-	deltaY := int16(1)
 	cont := true
 	for cont {
-		<-ticker
 		err := d.Tick()
 		if err != nil {
 			return err
 		}
-
-		pixel := display.GetPixel(x, y)
-		c := color.RGBA{255, 255, 255, 255}
-		if pixel {
-			c = color.RGBA{0, 0, 0, 255}
-		}
-		display.SetPixel(x, y, c)
-		display.Display()
-
-		x += deltaX
-		y += deltaY
-
-		if x == 0 || x == 127 {
-			deltaX = -deltaX
-		}
-
-		if y == 0 || y == 63 {
-			deltaY = -deltaY
-		}
-
+		ws.WriteColors(wsLeds[:])
 		time.Sleep(10 * time.Millisecond)
 	}
 
 	return nil
-}
-
-type celsius float32
-
-func (c celsius) String() string {
-	return fmt.Sprintf("%4.1f", c)
 }

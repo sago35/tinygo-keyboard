@@ -7,14 +7,15 @@ import (
 )
 
 type DuplexMatrixKeyboard struct {
-	State [][]State
-	Keys  [][][]Keycode
+	State    [][]State
+	Keys     [][][]Keycode
+	callback Callback
 
 	Col []machine.Pin
 	Row []machine.Pin
 }
 
-func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode) {
+func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode) *DuplexMatrixKeyboard {
 	state := [][]State{}
 	col := len(colPins)
 	row := len(rowPins)
@@ -39,6 +40,11 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 	}
 
 	d.kb = append(d.kb, k)
+	return k
+}
+
+func (d *DuplexMatrixKeyboard) SetCallback(fn Callback) {
+	d.callback = fn
 }
 
 func (d *DuplexMatrixKeyboard) Get() [][]State {
@@ -57,17 +63,22 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 			case NoneToPress:
 				if current {
 					d.State[2*len(d.Row)-r-1][c] = Press
+					d.callback(0, 2*len(d.Row)-r-1, c, Press)
 				} else {
 					d.State[2*len(d.Row)-r-1][c] = PressToRelease
+					d.callback(0, 2*len(d.Row)-r-1, c, Press)
+					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
 					d.State[2*len(d.Row)-r-1][c] = PressToRelease
+					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
 					d.State[2*len(d.Row)-r-1][c] = NoneToPress
+					d.callback(0, 2*len(d.Row)-r-1, c, Press)
 				} else {
 					d.State[2*len(d.Row)-r-1][c] = None
 				}
@@ -92,17 +103,22 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 			case NoneToPress:
 				if current {
 					d.State[r][c] = Press
+					d.callback(0, r, c, Press)
 				} else {
 					d.State[r][c] = PressToRelease
+					d.callback(0, r, c, Press)
+					d.callback(0, r, c, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
 					d.State[r][c] = PressToRelease
+					d.callback(0, r, c, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
 					d.State[r][c] = NoneToPress
+					d.callback(0, r, c, Press)
 				} else {
 					d.State[r][c] = None
 				}
