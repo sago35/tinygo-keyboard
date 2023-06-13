@@ -39,7 +39,12 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 | name | amount |
 | ---- | ------ |
 | Cherry MX / Kailh Choc V1 | 72 |
-| key cap | 72 |
+| key cap (1u) | 68 |
+| key cap (1.5u) | 1 |
+| key cap (1.75u) | 1 |
+| key cap (2u) | 1 |
+| key cap (ISO-ENTER) | 1 |
+| Stabilizer (2u) | 1 |
 | diode 1N4148 | 72 |
 | xiao-rp2040 | 2 |
 | pin header 1x7 | 4 |
