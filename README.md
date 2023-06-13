@@ -120,6 +120,18 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/fric10key/
 | diode 1N4148 | 27 |
 | xiao-rp2040 | 1 |
 
+## Gopher Badge
+
+![](./img/gopher-badge.jpg)
+
+```
+$ tinygo flash --target gopher-badge --size short ./targets/gopher-badge/
+```
+
+* schema
+    * https://gopherbadge.com/
+
+
 ## MacroPad RP2040
 
 ![](./img/macropad-rp2040.jpg)
