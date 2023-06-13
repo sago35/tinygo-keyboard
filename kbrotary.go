@@ -27,8 +27,9 @@ func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][][]Keycode) *
 	enc.Configure()
 
 	k := &RotaryKeyboard{
-		State: state,
-		Keys:  keys,
+		State:    state,
+		Keys:     keys,
+		callback: func(layer, row, col int, state State) {},
 
 		enc: enc,
 	}

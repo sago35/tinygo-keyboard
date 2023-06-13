@@ -39,11 +39,12 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Ke
 	}
 
 	k := &MatrixKeyboard{
-		Col:     colPins,
-		Row:     rowPins,
-		State:   state,
-		Keys:    keys,
-		options: o,
+		Col:      colPins,
+		Row:      rowPins,
+		State:    state,
+		Keys:     keys,
+		options:  o,
+		callback: func(layer, row, col int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)

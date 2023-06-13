@@ -33,10 +33,11 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 	}
 
 	k := &DuplexMatrixKeyboard{
-		Col:   colPins,
-		Row:   rowPins,
-		State: state,
-		Keys:  keys,
+		Col:      colPins,
+		Row:      rowPins,
+		State:    state,
+		Keys:     keys,
+		callback: func(layer, row, col int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)

@@ -24,10 +24,11 @@ func (d *Device) AddUartKeyboard(row, col int, uart *machine.UART, keys [][][]Ke
 	}
 
 	k := &UartKeyboard{
-		State: state,
-		Keys:  keys,
-		uart:  uart,
-		buf:   make([]byte, 0, 3),
+		State:    state,
+		Keys:     keys,
+		callback: func(layer, row, col int, state State) {},
+		uart:     uart,
+		buf:      make([]byte, 0, 3),
 	}
 
 	d.kb = append(d.kb, k)
