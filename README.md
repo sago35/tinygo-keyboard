@@ -24,9 +24,9 @@ The following microcontrollers are supported.
 * samd51
 * samd21
 
-## sgkb-0.2.0
+## sgkb-0.3.0
 
-![](./img/sgkb-0.2.0.jpg)
+![](./img/sgkb-0.3.0.jpg)
 
 ```
 $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/left/
