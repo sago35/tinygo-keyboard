@@ -27,9 +27,10 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 
 	for c := range colPins {
 		colPins[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
+		colPins[c].High()
 	}
 	for r := range rowPins {
-		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
 	k := &DuplexMatrixKeyboard{
@@ -51,50 +52,9 @@ func (d *DuplexMatrixKeyboard) SetCallback(fn Callback) {
 func (d *DuplexMatrixKeyboard) Get() [][]State {
 	for c := range d.Col {
 		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
-		d.Col[c].High()
-		for r := range d.Row {
-			//d.State[2*len(d.Row)-r-1][c] = d.Row[r].Get()
-			current := d.Row[r].Get()
-			switch d.State[2*len(d.Row)-r-1][c] {
-			case None:
-				if current {
-					d.State[2*len(d.Row)-r-1][c] = NoneToPress
-				} else {
-				}
-			case NoneToPress:
-				if current {
-					d.State[2*len(d.Row)-r-1][c] = Press
-					d.callback(0, 2*len(d.Row)-r-1, c, Press)
-				} else {
-					d.State[2*len(d.Row)-r-1][c] = PressToRelease
-					d.callback(0, 2*len(d.Row)-r-1, c, Press)
-					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
-				}
-			case Press:
-				if current {
-				} else {
-					d.State[2*len(d.Row)-r-1][c] = PressToRelease
-					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
-				}
-			case PressToRelease:
-				if current {
-					d.State[2*len(d.Row)-r-1][c] = NoneToPress
-					d.callback(0, 2*len(d.Row)-r-1, c, Press)
-				} else {
-					d.State[2*len(d.Row)-r-1][c] = None
-				}
-			}
-		}
 		d.Col[c].Low()
-		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-	}
-
-	for r := range d.Row {
-		d.Row[r].Configure(machine.PinConfig{Mode: machine.PinOutput})
-		d.Row[r].High()
-		for c := range d.Col {
-			//d.State[r][c] = d.Col[c].Get()
-			current := d.Col[c].Get()
+		for r := range d.Row {
+			current := !d.Row[r].Get()
 			switch d.State[r][c] {
 			case None:
 				if current {
@@ -125,8 +85,47 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 				}
 			}
 		}
+		d.Col[c].High()
+		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+	}
+
+	for r := range d.Row {
+		d.Row[r].Configure(machine.PinConfig{Mode: machine.PinOutput})
 		d.Row[r].Low()
-		d.Row[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+		for c := range d.Col {
+			current := !d.Col[c].Get()
+			switch d.State[2*len(d.Row)-r-1][c] {
+			case None:
+				if current {
+					d.State[2*len(d.Row)-r-1][c] = NoneToPress
+				} else {
+				}
+			case NoneToPress:
+				if current {
+					d.State[2*len(d.Row)-r-1][c] = Press
+					d.callback(0, 2*len(d.Row)-r-1, c, Press)
+				} else {
+					d.State[2*len(d.Row)-r-1][c] = PressToRelease
+					d.callback(0, 2*len(d.Row)-r-1, c, Press)
+					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
+				}
+			case Press:
+				if current {
+				} else {
+					d.State[2*len(d.Row)-r-1][c] = PressToRelease
+					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
+				}
+			case PressToRelease:
+				if current {
+					d.State[2*len(d.Row)-r-1][c] = NoneToPress
+					d.callback(0, 2*len(d.Row)-r-1, c, Press)
+				} else {
+					d.State[2*len(d.Row)-r-1][c] = None
+				}
+			}
+		}
+		d.Row[r].High()
+		d.Row[r].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
 	return d.State
