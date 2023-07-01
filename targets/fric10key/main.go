@@ -4,6 +4,9 @@ import (
 	"context"
 	"log"
 	"machine"
+	"time"
+
+	kbd "machine/usb/hid/keyboard"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
@@ -17,6 +20,12 @@ func main() {
 }
 
 func run() error {
+	time.Sleep(3 * time.Second)
+	err := kbd.Load()
+	if err != nil {
+		return err
+	}
+
 	d := keyboard.New()
 
 	colPins := []machine.Pin{
