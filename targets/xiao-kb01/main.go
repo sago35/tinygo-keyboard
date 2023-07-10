@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"machine"
+	"math/rand"
 	"runtime/volatile"
 	"time"
 
@@ -21,7 +22,7 @@ func main() {
 }
 
 var (
-	white = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}
+	white = color.RGBA{0x3F, 0x3F, 0x3F, 0xFF}
 	black = color.RGBA{0x00, 0x00, 0x00, 0xFF}
 )
 
@@ -60,7 +61,13 @@ func run() error {
 		if col%2 == 1 {
 			rowx = 3 - row - 1
 		}
-		wsLeds[rowx+3*col] = white
+		c := rand.Int()
+		wsLeds[rowx+3*col] = color.RGBA{
+			byte(c>>16) & 0x3F,
+			byte(c>>8) & 0x3F,
+			byte(c>>0) & 0x3F,
+			0xFF,
+		}
 		if state == keyboard.PressToRelease {
 			wsLeds[rowx+3*col] = black
 		}
@@ -76,7 +83,7 @@ func run() error {
 
 	d.AddRotaryKeyboard(machine.D9, machine.D8, [][][]keyboard.Keycode{
 		{
-			{jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc},
+			{jp.WheelDown, jp.WheelUp},
 		},
 	})
 
@@ -86,12 +93,12 @@ func run() error {
 	}
 	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
 		{
-			{jp.Key1, jp.Key2},
+			{jp.MouseLeft, jp.MouseRight},
 		},
 	})
 
 	cont := true
-	ticker := time.Tick(32 * time.Millisecond)
+	ticker := time.Tick(4 * time.Millisecond)
 	for cont {
 		<-ticker
 		err := d.Tick()
