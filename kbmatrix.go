@@ -5,8 +5,6 @@ package keyboard
 import (
 	"machine"
 	kbd "machine/usb/hid/keyboard"
-
-	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
 type MatrixKeyboard struct {
@@ -50,10 +48,12 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Ke
 		callback: func(layer, row, col int, state State) {},
 	}
 
-	for l := range keys {
-		for r := range keys[l] {
-			for c := range keys[l][r] {
-				kbd.Keys[l][r][c] = kbd.Keycode(keys[l][r][c] & 0x0FFF)
+	if kbd.Keys[0][0][0] == 0 {
+		for l := range keys {
+			for r := range keys[l] {
+				for c := range keys[l][r] {
+					kbd.Keys[l][r][c] = kbd.Keycode(keys[l][r][c] & 0x0FFF)
+				}
 			}
 		}
 	}
@@ -125,14 +125,11 @@ func (d *MatrixKeyboard) Get() [][]State {
 func (d *MatrixKeyboard) Key(layer, row, col int) Keycode {
 	kc := Keycode(kbd.Keys[layer][row][col])
 	switch kc {
-	case 0x5100:
-		return 0xF000 | 0x0006 // C
-	case 0x5101:
-		return jp.KeyMod1
+	case 0x5610, 0x5101, 0x5102, 0x5103, 0x5104, 0x5105:
+		return 0xFF00 | (kc & 0x00FF)
 	default:
-		return 0xF000 | kc
 	}
-	return 0xF000 | 0x0004 // A
+	return 0xF000 | kc
 }
 
 func (d *MatrixKeyboard) Init() error {
