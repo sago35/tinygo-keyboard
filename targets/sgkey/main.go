@@ -20,7 +20,7 @@ func main() {
 }
 
 func run() error {
-	err := kbd.Load()
+	err := kbd.Load(6, 2, 3)
 	if err != nil {
 		return err
 	}
