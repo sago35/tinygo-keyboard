@@ -1,0 +1,83 @@
+
+(rules PCB sgkb-right
+  (snap_angle 
+    fortyfive_degree
+  )
+  (autoroute_settings
+    (fanout off)
+    (autoroute on)
+    (postroute on)
+    (vias on)
+    (via_costs 50)
+    (plane_via_costs 5)
+    (start_ripup_costs 100)
+    (start_pass_no 2852)
+    (layer_rule F.Cu
+      (active on)
+      (preferred_direction horizontal)
+      (preferred_direction_trace_costs 1.0)
+      (against_preferred_direction_trace_costs 2.8)
+    )
+    (layer_rule B.Cu
+      (active on)
+      (preferred_direction vertical)
+      (preferred_direction_trace_costs 1.0)
+      (against_preferred_direction_trace_costs 1.6)
+    )
+  )
+  (rule
+    (width 250.0)
+    (clearance 200.2)
+    (clearance 125.0 (type smd_to_turn_gap))
+    (clearance 50.0 (type smd))
+    (clearance 200.2 (type "kicad_default"))
+  )
+  (padstack "Via[0-1]_800:400_um"
+    (shape
+      (circle F.Cu 800.0 0.0 0.0)
+    )
+    (shape
+      (circle B.Cu 800.0 0.0 0.0)
+    )
+    (attach off)
+  )
+  (via 
+    "Via[0-1]_800:400_um" "Via[0-1]_800:400_um" default
+  )
+  (via 
+    "Via[0-1]_800:400_um-kicad_default" "Via[0-1]_800:400_um" "kicad_default"
+  )
+  (via_rule
+    default "Via[0-1]_800:400_um"
+  )
+  (via_rule
+    "kicad_default" "Via[0-1]_800:400_um-kicad_default"
+  )
+  (class default
+    (clearance_class default)
+    (via_rule default)
+    (rule
+      (width 250.0)
+    )
+    (circuit 
+      (use_layer F.Cu B.Cu)
+    )
+  )
+  (class "kicad_default"
+    ROW1 "Net-(D2-A)" "Net-(D3-A)" "Net-(D4-A)" "Net-(D5-A)" "Net-(D6-K)" "Net-(D7-K)" "Net-(D8-K)"
+    "Net-(D9-K)" "Net-(D10-K)" ROW2 "Net-(D12-A)" "Net-(D13-A)" "Net-(D14-A)" "Net-(D15-A)" "Net-(D16-K)"
+    "Net-(D17-K)" "Net-(D18-K)" "Net-(D19-K)" ROW3 "Net-(D22-A)" "Net-(D23-A)" "Net-(D24-A)" "Net-(D25-A)"
+    "Net-(D26-K)" "Net-(D27-K)" "Net-(D28-K)" ROW4 "Net-(D31-A)" "Net-(D32-A)" "Net-(D33-A)" "Net-(D34-A)"
+    "Net-(D35-A)" "Net-(D36-K)" "Net-(D37-K)" "Net-(D38-K)" "Net-(D39-K)" ROW5 "Net-(D42-A)" "Net-(D43-A)"
+    "Net-(D44-A)" "Net-(D45-A)" "Net-(D46-K)" "Net-(D47-K)" "Net-(D48-K)" "Net-(D49-K)" TX VCC
+    GND "unconnected-(J1-PadC)" COL2 COL3 COL4 COL5 COL1 "unconnected-(U1-5V-Pad14)"
+    (clearance_class "kicad_default")
+    (via_rule "kicad_default")
+    (rule
+      (width 250.0)
+    )
+    (circuit 
+      (use_layer F.Cu B.Cu)
+    )
+  )
+)

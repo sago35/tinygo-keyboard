@@ -440,7 +440,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "specctra_dsn": "",
+      "specctra_dsn": "sgkb.dsn",
       "step": "sgkb.step",
       "vrml": ""
     },

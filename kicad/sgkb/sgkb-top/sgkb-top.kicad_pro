@@ -405,7 +405,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "sgkb-right.kicad_pro",
+    "filename": "sgkb-top.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -440,8 +440,8 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "specctra_dsn": "sgkb-right.dsn",
-      "step": "sgkb-right.step",
+      "specctra_dsn": "sgkb.dsn",
+      "step": "sgkb.step",
       "vrml": ""
     },
     "page_layout_descr_file": ""
@@ -482,7 +482,7 @@
   },
   "sheets": [
     [
-      "6e6ce34d-41d5-494c-8310-abe0616e698b",
+      "bfbdd92b-7f71-4ad3-b5e3-05abfda92e0a",
       ""
     ]
   ],

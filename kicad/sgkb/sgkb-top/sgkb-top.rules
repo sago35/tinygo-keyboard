@@ -1,0 +1,83 @@
+
+(rules PCB sgkb
+  (snap_angle 
+    fortyfive_degree
+  )
+  (autoroute_settings
+    (fanout off)
+    (autoroute on)
+    (postroute on)
+    (vias on)
+    (via_costs 50)
+    (plane_via_costs 5)
+    (start_ripup_costs 100)
+    (start_pass_no 4519)
+    (layer_rule F.Cu
+      (active on)
+      (preferred_direction horizontal)
+      (preferred_direction_trace_costs 1.0)
+      (against_preferred_direction_trace_costs 2.4)
+    )
+    (layer_rule B.Cu
+      (active on)
+      (preferred_direction vertical)
+      (preferred_direction_trace_costs 1.0)
+      (against_preferred_direction_trace_costs 1.7)
+    )
+  )
+  (rule
+    (width 250.0)
+    (clearance 200.2)
+    (clearance 125.0 (type smd_to_turn_gap))
+    (clearance 200.2 (type smd))
+    (clearance 200.2 (type "kicad_default"))
+    (clearance 200.2 (type kicad))
+  )
+  (padstack "Via[0-1]_800:400_um"
+    (shape
+      (circle F.Cu 800.0 0.0 0.0)
+    )
+    (shape
+      (circle B.Cu 800.0 0.0 0.0)
+    )
+    (attach off)
+  )
+  (via 
+    "Via[0-1]_800:400_um" "Via[0-1]_800:400_um" default
+  )
+  (via 
+    "Via[0-1]_800:400_um-kicad_default" "Via[0-1]_800:400_um" "kicad_default"
+  )
+  (via_rule
+    default "Via[0-1]_800:400_um"
+  )
+  (via_rule
+    "kicad_default" "Via[0-1]_800:400_um-kicad_default"
+  )
+  (class default
+    (clearance_class default)
+    (via_rule default)
+    (rule
+      (width 250.0)
+    )
+    (circuit 
+      (use_layer F.Cu B.Cu)
+    )
+  )
+  (class "kicad_default"
+    ROW1 "Net-(D2-A)" "Net-(D3-A)" "Net-(D4-A)" "Net-(D5-A)" "Net-(D6-K)" "Net-(D7-K)" "Net-(D8-K)"
+    "Net-(D12-A)" "Net-(D13-A)" "Net-(D14-A)" "Net-(D15-A)" "Net-(D16-K)" "Net-(D17-K)" "Net-(D22-A)" "Net-(D23-A)"
+    "Net-(D24-A)" "Net-(D25-A)" "Net-(D26-K)" "Net-(D27-K)" "Net-(D32-A)" "Net-(D33-A)" "Net-(D34-A)" "Net-(D35-A)"
+    "Net-(D36-K)" "Net-(D37-K)" "Net-(D41-A)" "Net-(D42-A)" "Net-(D43-A)" "Net-(D44-A)" "Net-(D45-A)" "Net-(D46-K)"
+    "unconnected-(J1-PadC)" "unconnected-(U1-5V-Pad14)" ROW2 ROW3 ROW4 ROW5 COL1 COL2
+    COL3 COL4 COL5 VCC GND RX
+    (clearance_class "kicad_default")
+    (via_rule "kicad_default")
+    (rule
+      (width 250.0)
+    )
+    (circuit 
+      (use_layer F.Cu B.Cu)
+    )
+  )
+)
