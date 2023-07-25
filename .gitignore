@@ -1,1 +1,3 @@
 *.zip
+**/production/*.csv
+**/production/*.ipc
