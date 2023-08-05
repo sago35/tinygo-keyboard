@@ -50,8 +50,8 @@ func run() error {
 			0, 0, 0, 0, 0, 0, 0,
 		},
 	})
-	sm.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("sm: %d %d %d %d\n", layer, row, col, state)
+	sm.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("sm: %d %d %d\n", layer, index, state)
 	})
 
 	uart := machine.UART0
@@ -73,8 +73,8 @@ func run() error {
 			0, jp.KeySpace, jp.KeyHenkan, jp.KeyMod1, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyHome, jp.KeyPageDown, jp.KeyEnd, 0,
 		},
 	})
-	uk.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("uk: %d %d %d %d\n", layer, row, col, state)
+	uk.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("uk: %d %d %d\n", layer, index, state)
 	})
 
 	// override ctrl-h to BackSpace

@@ -33,7 +33,7 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 		Row:      rowPins,
 		State:    state,
 		Keys:     keys,
-		callback: func(layer, row, col int, state State) {},
+		callback: func(layer, index int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)
@@ -50,33 +50,34 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 		d.Col[c].Low()
 		for r := range d.Row {
 			current := !d.Row[r].Get()
-			switch d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] {
+			idx := r*2*len(d.Col) + 2*len(d.Col) - 1 - c
+			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = NoneToPress
+					d.State[idx] = NoneToPress
 				} else {
 				}
 			case NoneToPress:
 				if current {
-					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = Press
-					d.callback(0, r, 2*len(d.Col)-1-c, Press)
+					d.State[idx] = Press
+					d.callback(0, idx, Press)
 				} else {
-					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = PressToRelease
-					d.callback(0, r, 2*len(d.Col)-1-c, Press)
-					d.callback(0, r, 2*len(d.Col)-1-c, PressToRelease)
+					d.State[idx] = PressToRelease
+					d.callback(0, idx, Press)
+					d.callback(0, idx, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
-					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = PressToRelease
-					d.callback(0, r, 2*len(d.Col)-1-c, PressToRelease)
+					d.State[idx] = PressToRelease
+					d.callback(0, idx, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
-					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = NoneToPress
-					d.callback(0, r, 2*len(d.Col)-1-c, Press)
+					d.State[idx] = NoneToPress
+					d.callback(0, idx, Press)
 				} else {
-					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = None
+					d.State[idx] = None
 				}
 			}
 		}
@@ -89,33 +90,34 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 		d.Row[r].Low()
 		for c := range d.Col {
 			current := !d.Col[c].Get()
-			switch d.State[r*2*len(d.Col)+c] {
+			idx := r*2*len(d.Col) + c
+			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[r*2*len(d.Col)+c] = NoneToPress
+					d.State[idx] = NoneToPress
 				} else {
 				}
 			case NoneToPress:
 				if current {
-					d.State[r*2*len(d.Col)+c] = Press
-					d.callback(0, r, c, Press)
+					d.State[idx] = Press
+					d.callback(0, idx, Press)
 				} else {
-					d.State[r*2*len(d.Col)+c] = PressToRelease
-					d.callback(0, r, c, Press)
-					d.callback(0, r, c, PressToRelease)
+					d.State[idx] = PressToRelease
+					d.callback(0, idx, Press)
+					d.callback(0, idx, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
-					d.State[r*2*len(d.Col)+c] = PressToRelease
-					d.callback(0, r, c, PressToRelease)
+					d.State[idx] = PressToRelease
+					d.callback(0, idx, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
-					d.State[r*2*len(d.Col)+c] = NoneToPress
-					d.callback(0, r, c, Press)
+					d.State[idx] = NoneToPress
+					d.callback(0, idx, Press)
 				} else {
-					d.State[r*2*len(d.Col)+c] = None
+					d.State[idx] = None
 				}
 			}
 		}

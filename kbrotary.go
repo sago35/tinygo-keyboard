@@ -26,7 +26,7 @@ func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][]Keycode) *Ro
 	k := &RotaryKeyboard{
 		State:    state,
 		Keys:     keys,
-		callback: func(layer, row, col int, state State) {},
+		callback: func(layer, index int, state State) {},
 
 		enc: enc,
 	}
@@ -60,22 +60,22 @@ func (d *RotaryKeyboard) Get() []State {
 		case NoneToPress:
 			if current {
 				d.State[c] = Press
-				d.callback(0, 0, c, Press)
+				d.callback(0, c, Press)
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, 0, c, Press)
-				d.callback(0, 0, c, PressToRelease)
+				d.callback(0, c, Press)
+				d.callback(0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, 0, c, PressToRelease)
+				d.callback(0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
 				d.State[c] = NoneToPress
-				d.callback(0, 0, c, Press)
+				d.callback(0, c, Press)
 			} else {
 				d.State[c] = None
 			}

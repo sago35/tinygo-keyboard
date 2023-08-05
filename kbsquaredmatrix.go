@@ -25,7 +25,7 @@ func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) 
 		Pins:     pins,
 		State:    state,
 		Keys:     keys,
-		callback: func(layer, row, col int, state State) {},
+		callback: func(layer, index int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)
@@ -53,34 +53,35 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 			d.Pins[j].Configure(machine.PinConfig{Mode: machine.PinOutput})
 			d.Pins[j].Low()
 			current := !d.Pins[c].Get()
+			idx := r*(len(cols)+1) + c
 
-			switch d.State[r*(len(cols)+1)+c] {
+			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[r*(len(cols)+1)+c] = NoneToPress
+					d.State[idx] = NoneToPress
 				} else {
 				}
 			case NoneToPress:
 				if current {
-					d.State[r*(len(cols)+1)+c] = Press
-					d.callback(0, r, c, Press)
+					d.State[idx] = Press
+					d.callback(0, idx, Press)
 				} else {
-					d.State[r*(len(cols)+1)+c] = PressToRelease
-					d.callback(0, r, c, Press)
-					d.callback(0, r, c, PressToRelease)
+					d.State[idx] = PressToRelease
+					d.callback(0, idx, Press)
+					d.callback(0, idx, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
-					d.State[r*(len(cols)+1)+c] = PressToRelease
-					d.callback(0, r, c, PressToRelease)
+					d.State[idx] = PressToRelease
+					d.callback(0, idx, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
-					d.State[r*(len(cols)+1)+c] = NoneToPress
-					d.callback(0, r, c, Press)
+					d.State[idx] = NoneToPress
+					d.callback(0, idx, Press)
 				} else {
-					d.State[r*(len(cols)+1)+c] = None
+					d.State[idx] = None
 				}
 			}
 			d.Pins[j].Configure(machine.PinConfig{Mode: machine.PinInputPullup})

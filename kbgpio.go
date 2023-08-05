@@ -31,7 +31,7 @@ func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][]Keycode, opt ...Op
 		State:    state,
 		Keys:     keys,
 		options:  o,
-		callback: func(layer, row, col int, state State) {},
+		callback: func(layer, index int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)
@@ -59,22 +59,22 @@ func (d *GpioKeyboard) Get() []State {
 		case NoneToPress:
 			if current {
 				d.State[c] = Press
-				d.callback(0, 0, c, Press)
+				d.callback(0, c, Press)
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, 0, c, Press)
-				d.callback(0, 0, c, PressToRelease)
+				d.callback(0, c, Press)
+				d.callback(0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, 0, c, PressToRelease)
+				d.callback(0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
 				d.State[c] = NoneToPress
-				d.callback(0, 0, c, Press)
+				d.callback(0, c, Press)
 			} else {
 				d.State[c] = None
 			}

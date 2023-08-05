@@ -52,7 +52,9 @@ func run() error {
 			jp.KeyY, jp.KeyG, jp.KeyO,
 		},
 	})
-	mk.SetCallback(func(layer, row, col int, state keyboard.State) {
+	mk.SetCallback(func(layer, index int, state keyboard.State) {
+		row := index / len(colPins)
+		col := index % len(colPins)
 		fmt.Printf("mk: %d %d %d %d\n", layer, row, col, state)
 		c := color.RGBA{255, 255, 255, 255}
 		if state == keyboard.PressToRelease {

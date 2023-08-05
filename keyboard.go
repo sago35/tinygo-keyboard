@@ -44,7 +44,7 @@ const (
 	PressToRelease
 )
 
-type Callback func(layer, row, col int, state State)
+type Callback func(layer, index int, state State)
 
 func New() *Device {
 	kb := &Keyboard{

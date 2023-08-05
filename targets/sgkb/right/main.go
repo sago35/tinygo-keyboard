@@ -44,8 +44,8 @@ func run() error {
 			0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F, 0x0030, 0x0031,
 		},
 	})
-	dm.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("dm: %d %d %d %d\n", layer, row, col, state)
+	dm.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("dm: %d %d %d\n", layer, index, state)
 	})
 
 	uart := machine.UART0

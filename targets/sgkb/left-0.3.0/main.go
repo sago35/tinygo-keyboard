@@ -56,8 +56,8 @@ func run() error {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
 	})
-	dk.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("dk: %d %d %d %d\n", layer, row, col, state)
+	dk.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("dk: %d %d %d\n", layer, index, state)
 	})
 
 	uart := machine.UART0

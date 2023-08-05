@@ -55,7 +55,9 @@ func run() error {
 			jp.KeyI, jp.KeyJ, jp.KeyK, jp.KeyL,
 		},
 	})
-	sm.SetCallback(func(layer, row, col int, state keyboard.State) {
+	sm.SetCallback(func(layer, index int, state keyboard.State) {
+		row := index / 4
+		col := index % 4
 		fmt.Printf("sm: %d %d %d %d\n", layer, row, col, state)
 		rowx := row
 		if col%2 == 1 {

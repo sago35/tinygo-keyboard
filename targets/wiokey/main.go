@@ -39,8 +39,8 @@ func run() error {
 		},
 	}, keyboard.InvertDiode(true))
 
-	mk.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("mk: %d %d %d %d\n", layer, row, col, state)
+	mk.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("mk: %d %d %d\n", layer, index, state)
 	})
 
 	gpioPins := []machine.Pin{
@@ -72,8 +72,8 @@ func run() error {
 		},
 	})
 
-	gk.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("gk: %d %d %d %d\n", layer, row, col, state)
+	gk.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("gk: %d %d %d\n", layer, index, state)
 	})
 
 	d.Debug = true

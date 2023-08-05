@@ -42,7 +42,8 @@ func run() error {
 		machine.TFT_CS,        // TFT_CS
 		machine.TFT_BACKLIGHT) // TFT_LITE
 	display.Configure(st7789.Config{
-		Rotation: st7789.ROTATION_90,
+		//Rotation: st7789.ROTATION_90,
+		Rotation: st7789.ROTATION_270,
 		Height:   320,
 	})
 	fb := FB{}
@@ -93,7 +94,9 @@ func run() error {
 		{x: 95, y: 120},  // RIGHT
 		{x: 60, y: 155},  // DOWN
 	}
-	gk.SetCallback(func(layer, row, col int, state keyboard.State) {
+	gk.SetCallback(func(layer, index int, state keyboard.State) {
+		row := index / 6
+		col := index % 6
 		fmt.Printf("gk: %d %d %d %d\n", layer, row, col, state)
 		if state == keyboard.Press {
 			tinydraw.Circle(&display, xy[col].x, xy[col].y, 16, ring)

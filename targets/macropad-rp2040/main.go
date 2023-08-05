@@ -83,16 +83,18 @@ func run() error {
 			jp.KeyC,
 		},
 	})
-	gk.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("gk: %d %d %d %d\n", layer, row, col, state)
+	gk.SetCallback(func(layer, index int, state keyboard.State) {
+		row := index / 3
+		col := index % 3
+		fmt.Printf("gk: %d %d %d %d %d\n", layer, index, row, col, state)
 		c := white
-		wsLeds[col] = white
+		wsLeds[index] = white
 		if state == keyboard.PressToRelease {
-			wsLeds[col] = black
+			wsLeds[index] = black
 			c = black
 		}
 		display.ClearBuffer()
-		tinyfont.WriteLine(&display, &freemono.Regular9pt7b, 10, 20, fmt.Sprintf("Key%d", col+1), c)
+		tinyfont.WriteLine(&display, &freemono.Regular9pt7b, 10, 20, fmt.Sprintf("Key%d", index+1), c)
 		display.Display()
 	})
 
@@ -101,8 +103,8 @@ func run() error {
 			jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc,
 		},
 	})
-	rk.SetCallback(func(layer, row, col int, state keyboard.State) {
-		fmt.Printf("rk: %d %d %d %d\n", layer, row, col, state)
+	rk.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("rk: %d %d %d\n", layer, index, state)
 	})
 
 	err := d.Init()

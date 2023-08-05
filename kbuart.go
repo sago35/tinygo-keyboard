@@ -21,7 +21,7 @@ func (d *Device) AddUartKeyboard(size int, uart *machine.UART, keys [][]Keycode)
 	k := &UartKeyboard{
 		State:    state,
 		Keys:     keys,
-		callback: func(layer, row, col int, state State) {},
+		callback: func(layer, index int, state State) {},
 		uart:     uart,
 		buf:      make([]byte, 0, 3),
 	}
@@ -68,7 +68,7 @@ func (d *UartKeyboard) Get() []State {
 			case None:
 				if current {
 					d.State[index] = NoneToPress
-					d.callback(0, index, 0, Press)
+					d.callback(0, index, Press)
 				} else {
 				}
 			case NoneToPress:
@@ -76,18 +76,18 @@ func (d *UartKeyboard) Get() []State {
 					d.State[index] = Press
 				} else {
 					d.State[index] = PressToRelease
-					d.callback(0, index, 0, PressToRelease)
+					d.callback(0, index, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
 					d.State[index] = PressToRelease
-					d.callback(0, index, 0, PressToRelease)
+					d.callback(0, index, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
 					d.State[index] = NoneToPress
-					d.callback(0, index, 0, Press)
+					d.callback(0, index, Press)
 				} else {
 					d.State[index] = None
 				}
