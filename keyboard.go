@@ -25,8 +25,8 @@ type Device struct {
 }
 
 type KBer interface {
-	Get() [][]State
-	Key(layer, row, col int) Keycode
+	Get() []State
+	Key(layer, index int) Keycode
 	Init() error
 }
 
@@ -82,32 +82,30 @@ func (d *Device) Tick() error {
 	// read from key matrix
 	for _, k := range d.kb {
 		state := k.Get()
-		for row := range state {
-			for col := range state[row] {
-				switch state[row][col] {
-				case None:
-					// skip
-				case NoneToPress:
-					x := k.Key(d.layer, row, col)
-					found := false
-					for _, p := range d.pressed {
-						if x == p {
-							found = true
-						}
+		for i := range state {
+			switch state[i] {
+			case None:
+				// skip
+			case NoneToPress:
+				x := k.Key(d.layer, i)
+				found := false
+				for _, p := range d.pressed {
+					if x == p {
+						found = true
 					}
-					if !found {
-						d.pressed = append(d.pressed, x)
-					}
+				}
+				if !found {
+					d.pressed = append(d.pressed, x)
+				}
 
-				case Press:
-				case PressToRelease:
-					x := k.Key(d.layer, row, col)
+			case Press:
+			case PressToRelease:
+				x := k.Key(d.layer, i)
 
-					for i, p := range d.pressed {
-						if x == p {
-							d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-							pressToRelease = append(pressToRelease, x)
-						}
+				for i, p := range d.pressed {
+					if x == p {
+						d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
+						pressToRelease = append(pressToRelease, x)
 					}
 				}
 			}

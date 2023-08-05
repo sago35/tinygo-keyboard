@@ -74,16 +74,14 @@ func run() error {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInput})
 	}
 
-	gk := d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
+	gk := d.AddGpioKeyboard(gpioPins, [][]keyboard.Keycode{
 		{
-			{
-				jp.KeyA,
-				jp.KeyB,
-				jp.KeyLeft,
-				jp.KeyUp,
-				jp.KeyRight,
-				jp.KeyDown,
-			},
+			jp.KeyA,
+			jp.KeyB,
+			jp.KeyLeft,
+			jp.KeyUp,
+			jp.KeyRight,
+			jp.KeyDown,
 		},
 	})
 

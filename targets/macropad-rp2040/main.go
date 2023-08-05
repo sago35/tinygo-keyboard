@@ -67,22 +67,20 @@ func run() error {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
-	gk := d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
+	gk := d.AddGpioKeyboard(gpioPins, [][]keyboard.Keycode{
 		{
-			{
-				jp.Key1,
-				jp.Key2,
-				jp.Key3,
-				jp.Key4,
-				jp.Key5,
-				jp.Key6,
-				jp.Key7,
-				jp.Key8,
-				jp.Key9,
-				jp.KeyA,
-				jp.KeyB,
-				jp.KeyC,
-			},
+			jp.Key1,
+			jp.Key2,
+			jp.Key3,
+			jp.Key4,
+			jp.Key5,
+			jp.Key6,
+			jp.Key7,
+			jp.Key8,
+			jp.Key9,
+			jp.KeyA,
+			jp.KeyB,
+			jp.KeyC,
 		},
 	})
 	gk.SetCallback(func(layer, row, col int, state keyboard.State) {
@@ -98,9 +96,9 @@ func run() error {
 		display.Display()
 	})
 
-	rk := d.AddRotaryKeyboard(machine.ROT_A, machine.ROT_B, [][][]keyboard.Keycode{
+	rk := d.AddRotaryKeyboard(machine.ROT_A, machine.ROT_B, [][]keyboard.Keycode{
 		{
-			{jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc},
+			jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc,
 		},
 	})
 	rk.SetCallback(func(layer, row, col int, state keyboard.State) {

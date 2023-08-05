@@ -36,16 +36,16 @@ func run() error {
 		machine.D10,
 	}
 
-	d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
+	d.AddMatrixKeyboard(colPins, rowPins, [][]keyboard.Keycode{
 		{
-			{jp.KeyF10, jp.KeyPageUp, jp.KeyUp, jp.KeyPageDown},
-			{jp.KeyF12, jp.KeyLeft, jp.KeyDown, jp.KeyRight},
+			jp.KeyF10, jp.KeyPageUp, jp.KeyUp, jp.KeyPageDown,
+			jp.KeyF12, jp.KeyLeft, jp.KeyDown, jp.KeyRight,
 
-			{jp.KeyTab, jp.KeypadSlash, jp.KeypadAsterisk, jp.KeyBackspace},
-			{jp.Keypad7, jp.Keypad8, jp.Keypad9, jp.KeypadMinus},
-			{jp.Keypad4, jp.Keypad5, jp.Keypad6, jp.KeypadPlus},
-			{jp.Keypad1, jp.Keypad2, jp.Keypad3, jp.KeypadEnter},
-			{jp.Keypad0, jp.Key0, jp.KeypadPeriod},
+			jp.KeyTab, jp.KeypadSlash, jp.KeypadAsterisk, jp.KeyBackspace,
+			jp.Keypad7, jp.Keypad8, jp.Keypad9, jp.KeypadMinus,
+			jp.Keypad4, jp.Keypad5, jp.Keypad6, jp.KeypadPlus,
+			jp.Keypad1, jp.Keypad2, jp.Keypad3, jp.KeypadEnter,
+			jp.Keypad0, jp.Key0, jp.KeypadPeriod, 0,
 		},
 	})
 

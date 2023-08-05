@@ -48,11 +48,11 @@ func run() error {
 		machine.D3,
 	}
 
-	sm := d.AddSquaredMatrixKeyboard(pins, [][][]keyboard.Keycode{
+	sm := d.AddSquaredMatrixKeyboard(pins, [][]keyboard.Keycode{
 		{
-			{jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyD},
-			{jp.KeyE, jp.KeyF, jp.KeyG, jp.KeyH},
-			{jp.KeyI, jp.KeyJ, jp.KeyK, jp.KeyL},
+			jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyD,
+			jp.KeyE, jp.KeyF, jp.KeyG, jp.KeyH,
+			jp.KeyI, jp.KeyJ, jp.KeyK, jp.KeyL,
 		},
 	})
 	sm.SetCallback(func(layer, row, col int, state keyboard.State) {
@@ -75,15 +75,15 @@ func run() error {
 		changed.Set(1)
 	})
 
-	d.AddRotaryKeyboard(machine.D5, machine.D10, [][][]keyboard.Keycode{
+	d.AddRotaryKeyboard(machine.D5, machine.D10, [][]keyboard.Keycode{
 		{
-			{jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc},
+			jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc,
 		},
 	})
 
-	d.AddRotaryKeyboard(machine.D9, machine.D8, [][][]keyboard.Keycode{
+	d.AddRotaryKeyboard(machine.D9, machine.D8, [][]keyboard.Keycode{
 		{
-			{jp.WheelDown, jp.WheelUp},
+			jp.WheelDown, jp.WheelUp,
 		},
 	})
 
@@ -91,9 +91,9 @@ func run() error {
 	for c := range gpioPins {
 		gpioPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
-	d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
+	d.AddGpioKeyboard(gpioPins, [][]keyboard.Keycode{
 		{
-			{jp.MouseLeft, jp.MouseRight},
+			jp.MouseLeft, jp.MouseRight,
 		},
 	})
 

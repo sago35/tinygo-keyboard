@@ -30,24 +30,24 @@ func run() error {
 		machine.D8,
 	}
 
-	sm := d.AddSquaredMatrixKeyboard(colPins, [][][]keyboard.Keycode{
+	sm := d.AddSquaredMatrixKeyboard(colPins, [][]keyboard.Keycode{
 		{
-			{jp.KeyEsc, jp.Key1, jp.Key2, jp.Key3, jp.Key4, jp.Key5, jp.Key6, 0},
-			{jp.KeyTab, jp.KeyQ, jp.KeyW, jp.KeyE, jp.KeyR, jp.KeyT, 0},
-			{jp.KeyLeftCtrl, jp.KeyA, jp.KeyS, jp.KeyD, jp.KeyF, jp.KeyG, 0},
-			{jp.KeyLeftShift, jp.KeyZ, jp.KeyX, jp.KeyC, jp.KeyV, jp.KeyB, 0},
-			{jp.KeyMod1, jp.KeyLeftCtrl, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, 0},
-			{0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0},
+			jp.KeyEsc, jp.Key1, jp.Key2, jp.Key3, jp.Key4, jp.Key5, jp.Key6,
+			jp.KeyTab, jp.KeyQ, jp.KeyW, jp.KeyE, jp.KeyR, jp.KeyT, 0,
+			jp.KeyLeftCtrl, jp.KeyA, jp.KeyS, jp.KeyD, jp.KeyF, jp.KeyG, 0,
+			jp.KeyLeftShift, jp.KeyZ, jp.KeyX, jp.KeyC, jp.KeyV, jp.KeyB, 0,
+			jp.KeyMod1, jp.KeyLeftCtrl, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, 0,
+			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0,
 		},
 		{
-			{jp.KeyEsc, jp.KeyF1, jp.KeyF2, jp.KeyF3, jp.KeyF4, jp.KeyF5, jp.KeyF6, 0},
-			{jp.KeyTab, jp.KeyQ, jp.KeyF15, jp.KeyEnd, jp.KeyF17, jp.KeyF18, 0},
-			{jp.KeyLeftCtrl, jp.KeyHome, jp.KeyS, jp.MouseRight, jp.MouseLeft, jp.MouseBack, 0},
-			{jp.KeyLeftShift, jp.KeyF13, jp.KeyF14, jp.MouseMiddle, jp.KeyF16, jp.MouseForward, 0},
-			{jp.KeyMod1, jp.KeyLeftCtrl, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, 0},
-			{0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0},
+			jp.KeyEsc, jp.KeyF1, jp.KeyF2, jp.KeyF3, jp.KeyF4, jp.KeyF5, jp.KeyF6,
+			jp.KeyTab, jp.KeyQ, jp.KeyF15, jp.KeyEnd, jp.KeyF17, jp.KeyF18, 0,
+			jp.KeyLeftCtrl, jp.KeyHome, jp.KeyS, jp.MouseRight, jp.MouseLeft, jp.MouseBack, 0,
+			jp.KeyLeftShift, jp.KeyF13, jp.KeyF14, jp.MouseMiddle, jp.KeyF16, jp.MouseForward, 0,
+			jp.KeyMod1, jp.KeyLeftCtrl, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, 0,
+			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0,
 		},
 	})
 	sm.SetCallback(func(layer, row, col int, state keyboard.State) {
@@ -57,31 +57,24 @@ func run() error {
 	uart := machine.UART0
 	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
 
-	d.AddUartKeyboard(5, 5, uart, [][][]keyboard.Keycode{
+	uk := d.AddUartKeyboard(50, uart, [][]keyboard.Keycode{
 		{
-			{0, 0, 0, jp.KeyB},
-			{jp.Key6, jp.KeyY, jp.KeyH, jp.KeyN, jp.KeySpace},
-			{jp.Key7, jp.KeyU, jp.KeyJ, jp.KeyM, jp.KeyHenkan},
-			{jp.Key8, jp.KeyI, jp.KeyK, jp.KeyComma, jp.KeyMod1},
-			{jp.Key9, jp.KeyO, jp.KeyL, jp.KeyPeriod, jp.KeyLeftAlt},
-			{jp.Key0, jp.KeyP, jp.KeySemicolon, jp.KeySlash, jp.KeyPrintscreen},
-			{jp.KeyMinus, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyLeft},
-			{jp.KeyHat, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyUp, jp.KeyDown},
-			{jp.KeyBackslash2, jp.KeyEnter, 0, jp.KeyDelete, jp.KeyRight},
-			{jp.KeyBackspace},
+			0, jp.Key6, jp.Key7, jp.Key8, jp.Key9, jp.Key0, jp.KeyMinus, jp.KeyHat, jp.KeyBackslash2, jp.KeyBackspace,
+			0, jp.KeyY, jp.KeyU, jp.KeyI, jp.KeyO, jp.KeyP, jp.KeyAt, jp.KeyLeftBrace, jp.KeyEnter, 0,
+			0, jp.KeyH, jp.KeyJ, jp.KeyK, jp.KeyL, jp.KeySemicolon, jp.KeyColon, jp.KeyRightBrace, 0, 0,
+			jp.KeyB, jp.KeyN, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash, jp.KeyUp, jp.KeyDelete, 0,
+			0, jp.KeySpace, jp.KeyHenkan, jp.KeyMod1, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyLeft, jp.KeyDown, jp.KeyRight, 0,
 		},
 		{
-			{0, 0, 0, jp.MouseForward},
-			{jp.KeyF6, jp.KeyY, jp.KeyLeft, jp.WheelDown, jp.KeySpace},
-			{jp.KeyF7, jp.KeyU, jp.KeyDown, jp.KeyM, jp.KeyHenkan},
-			{jp.KeyF8, jp.KeyTab, jp.KeyUp, jp.KeyComma, jp.KeyMod1},
-			{jp.KeyF9, jp.KeyO, jp.KeyRight, jp.KeyPeriod, jp.KeyLeftAlt},
-			{jp.KeyF10, jp.WheelUp, jp.KeySemicolon, jp.KeySlash, jp.KeyPrintscreen},
-			{jp.KeyF11, jp.KeyAt, jp.KeyColon, jp.KeyBackslash, jp.KeyHome},
-			{jp.KeyF12, jp.KeyLeftBrace, jp.KeyRightBrace, jp.KeyPageUp, jp.KeyPageDown},
-			{jp.KeyBackslash2, jp.KeyEnter, 0, jp.KeyDelete, jp.KeyEnd},
-			{jp.KeyDelete},
+			0, jp.KeyF6, jp.KeyF7, jp.KeyF8, jp.KeyF9, jp.KeyF10, jp.KeyF11, jp.KeyF12, jp.KeyBackslash2, jp.KeyBackspace,
+			0, jp.KeyY, jp.KeyU, jp.KeyTab, jp.KeyO, jp.WheelUp, jp.KeyAt, jp.KeyLeftBrace, jp.KeyEnter, 0,
+			0, jp.KeyLeft, jp.KeyDown, jp.KeyUp, jp.KeyRight, jp.KeySemicolon, jp.KeyColon, jp.KeyRightBrace, 0, 0,
+			jp.MouseForward, jp.WheelDown, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash, jp.KeyPageUp, jp.KeyDelete, 0,
+			0, jp.KeySpace, jp.KeyHenkan, jp.KeyMod1, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyHome, jp.KeyPageDown, jp.KeyEnd, 0,
 		},
+	})
+	uk.SetCallback(func(layer, row, col int, state keyboard.State) {
+		fmt.Printf("uk: %d %d %d %d\n", layer, row, col, state)
 	})
 
 	// override ctrl-h to BackSpace

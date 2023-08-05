@@ -46,10 +46,10 @@ func run() error {
 		machine.D2,
 	}
 
-	mk := d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
+	mk := d.AddMatrixKeyboard(colPins, rowPins, [][]keyboard.Keycode{
 		{
-			{jp.KeyT, jp.KeyI, jp.KeyN},
-			{jp.KeyY, jp.KeyG, jp.KeyO},
+			jp.KeyT, jp.KeyI, jp.KeyN,
+			jp.KeyY, jp.KeyG, jp.KeyO,
 		},
 	})
 	mk.SetCallback(func(layer, row, col int, state keyboard.State) {

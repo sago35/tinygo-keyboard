@@ -7,8 +7,8 @@ import (
 )
 
 type MatrixKeyboard struct {
-	State    [][]State
-	Keys     [][][]Keycode
+	State    []State
+	Keys     [][]Keycode
 	options  Options
 	callback Callback
 
@@ -16,15 +16,10 @@ type MatrixKeyboard struct {
 	Row []machine.Pin
 }
 
-func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode, opt ...Option) *MatrixKeyboard {
-	state := [][]State{}
+func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keycode, opt ...Option) *MatrixKeyboard {
 	col := len(colPins)
 	row := len(rowPins)
-
-	for r := 0; r < row; r++ {
-		column := make([]State, col)
-		state = append(state, column)
-	}
+	state := make([]State, row*col)
 
 	for c := range colPins {
 		colPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
@@ -55,10 +50,10 @@ func (d *MatrixKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
-func (d *MatrixKeyboard) Get() [][]State {
+func (d *MatrixKeyboard) Get() []State {
 	for c := range d.Col {
 		for r := range d.Row {
-			//d.State[r][c] = d.Row[r].Get()
+			//d.State[r*len(d.Col)+c] = d.Row[r].Get()
 			current := false
 			if !d.options.InvertDiode {
 				d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
@@ -69,33 +64,33 @@ func (d *MatrixKeyboard) Get() [][]State {
 				d.Row[r].High()
 				current = d.Col[c].Get()
 			}
-			switch d.State[r][c] {
+			switch d.State[r*len(d.Col)+c] {
 			case None:
 				if current {
-					d.State[r][c] = NoneToPress
+					d.State[r*len(d.Col)+c] = NoneToPress
 				} else {
 				}
 			case NoneToPress:
 				if current {
-					d.State[r][c] = Press
+					d.State[r*len(d.Col)+c] = Press
 					d.callback(0, r, c, Press)
 				} else {
-					d.State[r][c] = PressToRelease
+					d.State[r*len(d.Col)+c] = PressToRelease
 					d.callback(0, r, c, Press)
 					d.callback(0, r, c, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
-					d.State[r][c] = PressToRelease
+					d.State[r*len(d.Col)+c] = PressToRelease
 					d.callback(0, r, c, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
-					d.State[r][c] = NoneToPress
+					d.State[r*len(d.Col)+c] = NoneToPress
 					d.callback(0, r, c, Press)
 				} else {
-					d.State[r][c] = None
+					d.State[r*len(d.Col)+c] = None
 				}
 			}
 			if !d.options.InvertDiode {
@@ -111,8 +106,8 @@ func (d *MatrixKeyboard) Get() [][]State {
 	return d.State
 }
 
-func (d *MatrixKeyboard) Key(layer, row, col int) Keycode {
-	return d.Keys[layer][row][col]
+func (d *MatrixKeyboard) Key(layer, index int) Keycode {
+	return d.Keys[layer][index]
 }
 
 func (d *MatrixKeyboard) Init() error {

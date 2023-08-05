@@ -1,4 +1,4 @@
-//go:build tinygo && macropad_rp2040
+//go:build tinygo
 
 package keyboard
 
@@ -9,19 +9,16 @@ import (
 )
 
 type RotaryKeyboard struct {
-	State    [][]State
-	Keys     [][][]Keycode
+	State    []State
+	Keys     [][]Keycode
 	callback Callback
 
 	enc      *rotary_encoder.Device
 	oldValue int
 }
 
-func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][][]Keycode) *RotaryKeyboard {
-	state := [][]State{}
-
-	column := make([]State, 2)
-	state = append(state, column)
+func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][]Keycode) *RotaryKeyboard {
+	state := make([]State, 2)
 
 	enc := rotary_encoder.New(rotA, rotB)
 	enc.Configure()
@@ -42,7 +39,7 @@ func (d *RotaryKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
-func (d *RotaryKeyboard) Get() [][]State {
+func (d *RotaryKeyboard) Get() []State {
 	rot := []bool{false, false}
 	if newValue := d.enc.Value(); newValue != d.oldValue {
 		if newValue < d.oldValue {
@@ -54,33 +51,33 @@ func (d *RotaryKeyboard) Get() [][]State {
 	}
 
 	for c, current := range rot {
-		switch d.State[0][c] {
+		switch d.State[c] {
 		case None:
 			if current {
-				d.State[0][c] = NoneToPress
+				d.State[c] = NoneToPress
 			} else {
 			}
 		case NoneToPress:
 			if current {
-				d.State[0][c] = Press
+				d.State[c] = Press
 				d.callback(0, 0, c, Press)
 			} else {
-				d.State[0][c] = PressToRelease
+				d.State[c] = PressToRelease
 				d.callback(0, 0, c, Press)
 				d.callback(0, 0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
-				d.State[0][c] = PressToRelease
+				d.State[c] = PressToRelease
 				d.callback(0, 0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
-				d.State[0][c] = NoneToPress
+				d.State[c] = NoneToPress
 				d.callback(0, 0, c, Press)
 			} else {
-				d.State[0][c] = None
+				d.State[c] = None
 			}
 		}
 	}
@@ -88,8 +85,8 @@ func (d *RotaryKeyboard) Get() [][]State {
 	return d.State
 }
 
-func (d *RotaryKeyboard) Key(layer, row, col int) Keycode {
-	return d.Keys[layer][row][col]
+func (d *RotaryKeyboard) Key(layer, index int) Keycode {
+	return d.Keys[layer][index]
 }
 
 func (d *RotaryKeyboard) Init() error {

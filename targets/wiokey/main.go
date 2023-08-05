@@ -31,11 +31,11 @@ func run() error {
 		machine.BCM26,
 	}
 
-	mk := d.AddMatrixKeyboard(colPins, rowPins, [][][]keyboard.Keycode{
+	mk := d.AddMatrixKeyboard(colPins, rowPins, [][]keyboard.Keycode{
 		{
-			{jp.KeyT, jp.KeyI},
-			{jp.KeyN, jp.KeyY},
-			{jp.KeyG, jp.KeyO},
+			jp.KeyT, jp.KeyI,
+			jp.KeyN, jp.KeyY,
+			jp.KeyG, jp.KeyO,
 		},
 	}, keyboard.InvertDiode(true))
 
@@ -59,9 +59,16 @@ func run() error {
 	}
 
 	// KeyMediaXXX will be supported starting with tinygo-0.28.
-	gk := d.AddGpioKeyboard(gpioPins, [][][]keyboard.Keycode{
+	gk := d.AddGpioKeyboard(gpioPins, [][]keyboard.Keycode{
 		{
-			{jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyMediaVolumeInc, jp.KeyMediaPrevTrack, jp.KeyMediaNextTrack, jp.KeyMediaVolumeDec, jp.KeyMediaPlayPause},
+			jp.KeyA,
+			jp.KeyB,
+			jp.KeyC,
+			jp.KeyMediaVolumeInc,
+			jp.KeyMediaPrevTrack,
+			jp.KeyMediaNextTrack,
+			jp.KeyMediaVolumeDec,
+			jp.KeyMediaPlayPause,
 		},
 	})
 
