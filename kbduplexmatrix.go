@@ -1,4 +1,4 @@
-//go:build tinygo && xxx
+//go:build tinygo
 
 package keyboard
 
@@ -7,23 +7,18 @@ import (
 )
 
 type DuplexMatrixKeyboard struct {
-	State    [][]State
-	Keys     [][][]Keycode
+	State    []State
+	Keys     [][]Keycode
 	callback Callback
 
 	Col []machine.Pin
 	Row []machine.Pin
 }
 
-func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][][]Keycode) *DuplexMatrixKeyboard {
-	state := [][]State{}
+func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keycode) *DuplexMatrixKeyboard {
 	col := len(colPins)
 	row := len(rowPins)
-
-	for r := 0; r < row*2; r++ {
-		column := make([]State, col)
-		state = append(state, column)
-	}
+	state := make([]State, row*2*col)
 
 	for c := range colPins {
 		colPins[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
@@ -49,39 +44,39 @@ func (d *DuplexMatrixKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
-func (d *DuplexMatrixKeyboard) Get() [][]State {
+func (d *DuplexMatrixKeyboard) Get() []State {
 	for c := range d.Col {
 		d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
 		d.Col[c].Low()
 		for r := range d.Row {
 			current := !d.Row[r].Get()
-			switch d.State[r][c] {
+			switch d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] {
 			case None:
 				if current {
-					d.State[r][c] = NoneToPress
+					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = NoneToPress
 				} else {
 				}
 			case NoneToPress:
 				if current {
-					d.State[r][c] = Press
-					d.callback(0, r, c, Press)
+					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = Press
+					d.callback(0, r, 2*len(d.Col)-1-c, Press)
 				} else {
-					d.State[r][c] = PressToRelease
-					d.callback(0, r, c, Press)
-					d.callback(0, r, c, PressToRelease)
+					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = PressToRelease
+					d.callback(0, r, 2*len(d.Col)-1-c, Press)
+					d.callback(0, r, 2*len(d.Col)-1-c, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
-					d.State[r][c] = PressToRelease
-					d.callback(0, r, c, PressToRelease)
+					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = PressToRelease
+					d.callback(0, r, 2*len(d.Col)-1-c, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
-					d.State[r][c] = NoneToPress
-					d.callback(0, r, c, Press)
+					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = NoneToPress
+					d.callback(0, r, 2*len(d.Col)-1-c, Press)
 				} else {
-					d.State[r][c] = None
+					d.State[r*2*len(d.Col)+2*len(d.Col)-1-c] = None
 				}
 			}
 		}
@@ -94,33 +89,33 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 		d.Row[r].Low()
 		for c := range d.Col {
 			current := !d.Col[c].Get()
-			switch d.State[2*len(d.Row)-r-1][c] {
+			switch d.State[r*2*len(d.Col)+c] {
 			case None:
 				if current {
-					d.State[2*len(d.Row)-r-1][c] = NoneToPress
+					d.State[r*2*len(d.Col)+c] = NoneToPress
 				} else {
 				}
 			case NoneToPress:
 				if current {
-					d.State[2*len(d.Row)-r-1][c] = Press
-					d.callback(0, 2*len(d.Row)-r-1, c, Press)
+					d.State[r*2*len(d.Col)+c] = Press
+					d.callback(0, r, c, Press)
 				} else {
-					d.State[2*len(d.Row)-r-1][c] = PressToRelease
-					d.callback(0, 2*len(d.Row)-r-1, c, Press)
-					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
+					d.State[r*2*len(d.Col)+c] = PressToRelease
+					d.callback(0, r, c, Press)
+					d.callback(0, r, c, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
-					d.State[2*len(d.Row)-r-1][c] = PressToRelease
-					d.callback(0, 2*len(d.Row)-r-1, c, PressToRelease)
+					d.State[r*2*len(d.Col)+c] = PressToRelease
+					d.callback(0, r, c, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
-					d.State[2*len(d.Row)-r-1][c] = NoneToPress
-					d.callback(0, 2*len(d.Row)-r-1, c, Press)
+					d.State[r*2*len(d.Col)+c] = NoneToPress
+					d.callback(0, r, c, Press)
 				} else {
-					d.State[2*len(d.Row)-r-1][c] = None
+					d.State[r*2*len(d.Col)+c] = None
 				}
 			}
 		}
@@ -131,8 +126,8 @@ func (d *DuplexMatrixKeyboard) Get() [][]State {
 	return d.State
 }
 
-func (d *DuplexMatrixKeyboard) Key(layer, row, col int) Keycode {
-	return d.Keys[layer][row][col]
+func (d *DuplexMatrixKeyboard) Key(layer, index int) Keycode {
+	return d.Keys[layer][index]
 }
 
 func (d *DuplexMatrixKeyboard) Init() error {
