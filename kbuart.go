@@ -51,7 +51,7 @@ func (d *UartKeyboard) Get() []State {
 		d.buf = append(d.buf, data)
 
 		if len(d.buf) == 3 {
-			index := int(d.buf[1]) + int(d.buf[2])*10
+			index := (int(d.buf[1]) << 8) + int(d.buf[2])
 			current := false
 			switch d.buf[0] {
 			case 0xAA: // press
