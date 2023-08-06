@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
+	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
 type Device struct {
@@ -27,6 +28,7 @@ type Device struct {
 type KBer interface {
 	Get() []State
 	Key(layer, index int) Keycode
+	SetKeycode(layer, index int, key Keycode)
 	Init() error
 }
 
@@ -55,6 +57,8 @@ func New() *Device {
 		Mouse:    mouse.Port(),
 		pressed:  make([]Keycode, 0, 10),
 	}
+
+	SetDevice(d)
 
 	return d
 }
@@ -203,6 +207,38 @@ func (d *Device) Loop(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (d *Device) SetKeycode(layer, kbIndex, index int, key Keycode) {
+	d.kb[kbIndex].SetKeycode(layer, index, key)
+}
+
+func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
+	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, kbIndex, index, key)
+	kc := key | 0xF000
+
+	switch key {
+	case 0x00D1:
+		kc = jp.MouseLeft
+	case 0x00D2:
+		kc = jp.MouseRight
+	case 0x00D3:
+		kc = jp.MouseMiddle
+	case 0x00D4:
+		kc = jp.MouseBack
+	case 0x00D5:
+		kc = jp.MouseForward
+	case 0x00D9:
+		kc = jp.WheelUp
+	case 0x00DA:
+		kc = jp.WheelDown
+	case 0x5220, 0x5221, 0x5222, 0x5223, 0x5224, 0x5225:
+		// MO(x)
+		kc = 0xFF00 | (kc & 0x00FF)
+	default:
+	}
+
+	d.kb[kbIndex].SetKeycode(layer, index, kc)
 }
 
 type Keycode k.Keycode

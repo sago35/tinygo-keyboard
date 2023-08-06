@@ -102,6 +102,10 @@ func (d *UartKeyboard) Key(layer, index int) Keycode {
 	return d.Keys[layer][index]
 }
 
+func (d *UartKeyboard) SetKeycode(layer, index int, key Keycode) {
+	d.Keys[layer][index] = key
+}
+
 func (d *UartKeyboard) Init() error {
 	for d.uart.Buffered() > 0 {
 		d.uart.ReadByte()

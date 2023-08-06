@@ -111,6 +111,10 @@ func (d *MatrixKeyboard) Key(layer, index int) Keycode {
 	return d.Keys[layer][index]
 }
 
+func (d *MatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
+	d.Keys[layer][index] = key
+}
+
 func (d *MatrixKeyboard) Init() error {
 	return nil
 }

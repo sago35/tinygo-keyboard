@@ -89,6 +89,10 @@ func (d *RotaryKeyboard) Key(layer, index int) Keycode {
 	return d.Keys[layer][index]
 }
 
+func (d *RotaryKeyboard) SetKeycode(layer, index int, key Keycode) {
+	d.Keys[layer][index] = key
+}
+
 func (d *RotaryKeyboard) Init() error {
 	return nil
 }

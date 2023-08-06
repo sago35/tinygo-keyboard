@@ -96,6 +96,10 @@ func (d *SquaredMatrixKeyboard) Key(layer, index int) Keycode {
 	return d.Keys[layer][index]
 }
 
+func (d *SquaredMatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
+	d.Keys[layer][index] = key
+}
+
 func (d *SquaredMatrixKeyboard) Init() error {
 	return nil
 }

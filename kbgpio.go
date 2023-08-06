@@ -88,6 +88,10 @@ func (d *GpioKeyboard) Key(layer, index int) Keycode {
 	return d.Keys[layer][index]
 }
 
+func (d *GpioKeyboard) SetKeycode(layer, index int, key Keycode) {
+	d.Keys[layer][index] = key
+}
+
 func (d *GpioKeyboard) Init() error {
 	return nil
 }
