@@ -209,6 +209,23 @@ func (d *Device) Loop(ctx context.Context) error {
 	return nil
 }
 
+func (d *Device) Key(layer, kbIndex, index int) Keycode {
+	return d.kb[kbIndex].Key(layer, index)
+}
+
+func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
+	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, kbIndex, index)
+	kc := d.kb[kbIndex].Key(layer, index)
+	switch kc {
+	case 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05:
+		// MO(x)
+		kc = 0x5220 | (kc & 0x000F)
+	default:
+		kc = kc & 0x0FFF
+	}
+	return kc
+}
+
 func (d *Device) SetKeycode(layer, kbIndex, index int, key Keycode) {
 	d.kb[kbIndex].SetKeycode(layer, index, key)
 }
@@ -234,7 +251,7 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 		kc = jp.WheelDown
 	case 0x5220, 0x5221, 0x5222, 0x5223, 0x5224, 0x5225:
 		// MO(x)
-		kc = 0xFF00 | (kc & 0x00FF)
+		kc = 0xFF00 | (kc & 0x000F)
 	default:
 	}
 

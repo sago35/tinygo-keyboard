@@ -98,36 +98,28 @@ func rxHandler2(b []byte) bool {
 		txb[1] = 0x06
 	case 0x12:
 		// DynamicKeymapReadBufferCommand
-		//offset := (uint16(b[1]) << 8) + uint16(b[2])
-		//sz := b[3]
-		//// offset + 0 〜 offset + sz/2 までのデータを返す必要あり
-		//// このとき、 JSON で指定した row * col を超えると次の layer のデータとなる
-		//// なので、 offset + 0 〜 offset + sz/2 を Keys[layer][row][col] に変換する関数が必要
-		//layer := len(Keys)
-		//row := len(Keys[0])
-		//col := len(Keys[0][0])
-		//for i := 0; i < int(sz/2); i++ {
-		//	idx := i + int(offset)/2
-		//	ll := uint8(idx / (row * col))
-		//	rr := uint8((idx % (row * col)) / col)
-		//	cc := uint8((idx % (row * col)) % col)
-		//	//fmt.Printf("%02X %02X\n", (i+offset/2)/col, (i+offset/2)%col)
-		//	if (i+int(offset)/2)/col < row*layer {
-		//		txb[i*2+4+0] = byte(Keys[ll][rr][cc] >> 8)
-		//		txb[i*2+4+1] = byte(Keys[ll][rr][cc])
-		//	} else if offset == 0x0038 {
-		//		txb[i*2+4+0] = 0
-		//		txb[i*2+4+1] = 5 // B
-		//	} else {
-		//		//txb[i*2+4+0] = byte((offset + i) >> 8)
-		//		//txb[i*2+4+1] = byte(offset + i)
-		//		txb[i*2+4+0] = 0
-		//		txb[i*2+4+1] = 4 // A
-		//	}
-		//}
-		//if offset+uint16(sz) >= uint16(layer*col*row*2) {
-		//	Changed2 = true
-		//}
+		offset := (uint16(b[1]) << 8) + uint16(b[2])
+		sz := b[3]
+		//fmt.Printf("  offset : %04X + %d\n", offset, sz)
+		const (
+			// TODO: must read from JSON
+			columns      = 100
+			numKeyboards = 2
+		)
+		for i := 0; i < int(sz/2); i++ {
+			//fmt.Printf("  %02X %02X\n", b[4+i+1], b[4+i+0])
+			tmp := i + int(offset)/2
+			layer := tmp / (columns * numKeyboards)
+			tmp = tmp % (columns * numKeyboards)
+			kbd := tmp / columns
+			idx := tmp % columns
+			//layer := 0
+			//idx := tmp & 0xFF
+			kc := device.KeyVia(layer, kbd, idx)
+			//fmt.Printf("  (%d, %d, %d)\n", layer, kbd, idx)
+			txb[4+2*i+1] = uint8(kc)
+			txb[4+2*i+0] = uint8(kc >> 8)
+		}
 
 	case 0x0D:
 		// DynamicKeymapMacroGetBufferSizeCommand

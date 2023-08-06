@@ -129,6 +129,12 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 }
 
 func (d *DuplexMatrixKeyboard) Key(layer, index int) Keycode {
+	if layer >= len(d.Keys) {
+		return 0
+	}
+	if index >= len(d.Keys[layer]) {
+		return 0
+	}
 	return d.Keys[layer][index]
 }
 

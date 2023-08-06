@@ -108,6 +108,12 @@ func (d *MatrixKeyboard) Get() []State {
 }
 
 func (d *MatrixKeyboard) Key(layer, index int) Keycode {
+	if layer >= len(d.Keys) {
+		return 0
+	}
+	if index >= len(d.Keys[layer]) {
+		return 0
+	}
 	return d.Keys[layer][index]
 }
 
