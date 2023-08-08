@@ -215,6 +215,9 @@ func (d *Device) Key(layer, kbIndex, index int) Keycode {
 
 func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, kbIndex, index)
+	if kbIndex >= len(d.kb) {
+		return 0
+	}
 	kc := d.kb[kbIndex].Key(layer, index)
 	switch kc {
 	case 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05:
