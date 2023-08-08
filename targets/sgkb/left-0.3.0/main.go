@@ -66,7 +66,7 @@ func run() error {
 	uart := machine.UART0
 	uart.Configure(machine.UARTConfig{TX: machine.NoPin, RX: machine.UART_RX_PIN})
 
-	d.AddUartKeyboard(50, uart, [][]keyboard.Keycode{
+	uk := d.AddUartKeyboard(50, uart, [][]keyboard.Keycode{
 		{
 			0, jp.Key6, jp.Key7, jp.Key8, jp.Key9, jp.Key0, jp.KeyMinus, jp.KeyHat, jp.KeyBackslash2, jp.KeyBackspace,
 			0, jp.KeyY, jp.KeyU, jp.KeyI, jp.KeyO, jp.KeyP, jp.KeyAt, jp.KeyLeftBrace, jp.KeyEnter, 0,
@@ -81,6 +81,9 @@ func run() error {
 			jp.MouseForward, jp.WheelDown, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash, jp.KeyPageUp, jp.KeyDelete, 0,
 			0, jp.KeySpace, jp.KeyHenkan, jp.KeyMod1, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyHome, jp.KeyPageDown, jp.KeyEnd, 0,
 		},
+	})
+	uk.SetCallback(func(layer, index int, state keyboard.State) {
+		fmt.Printf("uk: %d %d %d\n", layer, index, state)
 	})
 
 	// override ctrl-h to BackSpace
