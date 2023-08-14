@@ -138,6 +138,7 @@ func rxHandler2(b []byte) bool {
 		fmt.Printf("XXXXXXXXX % X\n", b)
 		//Keys[b[1]][b[2]][b[3]] = Keycode((uint16(b[4]) << 8) + uint16(b[5]))
 		device.SetKeycodeVia(int(b[1]), int(b[2]), int(b[3]), Keycode((uint16(b[4])<<8)+uint16(b[5])))
+		device.flashCh <- true
 		//Changed = true
 	case 0x08:
 		// id_lighting_get_value
@@ -205,6 +206,10 @@ func rxHandler2(b []byte) bool {
 	fmt.Printf("Tx        % X\n", txb[:32])
 
 	return true
+}
+
+func Save() error {
+	return nil
 }
 
 func Load(l, r, c int) error {

@@ -18,6 +18,8 @@ type Device struct {
 	Mouse    Mouser
 	Override [][]Keycode
 	Debug    bool
+	flashCh  chan bool
+	flashCnt int
 
 	kb []KBer
 
@@ -56,6 +58,7 @@ func New() *Device {
 		Keyboard: kb,
 		Mouse:    mouse.Port(),
 		pressed:  make([]Keycode, 0, 10),
+		flashCh:  make(chan bool, 10),
 	}
 
 	SetDevice(d)
@@ -190,12 +193,20 @@ func (d *Device) Loop(ctx context.Context) error {
 	}
 
 	cont := true
+	d.flashCnt = 0
 	for cont {
 		select {
 		case <-ctx.Done():
 			cont = false
 			continue
+		case <-d.flashCh:
+			d.flashCnt = 1
 		default:
+			if d.flashCnt >= 500 {
+				d.flashCnt = 0
+			} else if d.flashCnt > 0 {
+				d.flashCnt++
+			}
 		}
 
 		err := d.Tick()
