@@ -81,6 +81,8 @@ func (d *Device) Init() error {
 		}
 	}
 
+	d.flashCnt = 0
+
 	// TODO: Allow change to match keyboard
 	layers := 6
 	keyboards := 2
@@ -115,6 +117,21 @@ func (d *Device) Init() error {
 
 func (d *Device) Tick() error {
 	pressToRelease := []Keycode{}
+
+	select {
+	case <-d.flashCh:
+		d.flashCnt = 1
+	default:
+		if d.flashCnt >= 500 {
+			d.flashCnt = 0
+			err := Save()
+			if err != nil {
+				return err
+			}
+		} else if d.flashCnt > 0 {
+			d.flashCnt++
+		}
+	}
 
 	// read from key matrix
 	for _, k := range d.kb {
@@ -223,24 +240,12 @@ func (d *Device) Loop(ctx context.Context) error {
 	}
 
 	cont := true
-	d.flashCnt = 0
 	for cont {
 		select {
 		case <-ctx.Done():
 			cont = false
 			continue
-		case <-d.flashCh:
-			d.flashCnt = 1
 		default:
-			if d.flashCnt >= 500 {
-				d.flashCnt = 0
-				err := Save()
-				if err != nil {
-					return err
-				}
-			} else if d.flashCnt > 0 {
-				d.flashCnt++
-			}
 		}
 
 		err := d.Tick()
@@ -268,6 +273,24 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 	}
 	kc := d.kb[kbIndex].Key(layer, index)
 	switch kc {
+	case jp.MouseLeft:
+		kc = 0x00D1
+	case jp.MouseRight:
+		kc = 0x00D2
+	case jp.MouseMiddle:
+		kc = 0x00D3
+	case jp.MouseBack:
+		kc = 0x00D4
+	case jp.MouseForward:
+		kc = 0x00D5
+	case jp.WheelUp:
+		kc = 0x00D9
+	case jp.WheelDown:
+		kc = 0x00DA
+	case jp.KeyMediaVolumeInc:
+		kc = 0x00A9
+	case jp.KeyMediaVolumeDec:
+		kc = 0x00AA
 	case 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05:
 		// MO(x)
 		kc = 0x5220 | (kc & 0x000F)
@@ -306,6 +329,10 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 		kc = jp.WheelUp
 	case 0x00DA:
 		kc = jp.WheelDown
+	case 0x00A9:
+		kc = jp.KeyMediaVolumeInc
+	case 0x00AA:
+		kc = jp.KeyMediaVolumeDec
 	case 0x5220, 0x5221, 0x5222, 0x5223, 0x5224, 0x5225:
 		// MO(x)
 		kc = 0xFF00 | (kc & 0x000F)
