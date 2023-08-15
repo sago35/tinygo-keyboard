@@ -246,61 +246,43 @@ func rxHandler2(b []byte) bool {
 }
 
 func Save() error {
-	return nil
-}
+	layers := 6
+	keyboards := 2
+	keys := 100
 
-func Load(l, r, c int) error {
-	Keys = make([][][]Keycode, l)
-	for ll := range Keys {
-		Keys[ll] = make([][]Keycode, r)
-		for rr := range Keys[ll] {
-			Keys[ll][rr] = make([]Keycode, c)
-		}
+	wbuf := make([]byte, 4+layers*keyboards*keys*2)
+	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
+	if needed == 0 {
+		needed = 1
 	}
-	wbuf = make([]byte, 4+l*r*c*2)
 
-	keyword := [4]byte{}
-	_, err := machine.Flash.ReadAt(keyword[:4], 0)
+	err := machine.Flash.EraseBlocks(0, needed)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("keyword: % X\n", keyword[:])
-	size := (int64(keyword[0]) << 24) +
-		(int64(keyword[1]) << 16) +
-		(int64(keyword[2]) << 8) +
-		(int64(keyword[3]) << 0)
-	if false {
-		// debug
-		size++
-	}
 
-	if size != machine.Flash.Size() {
-		fmt.Printf("config: not found : %08X vs %08X\n", size, machine.Flash.Size())
-	} else {
-		fmt.Printf("config: found : %08X vs %08X\n", size, machine.Flash.Size())
+	sz := machine.Flash.Size()
+	wbuf[0] = byte(sz >> 24)
+	wbuf[1] = byte(sz >> 16)
+	wbuf[2] = byte(sz >> 8)
+	wbuf[3] = byte(sz >> 0)
 
-		layer := len(Keys)
-		row := len(Keys[0])
-		col := len(Keys[0][0])
-		buf := make([]byte, 2*col)
-		offset := int64(0)
-		for l := 0; l < layer; l++ {
-			for r := 0; r < row; r++ {
-				_, err := machine.Flash.ReadAt(buf[:], 4+offset)
-				if err != nil {
-					return err
-				}
-				fmt.Printf("% X\n", buf[:])
-
-				for c := 0; c < col; c++ {
-					Keys[uint8(l)][r][c] = Keycode((uint16(buf[2*c]) << 8) + uint16(buf[2*c+1]))
-					fmt.Printf("Keys[%d][%d][%d] = %04X\n", l, r, c, Keys[uint8(l)][r][c])
-				}
-
-				offset += int64(len(buf))
+	offset := 4
+	for layer := 0; layer < layers; layer++ {
+		for keyboard := 0; keyboard < keyboards; keyboard++ {
+			for key := 0; key < keys; key++ {
+				wbuf[offset+2*key+0] = byte(device.Key(layer, keyboard, key) >> 8)
+				wbuf[offset+2*key+1] = byte(device.Key(layer, keyboard, key))
 			}
+			offset += keys * 2
 		}
 	}
+
+	_, err = machine.Flash.WriteAt(wbuf[:], 0)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

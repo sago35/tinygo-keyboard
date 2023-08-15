@@ -80,6 +80,36 @@ func (d *Device) Init() error {
 			return err
 		}
 	}
+
+	// TODO: Allow change to match keyboard
+	layers := 6
+	keyboards := 2
+	keys := 100
+
+	// TODO: refactor
+	rbuf := make([]byte, 4+layers*keyboards*keys*2)
+	_, err := machine.Flash.ReadAt(rbuf, 0)
+	if err != nil {
+		return err
+	}
+	sz := (int64(rbuf[0]) << 24) + (int64(rbuf[1]) << 16) + (int64(rbuf[2]) << 8) + int64(rbuf[3])
+	if sz != machine.Flash.Size() {
+		// No settings are saved
+		return nil
+	}
+
+	offset := 4
+	for layer := 0; layer < layers; layer++ {
+		for keyboard := 0; keyboard < keyboards; keyboard++ {
+			for key := 0; key < keys; key++ {
+				kc := Keycode(rbuf[offset+2*key+0]) << 8
+				kc += Keycode(rbuf[offset+2*key+1])
+				device.SetKeycode(layer, keyboard, key, kc)
+			}
+			offset += keys * 2
+		}
+	}
+
 	return nil
 }
 
@@ -204,6 +234,10 @@ func (d *Device) Loop(ctx context.Context) error {
 		default:
 			if d.flashCnt >= 500 {
 				d.flashCnt = 0
+				err := Save()
+				if err != nil {
+					return err
+				}
 			} else if d.flashCnt > 0 {
 				d.flashCnt++
 			}
