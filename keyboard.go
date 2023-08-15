@@ -221,6 +221,9 @@ func (d *Device) Loop(ctx context.Context) error {
 }
 
 func (d *Device) Key(layer, kbIndex, index int) Keycode {
+	if kbIndex >= len(d.kb) {
+		return 0
+	}
 	return d.kb[kbIndex].Key(layer, index)
 }
 
@@ -241,10 +244,16 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 }
 
 func (d *Device) SetKeycode(layer, kbIndex, index int, key Keycode) {
+	if kbIndex >= len(d.kb) {
+		return
+	}
 	d.kb[kbIndex].SetKeycode(layer, index, key)
 }
 
 func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
+	if kbIndex >= len(d.kb) {
+		return
+	}
 	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, kbIndex, index, key)
 	kc := key | 0xF000
 
