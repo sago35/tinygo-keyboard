@@ -16,10 +16,47 @@ func init() {
 
 	descriptor.CDCHID.Configuration = append(descriptor.CDCHID.Configuration, []byte{
 		// 32 byte
+
+		// Interface Descriptor
 		0x09, 0x04, 0x03, 0x00, 0x02, 0x03, 0x00, 0x00, 0x00,
+		// Length: 9 bytes
+		// Descriptor Type: Interface (0x04)
+		// Interface Number: 3
+		// Alternate Setting: 0
+		// Number of Endpoints: 2
+		// Interface Class: 3 (HID - Human Interface Device)
+		// Interface Subclass: 0
+		// Interface Protocol: 0
+		// Interface String Descriptor Index: 0 (No string descriptor)
+
+		// HID Descriptor
 		0x09, 0x21, 0x11, 0x01, 0x00, 0x01, 0x22, 0x22, 0x00,
+		// Length: 9 bytes
+		// Descriptor Type: HID (0x21)
+		// HID Class Specification Release: 1.11
+		// Country Code: 0 (Not localized)
+		// Number of Descriptors: 1
+		// Descriptor Type: Report (0x22)
+		// Descriptor Length: 34 bytes (0x0022)
+
+		// Endpoint Descriptor
 		0x07, 0x05, 0x86, 0x03, 0x20, 0x00, 0x01,
+		// Length: 7 bytes
+		// Descriptor Type: Endpoint (0x05)
+		// Endpoint Address: 0x86 (Endpoint 6, IN direction)
+		// Attributes: 3 (Interrupt transfer type)
+		// Maximum Packet Size: 32 bytes (0x0020)
+		// Interval: 1 ms
+
+		// Endpoint Descriptor
 		0x07, 0x05, 0x07, 0x03, 0x20, 0x00, 0x01,
+		// Length: 7 bytes
+		// Descriptor Type: Endpoint (0x05)
+		// Endpoint Address: 0x07 (Endpoint 7, OUT direction)
+		// Attributes: 3 (Interrupt transfer type)
+		// Maximum Packet Size: 32 bytes (0x0020)
+		// Interval: 1 ms
+
 	}...)
 
 	descriptor.CDCHID.HID[3] = []byte{
