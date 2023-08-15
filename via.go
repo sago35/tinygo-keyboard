@@ -261,6 +261,7 @@ func Save() error {
 		return err
 	}
 
+	// TODO: Size should be written last
 	sz := machine.Flash.Size()
 	wbuf[0] = byte(sz >> 24)
 	wbuf[1] = byte(sz >> 16)
