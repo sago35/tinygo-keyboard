@@ -118,6 +118,12 @@ func (d *MatrixKeyboard) Key(layer, index int) Keycode {
 }
 
 func (d *MatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
+	if layer >= len(d.Keys) {
+		return
+	}
+	if index >= len(d.Keys[layer]) {
+		return
+	}
 	d.Keys[layer][index] = key
 }
 
