@@ -19,3 +19,4 @@ gen-def:
 	go run ./cmd/main.go ./targets/sgkb/left/vial.json
 	go run ./cmd/main.go ./targets/sgkb/left-0.3.0/vial.json
 	go run ./cmd/main.go ./targets/sgkey/vial.json
+	go run ./cmd/main.go ./targets/xiao-kb01/vial.json
