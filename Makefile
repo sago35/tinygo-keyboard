@@ -13,10 +13,10 @@ smoketest: FORCE
 FORCE:
 
 gen-def:
-	go run ./cmd/main.go ./targets/fric10key/vial.json
-	go run ./cmd/main.go ./targets/gopher-badge/vial.json
-	go run ./cmd/main.go ./targets/macropad-rp2040/vial.json
-	go run ./cmd/main.go ./targets/sgkb/left/vial.json
-	go run ./cmd/main.go ./targets/sgkb/left-0.3.0/vial.json
-	go run ./cmd/main.go ./targets/sgkey/vial.json
-	go run ./cmd/main.go ./targets/xiao-kb01/vial.json
+	go run ./cmd/gen-def/main.go ./targets/fric10key/vial.json
+	go run ./cmd/gen-def/main.go ./targets/gopher-badge/vial.json
+	go run ./cmd/gen-def/main.go ./targets/macropad-rp2040/vial.json
+	go run ./cmd/gen-def/main.go ./targets/sgkb/left/vial.json
+	go run ./cmd/gen-def/main.go ./targets/sgkb/left-0.3.0/vial.json
+	go run ./cmd/gen-def/main.go ./targets/sgkey/vial.json
+	go run ./cmd/gen-def/main.go ./targets/xiao-kb01/vial.json
