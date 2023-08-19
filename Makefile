@@ -11,3 +11,11 @@ smoketest: FORCE
 	tinygo build -o /tmp/out.uf2 --target xiao-rp2040     --size short ./targets/xiao-kb01/
 
 FORCE:
+
+gen-def:
+	go run ./cmd/main.go ./targets/fric10key/vial.json
+	go run ./cmd/main.go ./targets/gopher-badge/vial.json
+	go run ./cmd/main.go ./targets/macropad-rp2040/vial.json
+	go run ./cmd/main.go ./targets/sgkb/left/vial.json
+	go run ./cmd/main.go ./targets/sgkb/left-0.3.0/vial.json
+	go run ./cmd/main.go ./targets/sgkey/vial.json
