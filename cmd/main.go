@@ -17,7 +17,7 @@ func main() {
 	if len(os.Args) != 2 {
 		log.Fatal("this program needs vial.json's path")
 	}
-	fmt.Println(os.Args[1])
+	// fmt.Println(os.Args[1])
 
 	f, err := os.Open(os.Args[1])
 	if err != nil {
@@ -56,9 +56,8 @@ func main() {
 	oBuf.WriteString("\t}\n")
 	oBuf.WriteString("}\n")
 
-	// err = os.WriteFile(`../targets/sgkb/left-0.3.0/def.go`, []byte(oBuf.String()), 0666)
 	outPath := filepath.Join(path.Dir(os.Args[1]), `def.go`)
-	fmt.Println(outPath)
+	// fmt.Println(outPath)
 	err = os.WriteFile(outPath, []byte(oBuf.String()), 0666)
 	if err != nil {
 		log.Fatal(err)
