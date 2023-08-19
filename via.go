@@ -138,18 +138,13 @@ func rxHandler2(b []byte) bool {
 		offset := (uint16(b[1]) << 8) + uint16(b[2])
 		sz := b[3]
 		//fmt.Printf("  offset : %04X + %d\n", offset, sz)
-		const (
-			// TODO: must read from JSON
-			columns      = 100
-			numKeyboards = 2
-		)
 		for i := 0; i < int(sz/2); i++ {
 			//fmt.Printf("  %02X %02X\n", b[4+i+1], b[4+i+0])
 			tmp := i + int(offset)/2
-			layer := tmp / (columns * numKeyboards)
-			tmp = tmp % (columns * numKeyboards)
-			kbd := tmp / columns
-			idx := tmp % columns
+			layer := tmp / (MaxKeyCount * len(device.kb))
+			tmp = tmp % (MaxKeyCount * len(device.kb))
+			kbd := tmp / MaxKeyCount
+			idx := tmp % MaxKeyCount
 			//layer := 0
 			//idx := tmp & 0xFF
 			kc := device.KeyVia(layer, kbd, idx)
@@ -247,10 +242,9 @@ func rxHandler2(b []byte) bool {
 
 func Save() error {
 	layers := 6
-	keyboards := 2
-	keys := 100
+	keyboards := len(device.kb)
 
-	wbuf := make([]byte, 4+layers*keyboards*keys*2)
+	wbuf := make([]byte, 4+layers*keyboards*MaxKeyCount*2)
 	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -271,11 +265,11 @@ func Save() error {
 	offset := 4
 	for layer := 0; layer < layers; layer++ {
 		for keyboard := 0; keyboard < keyboards; keyboard++ {
-			for key := 0; key < keys; key++ {
+			for key := 0; key < MaxKeyCount; key++ {
 				wbuf[offset+2*key+0] = byte(device.Key(layer, keyboard, key) >> 8)
 				wbuf[offset+2*key+1] = byte(device.Key(layer, keyboard, key))
 			}
-			offset += keys * 2
+			offset += MaxKeyCount * 2
 		}
 	}
 

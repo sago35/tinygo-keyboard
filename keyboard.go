@@ -84,9 +84,9 @@ func (d *Device) Init() error {
 	d.flashCnt = 0
 
 	// TODO: Allow change to match keyboard
-	layers := 6
-	keyboards := 2
-	keys := 100
+	layers := LayerCount
+	keyboards := len(d.kb)
+	keys := MaxKeyCount
 
 	// TODO: refactor
 	rbuf := make([]byte, 4+layers*keyboards*keys*2)
