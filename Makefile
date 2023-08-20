@@ -12,6 +12,9 @@ smoketest: FORCE
 
 FORCE:
 
+gen-def-with-find:
+	find . -name vial.json | xargs -n 1 go run ./cmd/gen-def
+
 gen-def:
 	go run ./cmd/gen-def/main.go ./targets/fric10key/vial.json
 	go run ./cmd/gen-def/main.go ./targets/gopher-badge/vial.json
