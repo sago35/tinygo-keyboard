@@ -56,7 +56,7 @@ func main() {
 	oBuf.WriteString("\t}\n")
 	oBuf.WriteString("}\n")
 
-	outPath := filepath.Join(path.Dir(os.Args[1]), `def.go`)
+	outPath := filepath.Join(filepath.Dir(os.Args[1]), `def.go`)
 	// fmt.Println(outPath)
 	err = os.WriteFile(outPath, []byte(oBuf.String()), 0666)
 	if err != nil {
