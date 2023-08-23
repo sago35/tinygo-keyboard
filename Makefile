@@ -26,6 +26,7 @@ gen-def:
 	go run ./cmd/gen-def/main.go ./targets/xiao-kb01/vial.json
 
 test-gen-def: gen-def-with-find
+	git status
 	test -z "$$(git status -s)"
 
 test-gen-def-uno: gen-def-with-find
