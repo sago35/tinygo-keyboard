@@ -9,10 +9,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: tinygo-dev
+    - name: smoketest
       run: |
-        go version
         docker pull tinygo/tinygo-dev
+        go version
         docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev tinygo version
-        docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev ls -la
         docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev /bin/sh -c "go mod tidy && git config --global --add safe.directory /workspace && make smoketest"
+
+    - name: Upload uf2 files
+      uses: actions/upload-artifact@v2
+      with:
+        name: uf2-files
+        path: ./out/*.uf2
