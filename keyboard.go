@@ -169,6 +169,9 @@ func (d *Device) Tick() error {
 	for i, x := range d.pressed {
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
 			d.layer = int(x) & 0x0F
+		} else if x == keycodes.KeyRestoreDefaultKeymap {
+			// restore default keymap for QMK
+			machine.Flash.EraseBlocks(0, 1)
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
@@ -294,6 +297,9 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 	case 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05:
 		// MO(x)
 		kc = 0x5220 | (kc & 0x000F)
+	case keycodes.KeyRestoreDefaultKeymap:
+		// restore default keymap for QMK
+		kc = keycodes.KeyRestoreDefaultKeymap
 	default:
 		kc = kc & 0x0FFF
 	}
@@ -336,6 +342,8 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 	case 0x5220, 0x5221, 0x5222, 0x5223, 0x5224, 0x5225:
 		// MO(x)
 		kc = 0xFF00 | (kc & 0x000F)
+	case keycodes.KeyRestoreDefaultKeymap:
+		kc = keycodes.KeyRestoreDefaultKeymap
 	default:
 	}
 
