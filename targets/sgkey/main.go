@@ -15,9 +15,6 @@ import (
 	"tinygo.org/x/tinydraw"
 )
 
-//go:embed vial.json
-var def []byte
-
 func main() {
 	usb.Product = "sgkey-0.1.0"
 

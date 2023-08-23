@@ -12,9 +12,6 @@ import (
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
-//go:embed vial.json
-var def []byte
-
 func main() {
 	usb.Product = "sgkb-0.3.0"
 

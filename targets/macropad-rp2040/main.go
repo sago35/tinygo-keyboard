@@ -17,9 +17,6 @@ import (
 	"tinygo.org/x/tinyfont/freemono"
 )
 
-//go:embed vial.json
-var def []byte
-
 func main() {
 	usb.Product = "macropad-rp2040-0.1.0"
 

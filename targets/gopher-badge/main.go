@@ -18,9 +18,6 @@ import (
 // This example is based on
 // https://github.com/conejoninja/gopherbadge/blob/main/tutorial/basics/step5/main.go
 
-//go:embed vial.json
-var def []byte
-
 func main() {
 	usb.Product = "gopher-badge-0.1.0"
 

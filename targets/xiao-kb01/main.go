@@ -16,9 +16,6 @@ import (
 	"tinygo.org/x/drivers/ws2812"
 )
 
-//go:embed vial.json
-var def []byte
-
 func main() {
 	usb.Product = "xiao-kb01-0.1.0"
 

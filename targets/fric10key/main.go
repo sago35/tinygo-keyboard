@@ -11,9 +11,6 @@ import (
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
-//go:embed vial.json
-var def []byte
-
 func main() {
 	usb.Product = "fric10key-0.1.0"
 
