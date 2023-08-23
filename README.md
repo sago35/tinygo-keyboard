@@ -2,6 +2,8 @@
 
 **The API is not yet fixed.**  
 
+**TinyGo 0.29 or later is required to build tinygo-keyboard 0.2.0**  
+
 ![](./img/top.jpg)
 
 The following are supported.  
