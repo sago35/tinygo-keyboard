@@ -3,7 +3,6 @@
 package keyboard
 
 import (
-	"fmt"
 	"machine"
 	"machine/usb"
 	"machine/usb/descriptor"
@@ -122,7 +121,7 @@ func rxHandler2(b []byte) bool {
 	switch b[0] {
 	//case 0x12, 0x0E:
 	default:
-		fmt.Printf("RxHandler % X\n", b)
+		//fmt.Printf("RxHandler % X\n", b)
 	}
 
 	copy(txb[:32], b)
@@ -167,7 +166,7 @@ func rxHandler2(b []byte) bool {
 		Changed = false
 		Changed2 = false
 	case 0x05:
-		fmt.Printf("XXXXXXXXX % X\n", b)
+		//fmt.Printf("XXXXXXXXX % X\n", b)
 		//Keys[b[1]][b[2]][b[3]] = Keycode((uint16(b[4]) << 8) + uint16(b[5]))
 		device.SetKeycodeVia(int(b[1]), int(b[2]), int(b[3]), Keycode((uint16(b[4])<<8)+uint16(b[5])))
 		device.flashCh <- true
@@ -211,7 +210,7 @@ func rxHandler2(b []byte) bool {
 			if int(end) > len(KeyboardDef) {
 				end = uint16(len(KeyboardDef))
 			}
-			fmt.Printf("vial_get_def : page=%04X start=%04X end=%04X\n", page, start, end)
+			//fmt.Printf("vial_get_def : page=%04X start=%04X end=%04X\n", page, start, end)
 			copy(txb[:32], KeyboardDef[start:end])
 		case 0x09:
 			// vial_qmk_settings_query
@@ -235,7 +234,7 @@ func rxHandler2(b []byte) bool {
 		return false
 	}
 	machine.SendUSBInPacket(6, txb[:32])
-	fmt.Printf("Tx        % X\n", txb[:32])
+	//fmt.Printf("Tx        % X\n", txb[:32])
 
 	return true
 }
