@@ -4,9 +4,9 @@ smoketest: FORCE
 	tinygo build -o ./out/fric10key.uf2       --target xiao-rp2040     --size short ./targets/fric10key/       
 	tinygo build -o ./out/gopher-badge.uf2    --target gopher-badge    --size short ./targets/gopher-badge/
 	tinygo build -o ./out/macropad-rp2040.uf2 --target macropad-rp2040 --size short ./targets/macropad-rp2040/
-	tinygo build -o ./out/sgkb/left.uf2       --target xiao-rp2040     --size short ./targets/sgkb/left/
-	tinygo build -o ./out/sgkb/left-0.3.0.uf2 --target xiao-rp2040     --size short ./targets/sgkb/left-0.3.0/
-	tinygo build -o ./out/sgkb/right.uf2      --target xiao-rp2040     --size short ./targets/sgkb/right/
+	tinygo build -o ./out/sgkb-left.uf2       --target xiao-rp2040     --size short ./targets/sgkb/left/
+	tinygo build -o ./out/sgkb-left-0.3.0.uf2 --target xiao-rp2040     --size short ./targets/sgkb/left-0.3.0/
+	tinygo build -o ./out/sgkb-right.uf2      --target xiao-rp2040     --size short ./targets/sgkb/right/
 	tinygo build -o ./out/sgkey.uf2           --target xiao-rp2040     --size short ./targets/sgkey/
 	tinygo build -o ./out/wiokey.uf2          --target wioterminal     --size short ./targets/wiokey/
 	tinygo build -o ./out/xiao-kb01.uf2       --target xiao-rp2040     --size short ./targets/xiao-kb01/
