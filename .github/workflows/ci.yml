@@ -7,9 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: tinygo-dev
       run: |
+        go version
         docker pull tinygo/tinygo-dev
+        docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev tinygo version
         docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev make smoketest
