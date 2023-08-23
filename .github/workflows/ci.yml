@@ -12,4 +12,4 @@ jobs:
     - name: tinygo-dev
       run: |
         docker pull tinygo/tinygo-dev
-        docker run --rm tinygo/tinygo-dev tinygo version
+        docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev make smoketest
