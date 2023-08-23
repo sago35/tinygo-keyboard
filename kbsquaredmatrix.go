@@ -93,7 +93,23 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 }
 
 func (d *SquaredMatrixKeyboard) Key(layer, index int) Keycode {
+	if layer >= len(d.Keys) {
+		return 0
+	}
+	if index >= len(d.Keys[layer]) {
+		return 0
+	}
 	return d.Keys[layer][index]
+}
+
+func (d *SquaredMatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
+	if layer >= len(d.Keys) {
+		return
+	}
+	if index >= len(d.Keys[layer]) {
+		return
+	}
+	d.Keys[layer][index] = key
 }
 
 func (d *SquaredMatrixKeyboard) Init() error {

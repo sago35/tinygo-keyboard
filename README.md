@@ -7,6 +7,7 @@
 The following are supported.  
 
 * key input
+    * squared matrix scan
     * matrix scan / duplex-matrix scan
     * rotary encoder
     * GPIO
@@ -14,6 +15,8 @@ The following are supported.
 * layer feature by mod key
 * mouse click / mouse wheel
 * support TRRS (UART)
+* support [Vial](https://vial.rocks/)
+    * currently rp2040 only
 
 ## Microcontrollers
 

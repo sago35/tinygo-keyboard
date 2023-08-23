@@ -86,7 +86,23 @@ func (d *RotaryKeyboard) Get() []State {
 }
 
 func (d *RotaryKeyboard) Key(layer, index int) Keycode {
+	if layer >= len(d.Keys) {
+		return 0
+	}
+	if index >= len(d.Keys[layer]) {
+		return 0
+	}
 	return d.Keys[layer][index]
+}
+
+func (d *RotaryKeyboard) SetKeycode(layer, index int, key Keycode) {
+	if layer >= len(d.Keys) {
+		return
+	}
+	if index >= len(d.Keys[layer]) {
+		return
+	}
+	d.Keys[layer][index] = key
 }
 
 func (d *RotaryKeyboard) Init() error {

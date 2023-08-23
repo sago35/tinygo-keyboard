@@ -1,10 +1,12 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"image/color"
 	"log"
 	"machine"
+	"machine/usb"
 	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
@@ -16,6 +18,8 @@ import (
 )
 
 func main() {
+	usb.Product = "macropad-rp2040-0.1.0"
+
 	err := run()
 	if err != nil {
 		log.Fatal(err)
@@ -106,6 +110,9 @@ func run() error {
 	rk.SetCallback(func(layer, index int, state keyboard.State) {
 		fmt.Printf("rk: %d %d %d\n", layer, index, state)
 	})
+
+	// for Vial
+	loadKeyboardDef()
 
 	err := d.Init()
 	if err != nil {

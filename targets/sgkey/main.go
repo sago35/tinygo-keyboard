@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"image/color"
 	"log"
 	"machine"
+	"machine/usb"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
@@ -14,16 +16,25 @@ import (
 )
 
 func main() {
+	usb.Product = "sgkey-0.1.0"
+
 	err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
+type RCS struct {
+	row, col int
+	state    keyboard.State
+}
+
 func run() error {
 	machine.I2C0.Configure(machine.I2CConfig{
 		Frequency: machine.TWI_FREQ_400KHZ,
 	})
+
+	ch := make(chan RCS, 16)
 
 	display := ssd1306.NewI2C(machine.I2C0)
 	display.Configure(ssd1306.Config{
@@ -56,13 +67,27 @@ func run() error {
 		row := index / len(colPins)
 		col := index % len(colPins)
 		fmt.Printf("mk: %d %d %d %d\n", layer, row, col, state)
-		c := color.RGBA{255, 255, 255, 255}
-		if state == keyboard.PressToRelease {
-			c = color.RGBA{0, 0, 0, 255}
+		select {
+		case ch <- RCS{row: row, col: col, state: state}:
 		}
-		tinydraw.FilledRectangle(&display, 10+20*int16(col), 10+20*int16(row), 18, 18, c)
-		display.Display()
 	})
+
+	go func() {
+		for {
+			select {
+			case x := <-ch:
+				c := color.RGBA{255, 255, 255, 255}
+				if x.state == keyboard.PressToRelease {
+					c = color.RGBA{0, 0, 0, 255}
+				}
+				tinydraw.FilledRectangle(&display, 10+20*int16(x.col), 10+20*int16(x.row), 18, 18, c)
+				display.Display()
+			}
+		}
+	}()
+
+	// for Vial
+	loadKeyboardDef()
 
 	d.Debug = true
 	return d.Loop(context.Background())

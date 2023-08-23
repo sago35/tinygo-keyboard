@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"image/color"
 	"log"
 	"machine"
+	"machine/usb"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
@@ -17,6 +19,8 @@ import (
 // https://github.com/conejoninja/gopherbadge/blob/main/tutorial/basics/step5/main.go
 
 func main() {
+	usb.Product = "gopher-badge-0.1.0"
+
 	err := run()
 	if err != nil {
 		log.Fatal(err)
@@ -104,6 +108,9 @@ func run() error {
 			tinydraw.Circle(&display, xy[col].x, xy[col].y, 16, white)
 		}
 	})
+
+	// for Vial
+	loadKeyboardDef()
 
 	return d.Loop(context.Background())
 }

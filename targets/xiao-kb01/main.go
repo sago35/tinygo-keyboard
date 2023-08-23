@@ -1,10 +1,12 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"image/color"
 	"log"
 	"machine"
+	"machine/usb"
 	"math/rand"
 	"runtime/volatile"
 	"time"
@@ -15,6 +17,8 @@ import (
 )
 
 func main() {
+	usb.Product = "xiao-kb01-0.1.0"
+
 	err := run()
 	if err != nil {
 		log.Fatal(err)
@@ -39,7 +43,6 @@ func run() error {
 	}
 
 	d := keyboard.New()
-	time.Sleep(2 * time.Second)
 
 	pins := []machine.Pin{
 		machine.D0,
@@ -98,6 +101,14 @@ func run() error {
 			jp.MouseLeft, jp.MouseRight,
 		},
 	})
+
+	// for Vial
+	loadKeyboardDef()
+
+	err := d.Init()
+	if err != nil {
+		return err
+	}
 
 	cont := true
 	ticker := time.Tick(4 * time.Millisecond)

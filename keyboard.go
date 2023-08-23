@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
+	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
 type Device struct {
@@ -17,6 +18,8 @@ type Device struct {
 	Mouse    Mouser
 	Override [][]Keycode
 	Debug    bool
+	flashCh  chan bool
+	flashCnt int
 
 	kb []KBer
 
@@ -27,6 +30,7 @@ type Device struct {
 type KBer interface {
 	Get() []State
 	Key(layer, index int) Keycode
+	SetKeycode(layer, index int, key Keycode)
 	Init() error
 }
 
@@ -54,7 +58,10 @@ func New() *Device {
 		Keyboard: kb,
 		Mouse:    mouse.Port(),
 		pressed:  make([]Keycode, 0, 10),
+		flashCh:  make(chan bool, 10),
 	}
+
+	SetDevice(d)
 
 	return d
 }
@@ -73,11 +80,58 @@ func (d *Device) Init() error {
 			return err
 		}
 	}
+
+	d.flashCnt = 0
+
+	// TODO: Allow change to match keyboard
+	layers := LayerCount
+	keyboards := len(d.kb)
+	keys := MaxKeyCount
+
+	// TODO: refactor
+	rbuf := make([]byte, 4+layers*keyboards*keys*2)
+	_, err := machine.Flash.ReadAt(rbuf, 0)
+	if err != nil {
+		return err
+	}
+	sz := (int64(rbuf[0]) << 24) + (int64(rbuf[1]) << 16) + (int64(rbuf[2]) << 8) + int64(rbuf[3])
+	if sz != machine.Flash.Size() {
+		// No settings are saved
+		return nil
+	}
+
+	offset := 4
+	for layer := 0; layer < layers; layer++ {
+		for keyboard := 0; keyboard < keyboards; keyboard++ {
+			for key := 0; key < keys; key++ {
+				kc := Keycode(rbuf[offset+2*key+0]) << 8
+				kc += Keycode(rbuf[offset+2*key+1])
+				device.SetKeycode(layer, keyboard, key, kc)
+			}
+			offset += keys * 2
+		}
+	}
+
 	return nil
 }
 
 func (d *Device) Tick() error {
 	pressToRelease := []Keycode{}
+
+	select {
+	case <-d.flashCh:
+		d.flashCnt = 1
+	default:
+		if d.flashCnt >= 500 {
+			d.flashCnt = 0
+			err := Save()
+			if err != nil {
+				return err
+			}
+		} else if d.flashCnt > 0 {
+			d.flashCnt++
+		}
+	}
 
 	// read from key matrix
 	for _, k := range d.kb {
@@ -203,6 +257,89 @@ func (d *Device) Loop(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (d *Device) Key(layer, kbIndex, index int) Keycode {
+	if kbIndex >= len(d.kb) {
+		return 0
+	}
+	return d.kb[kbIndex].Key(layer, index)
+}
+
+func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
+	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, kbIndex, index)
+	if kbIndex >= len(d.kb) {
+		return 0
+	}
+	kc := d.kb[kbIndex].Key(layer, index)
+	switch kc {
+	case jp.MouseLeft:
+		kc = 0x00D1
+	case jp.MouseRight:
+		kc = 0x00D2
+	case jp.MouseMiddle:
+		kc = 0x00D3
+	case jp.MouseBack:
+		kc = 0x00D4
+	case jp.MouseForward:
+		kc = 0x00D5
+	case jp.WheelUp:
+		kc = 0x00D9
+	case jp.WheelDown:
+		kc = 0x00DA
+	case jp.KeyMediaVolumeInc:
+		kc = 0x00A9
+	case jp.KeyMediaVolumeDec:
+		kc = 0x00AA
+	case 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05:
+		// MO(x)
+		kc = 0x5220 | (kc & 0x000F)
+	default:
+		kc = kc & 0x0FFF
+	}
+	return kc
+}
+
+func (d *Device) SetKeycode(layer, kbIndex, index int, key Keycode) {
+	if kbIndex >= len(d.kb) {
+		return
+	}
+	d.kb[kbIndex].SetKeycode(layer, index, key)
+}
+
+func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
+	if kbIndex >= len(d.kb) {
+		return
+	}
+	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, kbIndex, index, key)
+	kc := key | 0xF000
+
+	switch key {
+	case 0x00D1:
+		kc = jp.MouseLeft
+	case 0x00D2:
+		kc = jp.MouseRight
+	case 0x00D3:
+		kc = jp.MouseMiddle
+	case 0x00D4:
+		kc = jp.MouseBack
+	case 0x00D5:
+		kc = jp.MouseForward
+	case 0x00D9:
+		kc = jp.WheelUp
+	case 0x00DA:
+		kc = jp.WheelDown
+	case 0x00A9:
+		kc = jp.KeyMediaVolumeInc
+	case 0x00AA:
+		kc = jp.KeyMediaVolumeDec
+	case 0x5220, 0x5221, 0x5222, 0x5223, 0x5224, 0x5225:
+		// MO(x)
+		kc = 0xFF00 | (kc & 0x000F)
+	default:
+	}
+
+	d.kb[kbIndex].SetKeycode(layer, index, kc)
 }
 
 type Keycode k.Keycode

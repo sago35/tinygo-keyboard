@@ -2,15 +2,19 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"machine"
+	"machine/usb"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 )
 
 func main() {
+	usb.Product = "sgkb-0.4.0"
+
 	err := run()
 	if err != nil {
 		log.Fatal(err)
@@ -79,6 +83,8 @@ func run() error {
 
 	// override ctrl-h to BackSpace
 	d.OverrideCtrlH()
+
+	loadKeyboardDef()
 
 	return d.Loop(context.Background())
 }

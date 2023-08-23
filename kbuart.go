@@ -99,7 +99,23 @@ func (d *UartKeyboard) Get() []State {
 }
 
 func (d *UartKeyboard) Key(layer, index int) Keycode {
+	if layer >= len(d.Keys) {
+		return 0
+	}
+	if index >= len(d.Keys[layer]) {
+		return 0
+	}
 	return d.Keys[layer][index]
+}
+
+func (d *UartKeyboard) SetKeycode(layer, index int, key Keycode) {
+	if layer >= len(d.Keys) {
+		return
+	}
+	if index >= len(d.Keys[layer]) {
+		return
+	}
+	d.Keys[layer][index] = key
 }
 
 func (d *UartKeyboard) Init() error {
