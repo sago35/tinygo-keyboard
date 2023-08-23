@@ -23,3 +23,9 @@ gen-def:
 	go run ./cmd/gen-def/main.go ./targets/sgkb/left-0.3.0/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkey/vial.json
 	go run ./cmd/gen-def/main.go ./targets/xiao-kb01/vial.json
+
+test-gen-def: gen-def-with-find
+	test -z "$$(git status -s)"
+
+test-gen-def-uno: gen-def-with-find
+	test -z "$$(git status -s -uno)"
