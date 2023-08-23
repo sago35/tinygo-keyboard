@@ -1,6 +1,6 @@
+github.com/akif999/tinygo-rotary-encoder v0.0.0-20230411081648-5d87ee99295e h1:3KD1UE/W4pcKMlfR4PdbvksAB1/F1mu0RqqK2r7wOg0=
+github.com/akif999/tinygo-rotary-encoder v0.0.0-20230411081648-5d87ee99295e/go.mod h1:vozFQeh667GysGEvJ6GKutjAOilleV5usLdxYan+XYM=
 github.com/bgould/http v0.0.0-20190627042742-d268792bdee7/go.mod h1:BTqvVegvwifopl4KTEDth6Zezs9eR+lCWhvGKvkxJHE=
-github.com/bgould/tinygo-rotary-encoder v0.0.0-20221224155058-c26fcc9a3d20 h1:V+y/i2c6xdvTB/gmiYdlj1/lc9XVEPDysxe6+7U5Yt4=
-github.com/bgould/tinygo-rotary-encoder v0.0.0-20221224155058-c26fcc9a3d20/go.mod h1:vozFQeh667GysGEvJ6GKutjAOilleV5usLdxYan+XYM=
 github.com/eclipse/paho.mqtt.golang v1.2.0/go.mod h1:H9keYFcgq3Qr5OUJm/JZI/i6U7joQ8SYLhZwfeOo6Ts=
 github.com/frankban/quicktest v1.10.2/go.mod h1:K+q6oSqb0W0Ininfk863uOk1lMy69l/P6txr3mVT54s=
 github.com/google/go-cmp v0.5.2/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
