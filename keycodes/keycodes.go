@@ -15,3 +15,8 @@ const (
 	KeyH         = 0xF000 | 0x0B
 	KeyBackspace = 0xF000 | 0x2A
 )
+
+const (
+	// restore default keymap for QMK
+	KeyRestoreDefaultKeymap = 0x7C03
+)
