@@ -2,7 +2,7 @@
     "name": "tinygo-gopher-badge",
     "vendorId": "0x2E8A",
     "productId": "0x0003",
-    "matrix": {"rows": 2, "cols": 100},
+    "matrix": {"rows": 1, "cols": 252},
     "layouts": {
         "keymap": [
             [{"x":1}, "0,3"],

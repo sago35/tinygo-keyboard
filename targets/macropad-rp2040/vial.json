@@ -2,7 +2,7 @@
     "name": "tinygo-macropad-rp2040",
     "vendorId": "0x239A",
     "productId": "0x8107",
-    "matrix": {"rows": 2, "cols": 100},
+    "matrix": {"rows": 2, "cols": 252},
     "layouts": {
         "keymap": [
             [{"x":2, "w":0.5}, "1,0", {"w":0.5}, "1,1"],
