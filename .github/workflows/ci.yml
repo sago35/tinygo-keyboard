@@ -13,7 +13,7 @@ jobs:
       run: |
         docker pull tinygo/tinygo-dev
         docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev tinygo version
-        docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev /bin/sh -c "git config --global --add safe.directory /workspace && make test-gen-def && make smoketest"
+        docker run --rm -v $GITHUB_WORKSPACE:/workspace -w /workspace tinygo/tinygo-dev /bin/sh -c "git config --global --add safe.directory /workspace && make test-gen-def && sed -i '281s/^/\/\//' /tinygo/src/runtime/gc_blocks.go && make smoketest"
 
     - name: Upload uf2 files
       uses: actions/upload-artifact@v3
