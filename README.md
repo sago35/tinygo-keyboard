@@ -149,6 +149,12 @@ $ tinygo flash --target macropad-rp2040 --size short ./targets/macropad-rp2040/
     * https://learn.adafruit.com/adafruit-macropad-rp2040/overview
 
 
+## Restore default keymap
+
+Set the key with the key code of `0x7C03`, and then press it.  
+Then a reset will restore the default keymap.  
+See [#8](https://github.com/sago35/tinygo-keyboard/pull/8).
+
 ## Note
 
 The following PR changes are required for all keys to work properly.
