@@ -12,7 +12,7 @@ jobs:
     - name: Install TinyGo
       run: |
         wget https://github.com/tinygo-org/tinygo/releases/download/v0.28.1/tinygo0.28.1.linux-amd64.tar.gz
-        tar -xzf tinygo0.28.1.linux-amd64.tar.gz -C /usr
+        sudo tar -xzf tinygo0.28.1.linux-amd64.tar.gz -C /usr
         echo "/usr/tinygo/bin" >> $GITHUB_PATH
 
     - name: Run tinygo version
