@@ -18,9 +18,19 @@ type UartKeyboard struct {
 func (d *Device) AddUartKeyboard(size int, uart *machine.UART, keys [][]Keycode) *UartKeyboard {
 	state := make([]State, size)
 
+	keydef := make([][]Keycode, LayerCount)
+	for l := 0; l < len(keydef); l++ {
+		keydef[l] = make([]Keycode, len(state))
+	}
+	for l := 0; l < len(keys); l++ {
+		for kc := 0; kc < len(keys[l]); kc++ {
+			keydef[l][kc] = keys[l][kc]
+		}
+	}
+
 	k := &UartKeyboard{
 		State:    state,
-		Keys:     keys,
+		Keys:     keydef,
 		callback: func(layer, index int, state State) {},
 		uart:     uart,
 		buf:      make([]byte, 0, 3),
@@ -99,7 +109,7 @@ func (d *UartKeyboard) Get() []State {
 }
 
 func (d *UartKeyboard) Key(layer, index int) Keycode {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return 0
 	}
 	if index >= len(d.Keys[layer]) {
@@ -109,13 +119,17 @@ func (d *UartKeyboard) Key(layer, index int) Keycode {
 }
 
 func (d *UartKeyboard) SetKeycode(layer, index int, key Keycode) {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return
 	}
 	if index >= len(d.Keys[layer]) {
 		return
 	}
 	d.Keys[layer][index] = key
+}
+
+func (d *UartKeyboard) GetKeyCount() int {
+	return len(d.State)
 }
 
 func (d *UartKeyboard) Init() error {

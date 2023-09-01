@@ -137,13 +137,14 @@ func rxHandler2(b []byte) bool {
 		offset := (uint16(b[1]) << 8) + uint16(b[2])
 		sz := b[3]
 		//fmt.Printf("  offset : %04X + %d\n", offset, sz)
+		cnt := device.GetMaxKeyCount()
 		for i := 0; i < int(sz/2); i++ {
 			//fmt.Printf("  %02X %02X\n", b[4+i+1], b[4+i+0])
 			tmp := i + int(offset)/2
-			layer := tmp / (MaxKeyCount * len(device.kb))
-			tmp = tmp % (MaxKeyCount * len(device.kb))
-			kbd := tmp / MaxKeyCount
-			idx := tmp % MaxKeyCount
+			layer := tmp / (cnt * len(device.kb))
+			tmp = tmp % (cnt * len(device.kb))
+			kbd := tmp / cnt
+			idx := tmp % cnt
 			//layer := 0
 			//idx := tmp & 0xFF
 			kc := device.KeyVia(layer, kbd, idx)
@@ -243,7 +244,8 @@ func Save() error {
 	layers := 6
 	keyboards := len(device.kb)
 
-	wbuf := make([]byte, 4+layers*keyboards*MaxKeyCount*2)
+	cnt := device.GetMaxKeyCount()
+	wbuf := make([]byte, 4+layers*keyboards*cnt*2)
 	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -264,11 +266,11 @@ func Save() error {
 	offset := 4
 	for layer := 0; layer < layers; layer++ {
 		for keyboard := 0; keyboard < keyboards; keyboard++ {
-			for key := 0; key < MaxKeyCount; key++ {
+			for key := 0; key < cnt; key++ {
 				wbuf[offset+2*key+0] = byte(device.Key(layer, keyboard, key) >> 8)
 				wbuf[offset+2*key+1] = byte(device.Key(layer, keyboard, key))
 			}
-			offset += MaxKeyCount * 2
+			offset += cnt * 2
 		}
 	}
 

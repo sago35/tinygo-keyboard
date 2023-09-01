@@ -31,6 +31,7 @@ type KBer interface {
 	Get() []State
 	Key(layer, index int) Keycode
 	SetKeycode(layer, index int, key Keycode)
+	GetKeyCount() int
 	Init() error
 }
 
@@ -86,7 +87,7 @@ func (d *Device) Init() error {
 	// TODO: Allow change to match keyboard
 	layers := LayerCount
 	keyboards := len(d.kb)
-	keys := MaxKeyCount
+	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
 	rbuf := make([]byte, 4+layers*keyboards*keys*2)
@@ -113,6 +114,17 @@ func (d *Device) Init() error {
 	}
 
 	return nil
+}
+
+func (d *Device) GetMaxKeyCount() int {
+	cnt := 0
+	for _, k := range d.kb {
+		if cnt < k.GetKeyCount() {
+			cnt = k.GetKeyCount()
+		}
+	}
+
+	return cnt
 }
 
 func (d *Device) Tick() error {

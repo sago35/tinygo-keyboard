@@ -21,10 +21,20 @@ func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) 
 		pins[i].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
+	keydef := make([][]Keycode, LayerCount)
+	for l := 0; l < len(keydef); l++ {
+		keydef[l] = make([]Keycode, len(state))
+	}
+	for l := 0; l < len(keys); l++ {
+		for kc := 0; kc < len(keys[l]); kc++ {
+			keydef[l][kc] = keys[l][kc]
+		}
+	}
+
 	k := &SquaredMatrixKeyboard{
 		Pins:     pins,
 		State:    state,
-		Keys:     keys,
+		Keys:     keydef,
 		callback: func(layer, index int, state State) {},
 	}
 
@@ -93,7 +103,7 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 }
 
 func (d *SquaredMatrixKeyboard) Key(layer, index int) Keycode {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return 0
 	}
 	if index >= len(d.Keys[layer]) {
@@ -103,13 +113,17 @@ func (d *SquaredMatrixKeyboard) Key(layer, index int) Keycode {
 }
 
 func (d *SquaredMatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return
 	}
 	if index >= len(d.Keys[layer]) {
 		return
 	}
 	d.Keys[layer][index] = key
+}
+
+func (d *SquaredMatrixKeyboard) GetKeyCount() int {
+	return len(d.State)
 }
 
 func (d *SquaredMatrixKeyboard) Init() error {

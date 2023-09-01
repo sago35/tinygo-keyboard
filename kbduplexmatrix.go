@@ -28,11 +28,21 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 	}
 
+	keydef := make([][]Keycode, LayerCount)
+	for l := 0; l < len(keydef); l++ {
+		keydef[l] = make([]Keycode, len(state))
+	}
+	for l := 0; l < len(keys); l++ {
+		for kc := 0; kc < len(keys[l]); kc++ {
+			keydef[l][kc] = keys[l][kc]
+		}
+	}
+
 	k := &DuplexMatrixKeyboard{
 		Col:      colPins,
 		Row:      rowPins,
 		State:    state,
-		Keys:     keys,
+		Keys:     keydef,
 		callback: func(layer, index int, state State) {},
 	}
 
@@ -129,7 +139,7 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 }
 
 func (d *DuplexMatrixKeyboard) Key(layer, index int) Keycode {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return 0
 	}
 	if index >= len(d.Keys[layer]) {
@@ -139,13 +149,17 @@ func (d *DuplexMatrixKeyboard) Key(layer, index int) Keycode {
 }
 
 func (d *DuplexMatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return
 	}
 	if index >= len(d.Keys[layer]) {
 		return
 	}
 	d.Keys[layer][index] = key
+}
+
+func (d *DuplexMatrixKeyboard) GetKeyCount() int {
+	return len(d.State)
 }
 
 func (d *DuplexMatrixKeyboard) Init() error {

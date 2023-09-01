@@ -33,11 +33,21 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keyc
 		f(&o)
 	}
 
+	keydef := make([][]Keycode, LayerCount)
+	for l := 0; l < len(keydef); l++ {
+		keydef[l] = make([]Keycode, len(state))
+	}
+	for l := 0; l < len(keys); l++ {
+		for kc := 0; kc < len(keys[l]); kc++ {
+			keydef[l][kc] = keys[l][kc]
+		}
+	}
+
 	k := &MatrixKeyboard{
 		Col:      colPins,
 		Row:      rowPins,
 		State:    state,
-		Keys:     keys,
+		Keys:     keydef,
 		options:  o,
 		callback: func(layer, index int, state State) {},
 	}
@@ -108,7 +118,7 @@ func (d *MatrixKeyboard) Get() []State {
 }
 
 func (d *MatrixKeyboard) Key(layer, index int) Keycode {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return 0
 	}
 	if index >= len(d.Keys[layer]) {
@@ -118,13 +128,17 @@ func (d *MatrixKeyboard) Key(layer, index int) Keycode {
 }
 
 func (d *MatrixKeyboard) SetKeycode(layer, index int, key Keycode) {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return
 	}
 	if index >= len(d.Keys[layer]) {
 		return
 	}
 	d.Keys[layer][index] = key
+}
+
+func (d *MatrixKeyboard) GetKeyCount() int {
+	return len(d.State)
 }
 
 func (d *MatrixKeyboard) Init() error {
