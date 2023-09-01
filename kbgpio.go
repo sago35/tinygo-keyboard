@@ -26,10 +26,20 @@ func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][]Keycode, opt ...Op
 		f(&o)
 	}
 
+	keydef := make([][]Keycode, LayerCount)
+	for l := 0; l < len(keydef); l++ {
+		keydef[l] = make([]Keycode, len(state))
+	}
+	for l := 0; l < len(keys); l++ {
+		for kc := 0; kc < len(keys[l]); kc++ {
+			keydef[l][kc] = keys[l][kc]
+		}
+	}
+
 	k := &GpioKeyboard{
 		Col:      pins,
 		State:    state,
-		Keys:     keys,
+		Keys:     keydef,
 		options:  o,
 		callback: func(layer, index int, state State) {},
 	}
@@ -85,7 +95,7 @@ func (d *GpioKeyboard) Get() []State {
 }
 
 func (d *GpioKeyboard) Key(layer, index int) Keycode {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return 0
 	}
 	if index >= len(d.Keys[layer]) {
@@ -95,13 +105,17 @@ func (d *GpioKeyboard) Key(layer, index int) Keycode {
 }
 
 func (d *GpioKeyboard) SetKeycode(layer, index int, key Keycode) {
-	if layer >= len(d.Keys) {
+	if layer >= LayerCount {
 		return
 	}
 	if index >= len(d.Keys[layer]) {
 		return
 	}
 	d.Keys[layer][index] = key
+}
+
+func (d *GpioKeyboard) GetKeyCount() int {
+	return len(d.State)
 }
 
 func (d *GpioKeyboard) Init() error {
