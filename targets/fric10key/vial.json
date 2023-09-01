@@ -2,7 +2,7 @@
     "name": "tinygo-fric10key",
     "vendorId": "0x2e8a",
     "productId": "0x000a",
-    "matrix": {"rows": 1, "cols": 252},
+    "matrix": {"rows": 1, "cols": 28},
     "layouts": {
         "keymap": [
             ["0,0","0,1","0,2","0,3"],

@@ -2,7 +2,7 @@
     "name": "sgkb",
     "vendorId": "0x2e8a",
     "productId": "0x000a",
-    "matrix": {"rows": 2, "cols": 252},
+    "matrix": {"rows": 2, "cols": 50},
     "layouts": {
         "keymap": [
             [

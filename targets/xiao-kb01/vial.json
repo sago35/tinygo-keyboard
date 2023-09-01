@@ -2,7 +2,7 @@
     "name": "tinygo-xiao-kb01",
     "vendorId": "0x2e8a",
     "productId": "0x000a",
-    "matrix": {"rows": 4, "cols": 252},
+    "matrix": {"rows": 4, "cols": 12},
     "layouts": {
         "keymap": [
             [{"w":0.75}, "1,0", {"w":0.75}, "1,1", {"x":1, "w":0.75}, "2,0", {"w":0.75}, "2,1"],
