@@ -29,6 +29,10 @@ The following microcontrollers are supported.
 * samd51
 * samd21
 
+## Tutorial
+
+* [tutorial.md](./tutorial.md)
+
 ## sgkb-0.3.0
 
 ![](./img/sgkb-0.3.0.jpg)
