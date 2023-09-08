@@ -1,0 +1,11 @@
+{
+    "name": "tinygo-keyboard-tutorial-gpio-vial",
+    "vendorId": "0x2e8a",
+    "productId": "0x000a",
+    "matrix": {"rows": 1, "cols": 2},
+    "layouts": {
+        "keymap": [
+            ["0,0","0,1"]
+        ]
+    }
+}
