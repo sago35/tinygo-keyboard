@@ -18,7 +18,8 @@ The following are supported.
 * mouse click / mouse wheel
 * support TRRS (UART)
 * support [Vial](https://vial.rocks/)
-    * currently rp2040 only
+    * rp2040 and nrf52840 are supported
+    * atsamd21 and atsamd51 will be supported in TinyGo 0.30
 
 ## Microcontrollers
 
