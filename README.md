@@ -159,6 +159,15 @@ Set the key with the key code of `0x7C03`, and then press it.
 Then a reset will restore the default keymap.  
 See [#8](https://github.com/sago35/tinygo-keyboard/pull/8).
 
+## Restore default keymap (tinygo flash)
+
+Restore default keymap each time it is reset by specifying `--tags reset_to_default`.  
+Note that in this setting, any changes made from Vial or other sources will immediately revert to the original setting.  
+
+```
+$ tinygo flash --target wioterminal --size short  --tags reset_to_default ./targets/wiokey
+```
+
 ## Note
 
 The following PR changes are required for all keys to work properly.
