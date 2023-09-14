@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"machine"
+	"machine/usb"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
@@ -18,6 +19,8 @@ func main() {
 }
 
 func run() error {
+	usb.Product = "wiokey-0.1.0"
+
 	d := keyboard.New()
 
 	colPins := []machine.Pin{
@@ -65,16 +68,19 @@ func run() error {
 			jp.KeyB,
 			jp.KeyC,
 			jp.KeyMediaVolumeInc,
-			jp.KeyMediaPrevTrack,
-			jp.KeyMediaNextTrack,
+			jp.KeyLeft,
+			jp.KeyRight,
 			jp.KeyMediaVolumeDec,
-			jp.KeyMediaPlayPause,
+			jp.KeyEnter,
 		},
 	})
 
 	gk.SetCallback(func(layer, index int, state keyboard.State) {
 		fmt.Printf("gk: %d %d %d\n", layer, index, state)
 	})
+
+	// for Vial
+	loadKeyboardDef()
 
 	d.Debug = true
 	return d.Loop(context.Background())

@@ -24,6 +24,7 @@ gen-def:
 	go run ./cmd/gen-def/main.go ./targets/macropad-rp2040/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkb/left/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkb/left-0.3.0/vial.json
+	go run ./cmd/gen-def/main.go ./targets/wiokey/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkey/vial.json
 	go run ./cmd/gen-def/main.go ./targets/xiao-kb01/vial.json
 	go run ./cmd/gen-def/main.go ./tutorial/gpio-vial/vial.json
