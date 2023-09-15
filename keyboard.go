@@ -163,6 +163,8 @@ func (d *Device) Tick() error {
 				if !found {
 					d.pressed = append(d.pressed, x)
 				}
+				// waiting time for chattering prevention
+				time.Sleep(40 * time.Millisecond)
 
 			case Press:
 			case PressToRelease:
