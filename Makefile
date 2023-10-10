@@ -2,6 +2,7 @@ smoketest: FORCE
 	go build .
 	mkdir -p out
 	tinygo build -o ./out/fric10key.uf2       --target xiao-rp2040     --size short ./targets/fric10key/
+	tinygo build -o ./out/gobadge.uf2         --target gobadge         --size short ./targets/gobadge/
 	tinygo build -o ./out/gopher-badge.uf2    --target gopher-badge    --size short ./targets/gopher-badge/
 	tinygo build -o ./out/macropad-rp2040.uf2 --target macropad-rp2040 --size short ./targets/macropad-rp2040/
 	tinygo build -o ./out/sgkb-left.uf2       --target xiao-rp2040     --size short ./targets/sgkb/left/
@@ -21,6 +22,7 @@ gen-def-with-find:
 gen-def:
 	go run ./cmd/gen-def/main.go ./targets/fric10key/vial.json
 	go run ./cmd/gen-def/main.go ./targets/gopher-badge/vial.json
+	go run ./cmd/gen-def/main.go ./targets/gobadge/vial.json
 	go run ./cmd/gen-def/main.go ./targets/macropad-rp2040/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkb/left/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkb/left-0.3.0/vial.json
