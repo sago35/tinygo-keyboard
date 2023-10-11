@@ -141,6 +141,15 @@ $ tinygo flash --target gopher-badge --size short ./targets/gopher-badge/
 * schema
     * https://gopherbadge.com/
 
+## GoBadge / PyBadge
+
+```
+$ tinygo flash --target gobadge --size short ./targets/gobadge
+```
+
+* schema
+    * https://learn.adafruit.com/adafruit-pybadge
+
 
 ## MacroPad RP2040
 
