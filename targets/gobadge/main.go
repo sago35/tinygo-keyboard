@@ -33,14 +33,54 @@ func run() error {
 
 	d.AddShifterKeyboard(buttons, [][]keyboard.Keycode{
 		{
-			jp.KeyT, // Left
-			jp.KeyI, // Up
-			jp.KeyN, // Down
-			jp.KeyY, // Right
-			jp.KeyG, // Select
-			jp.KeyO, // Start
-			jp.KeyA, // A
-			jp.KeyB, // B
+			jp.Key0,   // Left
+			jp.Key0,   // Up
+			jp.Key0,   // Down
+			jp.Key0,   // Right
+			jp.KeyTo1, // Select
+			jp.KeyTo1, // Start
+			jp.KeyA,   // A
+			jp.KeyB,   // B
+		},
+		{
+			jp.Key1,    // Left
+			jp.Key1,    // Up
+			jp.Key1,    // Down
+			jp.Key1,    // Right
+			jp.KeyTo2,  // Select
+			jp.KeyTo2,  // Start
+			jp.KeyMod3, // A
+			jp.KeyB,    // B
+		},
+		{
+			jp.Key2,    // Left
+			jp.Key2,    // Up
+			jp.Key2,    // Down
+			jp.Key2,    // Right
+			jp.KeyTo0,  // Select
+			jp.KeyTo0,  // Start
+			jp.KeyMod4, // A
+			jp.KeyB,    // B
+		},
+		{
+			jp.Key3,    // Left
+			jp.Key3,    // Up
+			jp.Key3,    // Down
+			jp.Key3,    // Right
+			jp.Key3,    // Select
+			jp.Key3,    // Start
+			jp.KeyMod3, // A
+			jp.KeyB,    // B
+		},
+		{
+			jp.Key4,    // Left
+			jp.Key4,    // Up
+			jp.Key4,    // Down
+			jp.Key4,    // Right
+			jp.Key4,    // Select
+			jp.Key4,    // Start
+			jp.KeyMod4, // A
+			jp.KeyB,    // B
 		},
 	})
 
