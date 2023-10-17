@@ -23,8 +23,9 @@ type Device struct {
 
 	kb []KBer
 
-	layer   int
-	pressed []Keycode
+	layer     int
+	baseLayer int
+	pressed   []Keycode
 }
 
 type KBer interface {
@@ -180,6 +181,9 @@ func (d *Device) Tick() error {
 
 	for i, x := range d.pressed {
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
+			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
+				d.baseLayer = int(x) & 0x0F
+			}
 			d.layer = int(x) & 0x0F
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
@@ -206,7 +210,9 @@ func (d *Device) Tick() error {
 
 	for _, x := range pressToRelease {
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-			d.layer = 0
+			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
+				d.layer = d.baseLayer
+			}
 
 			pressed := []Keycode{}
 			for _, p := range d.pressed {
@@ -306,6 +312,9 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 		kc = 0x00A9
 	case jp.KeyMediaVolumeDec:
 		kc = 0x00AA
+	case 0xFF10, 0xFF11, 0xFF12, 0xFF13, 0xFF14, 0xFF15:
+		// TO(x)
+		kc = 0x5200 | (kc & 0x000F)
 	case 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05:
 		// MO(x)
 		kc = 0x5220 | (kc & 0x000F)
@@ -351,6 +360,9 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 		kc = jp.KeyMediaVolumeInc
 	case 0x00AA:
 		kc = jp.KeyMediaVolumeDec
+	case 0x5200, 0x5201, 0x5202, 0x5203, 0x5204, 0x5205:
+		// TO(x)
+		kc = 0xFF10 | (kc & 0x000F)
 	case 0x5220, 0x5221, 0x5222, 0x5223, 0x5224, 0x5225:
 		// MO(x)
 		kc = 0xFF00 | (kc & 0x000F)
