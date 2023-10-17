@@ -23,8 +23,9 @@ type Device struct {
 
 	kb []KBer
 
-	layer   int
-	pressed []Keycode
+	layer     int
+	baseLayer int
+	pressed   []Keycode
 }
 
 type KBer interface {
@@ -180,6 +181,9 @@ func (d *Device) Tick() error {
 
 	for i, x := range d.pressed {
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
+			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
+				d.baseLayer = int(x) & 0x0F
+			}
 			d.layer = int(x) & 0x0F
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
@@ -206,7 +210,9 @@ func (d *Device) Tick() error {
 
 	for _, x := range pressToRelease {
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-			d.layer = 0
+			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
+				d.layer = d.baseLayer
+			}
 
 			pressed := []Keycode{}
 			for _, p := range d.pressed {

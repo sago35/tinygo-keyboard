@@ -160,8 +160,17 @@ const (
 )
 
 const (
+	KeyMod0 = keycodes.KeyMod0
 	KeyMod1 = keycodes.KeyMod1
 	KeyMod2 = keycodes.KeyMod2
 	KeyMod3 = keycodes.KeyMod3
 	KeyMod4 = keycodes.KeyMod4
+	KeyMod5 = keycodes.KeyMod5
+
+	KeyTo0 = keycodes.KeyTo0
+	KeyTo1 = keycodes.KeyTo1
+	KeyTo2 = keycodes.KeyTo2
+	KeyTo3 = keycodes.KeyTo3
+	KeyTo4 = keycodes.KeyTo4
+	KeyTo5 = keycodes.KeyTo5
 )
