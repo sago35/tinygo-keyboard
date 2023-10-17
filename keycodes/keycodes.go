@@ -17,6 +17,13 @@ const (
 )
 
 const (
+	KeyMod1 = ModKeyMask | 0x01
+	KeyMod2 = ModKeyMask | 0x02
+	KeyMod3 = ModKeyMask | 0x03
+	KeyMod4 = ModKeyMask | 0x04
+)
+
+const (
 	// restore default keymap for QMK
 	KeyRestoreDefaultKeymap = 0x7C03
 )

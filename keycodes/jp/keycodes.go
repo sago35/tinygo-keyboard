@@ -160,8 +160,8 @@ const (
 )
 
 const (
-	KeyMod1 = keycodes.ModKeyMask | 0x01
-	KeyMod2 = keycodes.ModKeyMask | 0x02
-	KeyMod3 = keycodes.ModKeyMask | 0x03
-	KeyMod4 = keycodes.ModKeyMask | 0x04
+	KeyMod1 = keycodes.KeyMod1
+	KeyMod2 = keycodes.KeyMod2
+	KeyMod3 = keycodes.KeyMod3
+	KeyMod4 = keycodes.KeyMod4
 )
