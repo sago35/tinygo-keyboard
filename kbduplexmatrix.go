@@ -69,8 +69,14 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[idx] = NoneToPress
+					if d.cycleCounter[idx] >= CyclesToPreventChattering {
+						d.State[idx] = NoneToPress
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				} else {
+					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
 				if current {
@@ -115,8 +121,14 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[idx] = NoneToPress
+					if d.cycleCounter[idx] >= CyclesToPreventChattering {
+						d.State[idx] = NoneToPress
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				} else {
+					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
 				if current {
