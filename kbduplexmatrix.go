@@ -22,7 +22,7 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 	col := len(colPins)
 	row := len(rowPins)
 	state := make([]State, row*2*col)
-	cycleCnt := make([]uint8, row*2*col)
+	cycleCnt := make([]uint8, len(state))
 
 	for c := range colPins {
 		colPins[c].Configure(machine.PinConfig{Mode: machine.PinOutput})

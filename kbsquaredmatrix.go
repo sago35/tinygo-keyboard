@@ -11,11 +11,15 @@ type SquaredMatrixKeyboard struct {
 	Keys     [][]Keycode
 	callback Callback
 
-	Pins []machine.Pin
+	Pins         []machine.Pin
+	cycleCounter []uint8
 }
+
+const squaredMatrixCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) *SquaredMatrixKeyboard {
 	state := make([]State, len(pins)*(len(pins)-1))
+	cycleCnt := make([]uint8, len(state))
 
 	for i := range pins {
 		pins[i].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
@@ -32,10 +36,11 @@ func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) 
 	}
 
 	k := &SquaredMatrixKeyboard{
-		Pins:     pins,
-		State:    state,
-		Keys:     keydef,
-		callback: func(layer, index int, state State) {},
+		Pins:         pins,
+		State:        state,
+		Keys:         keydef,
+		callback:     func(layer, index int, state State) {},
+		cycleCounter: cycleCnt,
 	}
 
 	d.kb = append(d.kb, k)
@@ -68,8 +73,14 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[idx] = NoneToPress
+					if d.cycleCounter[idx] >= squaredMatrixCyclesToPreventChattering {
+						d.State[idx] = NoneToPress
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				} else {
+					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
 				if current {
@@ -82,9 +93,15 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 				}
 			case Press:
 				if current {
+					d.cycleCounter[idx] = 0
 				} else {
-					d.State[idx] = PressToRelease
-					d.callback(0, idx, PressToRelease)
+					if d.cycleCounter[idx] >= squaredMatrixCyclesToPreventChattering {
+						d.State[idx] = PressToRelease
+						d.callback(0, idx, PressToRelease)
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				}
 			case PressToRelease:
 				if current {
