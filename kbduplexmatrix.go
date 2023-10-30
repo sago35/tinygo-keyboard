@@ -11,14 +11,18 @@ type DuplexMatrixKeyboard struct {
 	Keys     [][]Keycode
 	callback Callback
 
-	Col []machine.Pin
-	Row []machine.Pin
+	Col          []machine.Pin
+	Row          []machine.Pin
+	cycleCounter []uint8
 }
+
+const duplexMatrixCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keycode) *DuplexMatrixKeyboard {
 	col := len(colPins)
 	row := len(rowPins)
 	state := make([]State, row*2*col)
+	cycleCnt := make([]uint8, row*2*col)
 
 	for c := range colPins {
 		colPins[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
@@ -39,11 +43,12 @@ func (d *Device) AddDuplexMatrixKeyboard(colPins, rowPins []machine.Pin, keys []
 	}
 
 	k := &DuplexMatrixKeyboard{
-		Col:      colPins,
-		Row:      rowPins,
-		State:    state,
-		Keys:     keydef,
-		callback: func(layer, index int, state State) {},
+		Col:          colPins,
+		Row:          rowPins,
+		cycleCounter: cycleCnt,
+		State:        state,
+		Keys:         keydef,
+		callback:     func(layer, index int, state State) {},
 	}
 
 	d.kb = append(d.kb, k)
@@ -64,8 +69,14 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[idx] = NoneToPress
+					if d.cycleCounter[idx] >= duplexMatrixCyclesToPreventChattering {
+						d.State[idx] = NoneToPress
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				} else {
+					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
 				if current {
@@ -78,9 +89,15 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 				}
 			case Press:
 				if current {
+					d.cycleCounter[idx] = 0
 				} else {
-					d.State[idx] = PressToRelease
-					d.callback(0, idx, PressToRelease)
+					if d.cycleCounter[idx] >= duplexMatrixCyclesToPreventChattering {
+						d.State[idx] = PressToRelease
+						d.callback(0, idx, PressToRelease)
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				}
 			case PressToRelease:
 				if current {
@@ -104,8 +121,14 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[idx] = NoneToPress
+					if d.cycleCounter[idx] >= duplexMatrixCyclesToPreventChattering {
+						d.State[idx] = NoneToPress
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				} else {
+					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
 				if current {
@@ -118,9 +141,15 @@ func (d *DuplexMatrixKeyboard) Get() []State {
 				}
 			case Press:
 				if current {
+					d.cycleCounter[idx] = 0
 				} else {
-					d.State[idx] = PressToRelease
-					d.callback(0, idx, PressToRelease)
+					if d.cycleCounter[idx] >= duplexMatrixCyclesToPreventChattering {
+						d.State[idx] = PressToRelease
+						d.callback(0, idx, PressToRelease)
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				}
 			case PressToRelease:
 				if current {
