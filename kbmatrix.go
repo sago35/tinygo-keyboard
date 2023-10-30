@@ -12,14 +12,18 @@ type MatrixKeyboard struct {
 	options  Options
 	callback Callback
 
-	Col []machine.Pin
-	Row []machine.Pin
+	Col          []machine.Pin
+	Row          []machine.Pin
+	cycleCounter []uint8
 }
+
+const matrixCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keycode, opt ...Option) *MatrixKeyboard {
 	col := len(colPins)
 	row := len(rowPins)
 	state := make([]State, row*col)
+	cycleCnt := make([]uint8, len(state))
 
 	for c := range colPins {
 		colPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
@@ -44,12 +48,13 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keyc
 	}
 
 	k := &MatrixKeyboard{
-		Col:      colPins,
-		Row:      rowPins,
-		State:    state,
-		Keys:     keydef,
-		options:  o,
-		callback: func(layer, index int, state State) {},
+		Col:          colPins,
+		Row:          rowPins,
+		State:        state,
+		Keys:         keydef,
+		options:      o,
+		callback:     func(layer, index int, state State) {},
+		cycleCounter: cycleCnt,
 	}
 
 	d.kb = append(d.kb, k)
@@ -78,8 +83,14 @@ func (d *MatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					d.State[idx] = NoneToPress
+					if d.cycleCounter[idx] >= matrixCyclesToPreventChattering {
+						d.State[idx] = NoneToPress
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				} else {
+					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
 				if current {
@@ -92,9 +103,15 @@ func (d *MatrixKeyboard) Get() []State {
 				}
 			case Press:
 				if current {
+					d.cycleCounter[idx] = 0
 				} else {
-					d.State[idx] = PressToRelease
-					d.callback(0, idx, PressToRelease)
+					if d.cycleCounter[idx] >= matrixCyclesToPreventChattering {
+						d.State[idx] = PressToRelease
+						d.callback(0, idx, PressToRelease)
+						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
+					}
 				}
 			case PressToRelease:
 				if current {

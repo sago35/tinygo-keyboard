@@ -12,12 +12,16 @@ type GpioKeyboard struct {
 	options  Options
 	callback Callback
 
-	Col []machine.Pin
+	Col          []machine.Pin
+	cycleCounter []uint8
 }
+
+const gpioCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][]Keycode, opt ...Option) *GpioKeyboard {
 	col := len(pins)
 	state := make([]State, col)
+	cycleCnt := make([]uint8, len(state))
 
 	o := Options{
 		InvertButtonState: true,
@@ -37,11 +41,12 @@ func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][]Keycode, opt ...Op
 	}
 
 	k := &GpioKeyboard{
-		Col:      pins,
-		State:    state,
-		Keys:     keydef,
-		options:  o,
-		callback: func(layer, index int, state State) {},
+		Col:          pins,
+		State:        state,
+		Keys:         keydef,
+		options:      o,
+		callback:     func(layer, index int, state State) {},
+		cycleCounter: cycleCnt,
 	}
 
 	d.kb = append(d.kb, k)
@@ -63,8 +68,14 @@ func (d *GpioKeyboard) Get() []State {
 		switch d.State[c] {
 		case None:
 			if current {
-				d.State[c] = NoneToPress
+				if d.cycleCounter[c] >= gpioCyclesToPreventChattering {
+					d.State[c] = NoneToPress
+					d.cycleCounter[c] = 0
+				} else {
+					d.cycleCounter[c]++
+				}
 			} else {
+				d.cycleCounter[c] = 0
 			}
 		case NoneToPress:
 			if current {
@@ -77,9 +88,15 @@ func (d *GpioKeyboard) Get() []State {
 			}
 		case Press:
 			if current {
+				d.cycleCounter[c] = 0
 			} else {
-				d.State[c] = PressToRelease
-				d.callback(0, c, PressToRelease)
+				if d.cycleCounter[c] >= gpioCyclesToPreventChattering {
+					d.State[c] = PressToRelease
+					d.callback(0, c, PressToRelease)
+					d.cycleCounter[c] = 0
+				} else {
+					d.cycleCounter[c]++
+				}
 			}
 		case PressToRelease:
 			if current {
