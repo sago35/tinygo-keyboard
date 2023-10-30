@@ -108,9 +108,9 @@ func (d *MatrixKeyboard) Get() []State {
 					if d.cycleCounter[idx] >= matrixCyclesToPreventChattering {
 						d.State[idx] = PressToRelease
 						d.callback(0, idx, PressToRelease)
-						d.cycleCounter[idx]++
-					} else {
 						d.cycleCounter[idx] = 0
+					} else {
+						d.cycleCounter[idx]++
 					}
 				}
 			case PressToRelease:

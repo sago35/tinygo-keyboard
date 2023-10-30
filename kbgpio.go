@@ -93,9 +93,9 @@ func (d *GpioKeyboard) Get() []State {
 				if d.cycleCounter[c] >= gpioCyclesToPreventChattering {
 					d.State[c] = PressToRelease
 					d.callback(0, c, PressToRelease)
-					d.cycleCounter[c]++
-				} else {
 					d.cycleCounter[c] = 0
+				} else {
+					d.cycleCounter[c]++
 				}
 			}
 		case PressToRelease:
