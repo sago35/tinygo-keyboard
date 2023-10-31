@@ -1,3 +1,5 @@
+//go:build tinygo && nrf52840
+
 package keyboard
 
 import (
@@ -81,11 +83,18 @@ func (k *BleTxKeyboard) Connect() error {
 	return nil
 }
 
+type bleKeyEvent struct {
+	Index  int
+	IsHigh bool
+}
+
 type BleKeyboard struct {
 	RxBleName string
 	State     []State
 	Keys      [][]Keycode
 	callback  Callback
+	ringbuf   *RingBuffer[bleKeyEvent]
+	processed []int
 
 	adapter *bluetooth.Adapter
 	buf     []byte
@@ -105,6 +114,7 @@ func (d *Device) AddBleKeyboard(size int, rxname string, keys [][]Keycode) *BleK
 		}
 	}
 
+	var rb [32]bleKeyEvent
 	k := &BleKeyboard{
 		RxBleName: rxname,
 		State:     state,
@@ -113,6 +123,8 @@ func (d *Device) AddBleKeyboard(size int, rxname string, keys [][]Keycode) *BleK
 		callback:  func(layer, index int, state State) {},
 		buf:       make([]byte, 3),
 		changed:   false,
+		ringbuf:   NewRingBuffer(rb[:]),
+		processed: make([]int, 0, 8),
 	}
 
 	d.kb = append(d.kb, k)
@@ -134,25 +146,26 @@ func (d *BleKeyboard) Get() []State {
 		}
 	}
 
-	if !d.changed {
-		return d.State
-	}
+	d.processed = d.processed[:0]
 
-	d.changed = false
-
-	if len(d.buf) == 3 {
-		index := (int(d.buf[1]) << 8) + int(d.buf[2])
-		current := false
-		switch d.buf[0] {
-		case 0xAA: // press
-			current = true
-		case 0x55: // release
-			current = false
-		default:
-			d.buf[0], d.buf[1] = d.buf[1], d.buf[2]
-			d.buf = d.buf[:2]
+	cont := true
+	for cont {
+		b, ok := d.ringbuf.Peek()
+		if !ok {
 			return d.State
 		}
+		index := b.Index
+		current := b.IsHigh
+
+		for _, idx := range d.processed {
+			if index == idx {
+				return d.State
+			}
+		}
+		d.processed = append(d.processed, index)
+
+		d.ringbuf.Get()
+
 		switch d.State[index] {
 		case None:
 			if current {
@@ -236,10 +249,18 @@ func (d *BleKeyboard) Init() error {
 					if offset != 0 || len(value) != 3 {
 						return
 					}
-					d.buf[0] = value[0]
-					d.buf[1] = value[1]
-					d.buf[2] = value[2]
-					d.changed = true
+					index := (int(value[1]) << 8) + int(value[2])
+					isHigh := false
+					switch value[0] {
+					case 0xAA: // press
+						isHigh = true
+					case 0x55: // release
+						isHigh = false
+					}
+					d.ringbuf.Put(bleKeyEvent{
+						Index:  index,
+						IsHigh: isHigh,
+					})
 				},
 			},
 		},
