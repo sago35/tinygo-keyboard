@@ -9,6 +9,9 @@ import (
 )
 
 func init() {
+	// vial-gui requires the following magic word.
+	usb.Serial = "vial:f64c2b3c"
+
 	descriptor.CDCHID.Configuration[2] = 0x84
 	descriptor.CDCHID.Configuration[3] = 0x00
 	descriptor.CDCHID.Configuration[4] = 0x04
