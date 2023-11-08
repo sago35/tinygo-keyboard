@@ -10,16 +10,16 @@ The following are supported.
 
 * key input
     * squared matrix scan
-    * matrix scan / duplex-matrix scan
+    * matrix scan
+    * duplex-matrix scan
     * rotary encoder
     * GPIO
     * UART
+    * Shifter (tinygo.org/x/drivers/shifter)
 * layer feature by mod key
 * mouse click / mouse wheel
 * support TRRS (UART)
 * support [Vial](https://vial.rocks/)
-    * rp2040 and nrf52840 are supported
-    * atsamd21 and atsamd51 will be supported in TinyGo 0.30
 
 ## Microcontrollers
 
@@ -34,12 +34,17 @@ The following microcontrollers are supported.
 
 * [tutorial.md](./tutorial.md)
 
-## sgkb-0.3.0
+## sgkb-0.4.0
 
 ![](./img/sgkb-0.3.0.jpg)
 
 ```
+# sgkb-0.4.0
 $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/left/
+$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
+
+# sgkb-0.3.0 or before
+$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/left-0.3.0/
 $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 ```
 
@@ -54,16 +59,17 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 | key cap (1.75u) | 1 |
 | key cap (2u) | 1 |
 | key cap (ISO-ENTER) | 1 |
-| Stabilizer (2u) | 1 |
+| Stabilizer (2u) | 2 |
 | diode 1N4148 | 72 |
 | xiao-rp2040 | 2 |
 | pin header 1x7 | 4 |
 | TRRS connector | 2 |
 | TRRS cable | 1 |
 
-left:
+left: (This is a circuit from before version 0.3.0; version 0.4.0 has become a squared-matrix)
 
 ![](./img/sgkb-0.2.0.left.png)
+
 
 right:
 
@@ -179,14 +185,6 @@ $ tinygo flash --target wioterminal --size short  --tags reset_to_default ./targ
 ```
 
 ## Note
-
-The following PR changes are required for all keys to work properly.
-However, most keys will work without the following PRs.
-
-> With the previous configurations, keycodes larger than 0x73 cannot be sent.
-> For example, we cannot send Left Windows (0xF0E3).
-
-https://github.com/tinygo-org/tinygo/pull/3327
 
 ## LICENSE
 
