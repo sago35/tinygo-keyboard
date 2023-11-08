@@ -11,5 +11,3 @@ require (
 )
 
 require github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-
-replace github.com/bgould/tinygo-rotary-encoder => github.com/akif999/tinygo-rotary-encoder v0.0.0-20230411081648-5d87ee99295e
