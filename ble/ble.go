@@ -59,9 +59,14 @@ func (k *Keyboard) Connect() error {
 	bluetooth.SetSecParamsBonding()
 	bluetooth.SetSecCapabilities(bluetooth.NoneGapIOCapability)
 
+	name := k.Name
+	if len(name) > 14 {
+		name = name[:14]
+	}
+
 	adv := adapter.DefaultAdvertisement()
 	adv.Configure(bluetooth.AdvertisementOptions{
-		LocalName: "tinygo", //k.Name,
+		LocalName: name,
 		ServiceUUIDs: []bluetooth.UUID{
 			bluetooth.ServiceUUIDDeviceInformation,
 			bluetooth.ServiceUUIDBattery,
