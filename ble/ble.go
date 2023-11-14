@@ -16,7 +16,7 @@ var reportMap = []byte{
 	0x05, 0x01, // USAGE_PAGE (Generic Desktop)
 	0x09, 0x06, // USAGE (Keyboard)
 	0xa1, 0x01, // COLLECTION (Application)
-	0x85, 0x01, //   REPORT_ID (1)
+	0x85, 0x02, //   REPORT_ID (2)
 	0x05, 0x07, //   USAGE_PAGE (Keyboard)
 	0x19, 0x01, //   USAGE_MINIMUM
 	0x29, 0x7f, //   USAGE_MAXIMUM
@@ -39,18 +39,19 @@ var reportMap = []byte{
 	0xc0, // END_COLLECTION
 }
 
-type Keyboard struct {
+type bleKeyboard struct {
+	keyboard
 	Name   string
 	report [9]byte
 }
 
-func NewKeyboard(name string) *Keyboard {
-	return &Keyboard{
+func NewKeyboard(name string) *bleKeyboard {
+	return &bleKeyboard{
 		Name: name,
 	}
 }
 
-func (k *Keyboard) Connect() error {
+func (k *bleKeyboard) Connect() error {
 	err := adapter.Enable()
 	if err != nil {
 		return err
@@ -84,7 +85,7 @@ func (k *Keyboard) Connect() error {
 	return nil
 }
 
-func (k *Keyboard) registerHID() error {
+func (k *bleKeyboard) registerHID() error {
 	adapter.AddService(&bluetooth.Service{
 		UUID: bluetooth.ServiceUUIDDeviceInformation,
 		Characteristics: []bluetooth.CharacteristicConfig{
@@ -201,30 +202,15 @@ func (k *Keyboard) registerHID() error {
 	return nil
 }
 
-func (k *Keyboard) Up(c k.Keycode) error {
-	k.report[0] = 0x01
-	k.report[1] = 0x00
-	k.report[2] = 0x00
-	k.report[3] = 0x00
-	k.report[4] = 0x00
-	k.report[5] = 0x00
-	k.report[6] = 0x00
-	k.report[7] = 0x00
-	k.report[8] = 0x00
-	_, err := reportIn.Write(k.report[:9])
-	return err
+func (k *bleKeyboard) Up(c k.Keycode) error {
+	return k.keyboard.Up(Keycode(c))
 }
 
-func (k *Keyboard) Down(c k.Keycode) error {
-	k.report[0] = 0x01
-	k.report[1] = 0x00
-	k.report[2] = 0x00
-	k.report[3] = uint8(c)
-	k.report[4] = 0x00
-	k.report[5] = 0x00
-	k.report[6] = 0x00
-	k.report[7] = 0x00
-	k.report[8] = 0x00
-	_, err := reportIn.Write(k.report[:9])
+func (k *bleKeyboard) Down(c k.Keycode) error {
+	return k.keyboard.Down(Keycode(c))
+}
+
+func sendBLEPacket(b []byte) error {
+	_, err := reportIn.Write(b)
 	return err
 }
