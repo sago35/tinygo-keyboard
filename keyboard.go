@@ -7,6 +7,7 @@ import (
 	"machine"
 	k "machine/usb/hid/keyboard"
 	"machine/usb/hid/mouse"
+	"runtime"
 	"time"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
@@ -301,6 +302,7 @@ func (d *Device) Loop(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		runtime.Gosched()
 	}
 
 	return nil

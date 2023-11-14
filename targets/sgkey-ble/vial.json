@@ -1,0 +1,12 @@
+{
+    "name": "tinygo-sgkey",
+    "vendorId": "0x2e8a",
+    "productId": "0x000a",
+    "matrix": {"rows": 1, "cols": 6},
+    "layouts": {
+        "keymap": [
+            ["0,0","0,1","0,2"],
+            ["0,3","0,4","0,5"]
+        ]
+    }
+}
