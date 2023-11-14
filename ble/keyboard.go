@@ -1,8 +1,7 @@
-package keyboard
+package ble
 
 import (
 	"errors"
-	"machine"
 	"machine/usb/hid"
 )
 
@@ -57,13 +56,6 @@ const (
 	decodeByte3
 )
 
-func init() {
-	if Keyboard == nil {
-		Keyboard = newKeyboard()
-		hid.SetHandler(Keyboard)
-	}
-}
-
 // New returns the USB hid-keyboard port.
 // Deprecated, better to just use Port()
 func New() *keyboard {
@@ -81,32 +73,8 @@ func newKeyboard() *keyboard {
 	}
 }
 
-func (kb *keyboard) TxHandler() bool {
-	kb.waitTxc = false
-	if b, ok := kb.buf.Get(); ok {
-		kb.waitTxc = true
-		hid.SendUSBPacket(b)
-		return true
-	}
-	return false
-}
-
-func (kb *keyboard) RxHandler(b []byte) bool {
-	if len(b) >= 2 && b[0] == 2 /* ReportID */ {
-		kb.led = b[1]
-	}
-	return false
-}
-
 func (kb *keyboard) tx(b []byte) {
-	if machine.USBDev.InitEndpointComplete {
-		if kb.waitTxc {
-			kb.buf.Put(b)
-		} else {
-			kb.waitTxc = true
-			hid.SendUSBPacket(b)
-		}
-	}
+	sendBLEPacket(b)
 }
 
 func (kb *keyboard) NumLockLed() bool {

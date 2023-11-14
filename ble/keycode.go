@@ -1,4 +1,4 @@
-package keyboard
+package ble
 
 // Keycode is a package-defined bitmap used to encode the value of a given key.
 type Keycode uint16
