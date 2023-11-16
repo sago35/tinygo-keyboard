@@ -1,4 +1,4 @@
-//go:build nrf52840
+//go:build tinygo && nrf52840
 
 package ble
 
@@ -15,10 +15,15 @@ var rx bluetooth.DeviceCharacteristic
 
 var reportMap = descriptor.CDCHID.HID[2]
 
+func init() {
+	adapter.Enable()
+}
+
 type bleKeyboard struct {
 	keyboard
-	Name   string
-	report [9]byte
+	Name      string
+	report    [9]byte
+	connected bool
 }
 
 func NewKeyboard(name string) *bleKeyboard {
@@ -28,10 +33,7 @@ func NewKeyboard(name string) *bleKeyboard {
 }
 
 func (k *bleKeyboard) Connect() error {
-	err := adapter.Enable()
-	if err != nil {
-		return err
-	}
+	var err error
 
 	bluetooth.SetSecParamsBonding()
 	bluetooth.SetSecCapabilities(bluetooth.NoneGapIOCapability)
