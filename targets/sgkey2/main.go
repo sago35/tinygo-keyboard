@@ -11,6 +11,7 @@ import (
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/ble"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	"tinygo.org/x/bluetooth"
 )
 
 func main() {
@@ -55,6 +56,20 @@ func run() error {
 		row := index / len(colPins)
 		col := index % len(colPins)
 		fmt.Printf("mk: %d %d %d %d\n", layer, row, col, state)
+	})
+
+	d.AddBleSplitKeyboard(0x12, bluetooth.DefaultAdapter, "xiao-kb01-0.1.0", [][]keyboard.Keycode{
+		{
+			jp.KeyA, jp.KeyB, jp.KeyC, jp.KeyD,
+			jp.KeyE, jp.KeyF, jp.KeyG, jp.KeyH,
+			jp.KeyI, jp.KeyJ, jp.KeyK, jp.KeyL,
+
+			jp.KeyMediaVolumeDec, jp.KeyMediaVolumeInc,
+
+			jp.WheelDown, jp.WheelUp,
+
+			jp.MouseLeft, jp.MouseRight,
+		},
 	})
 
 	bk := ble.NewKeyboard(usb.Product)
