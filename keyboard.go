@@ -260,12 +260,14 @@ func (d *Device) Loop(ctx context.Context) error {
 		return err
 	}
 
+	ticker := time.Tick(5 * time.Millisecond)
 	cont := true
 	for cont {
 		select {
 		case <-ctx.Done():
 			cont = false
 			continue
+		case <-ticker:
 		default:
 		}
 
@@ -273,8 +275,6 @@ func (d *Device) Loop(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-
-		time.Sleep(10 * time.Millisecond)
 	}
 
 	return nil
