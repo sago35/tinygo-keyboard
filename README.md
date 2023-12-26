@@ -53,7 +53,8 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
         * KiCanvas : [sgkb-0.4.0 left](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fsgkb-0.4.0-dev%2Fkicad%2Fsgkb%2Fsgkb)
         * KiCanvas : [sgkb-0.4.0 right](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fsgkb-right%2Fsgkb-right)
         * KiCanvas : [sgkb-0.3.0 left](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fea336a62da237ce1e1972d8fc5d999a584e267c3%2Fkicad%2Fsgkb%2Fsgkb)
-        * KiCanvas : [sgkb-0.3.0 right](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fea336a62da237ce1e1972d8fc5d999a584e267c3%2Fkicad%2Fsgkb%2Fsgkb)
+        * KiCanvas : [sgkb-0.3.0 right](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fea336a62da237ce1e1972d8fc5d999a584e267c3%2Fkicad%2Fsgkb-right%2Fsgkb-right)
+
 
 | name | amount |
 | ---- | ------ |
