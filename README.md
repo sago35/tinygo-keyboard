@@ -50,6 +50,10 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 
 * files
     * [./kicad/sgkb](./kicad/sgkb/) for KiCad 7.0
+        * KiCanvas : [sgkb-0.4.0 left](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fsgkb-0.4.0-dev%2Fkicad%2Fsgkb%2Fsgkb)
+        * KiCanvas : [sgkb-0.4.0 right](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fsgkb-right%2Fsgkb-right)
+        * KiCanvas : [sgkb-0.3.0 left](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fsgkb%2Fsgkb)
+        * KiCanvas : [sgkb-0.4.0 right](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fsgkb-0.4.0-dev%2Fkicad%2Fsgkb-right%2Fsgkb-right)
 
 | name | amount |
 | ---- | ------ |
@@ -66,15 +70,6 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 | TRRS connector | 2 |
 | TRRS cable | 1 |
 
-left: (This is a circuit from before version 0.3.0; version 0.4.0 has become a squared-matrix)
-
-![](./img/sgkb-0.2.0.left.png)
-
-
-right:
-
-![](./img/sgkb-0.2.0.right.png)
-
 
 ## sg48key
 
@@ -86,6 +81,7 @@ tinygo flash --target xiao --size short ./targets/sg48key/
 
 * files
     * [./kicad/sg48key](./kicad/sg48key/)
+        * KiCanvas : [sg48key](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fsg48key%2Fsg48key)
 
 ## sgh60
 
@@ -97,6 +93,7 @@ tinygo flash --target waveshare-rp2040-zero --size short ./targets/sgh60/
 
 * files
     * [./kicad/sgh60](./kicad/sgh60/)
+        * KiCanvas : [sgh60](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fsgh60%2Fsgh60)
 
 ## wiokey-0.1.0
 
@@ -108,6 +105,7 @@ $ tinygo flash --target wioterminal --size short ./targets/wiokey/
 
 * files
     * [./kicad/wiokey](./kicad/wiokey/) for KiCad 7.0
+        * KiCanvas : [wiokey](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fwiokey%2Fwiokey)
 
 | name | amount |
 | ---- | ------ |
@@ -127,6 +125,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
 
 * files
     * [./kicad/sgkey](./kicad/sgkey/) for KiCad 7.0
+        * KiCanvas : [sgkey](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fsgkey%2Fsgkey)
 * build guide
     * [./targets/sgkey/README.md](./targets/sgkey/README.md)
 
@@ -149,6 +148,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/fric10key/
 
 * files
     * [./kicad/fric10key](./kicad/fric10key/) for KiCad 7.0
+        * KiCanvas : [fric10key](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Ffric10key%2Ffric10key)
 
 | name | amount |
 | ---- | ------ |
@@ -158,6 +158,19 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/fric10key/
 | Stabilizer (2u) | 1 |
 | diode 1N4148 | 27 |
 | xiao-rp2040 | 1 |
+
+## xiao-kb01
+
+![](./img/xiao-kb01-0.1.0.jpg)
+
+```
+$ tinygo flash --target xiao-rp2040 --size short ./targets/xiao-kb01/
+```
+
+* files
+    * [./kicad/xiao-kb01](./kicad/xiao-kb01/) for KiCad 7.0
+        * KiCanvas : [xiao-kb01](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2Fsago35%2Ftinygo-keyboard%2Ftree%2Fmain%2Fkicad%2Fxiao-kb01%2Fxiao-kb01)
+
 
 ## Gopher Badge
 
