@@ -374,6 +374,10 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 	d.kb[kbIndex].SetKeycode(layer, index, kc)
 }
 
+func (d *Device) Layer() int {
+	return d.layer
+}
+
 type Keycode k.Keycode
 
 type Keyboard struct {
