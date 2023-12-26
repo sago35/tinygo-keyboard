@@ -75,6 +75,29 @@ right:
 
 ![](./img/sgkb-0.2.0.right.png)
 
+
+## sg48key
+
+![](./img/sg48key-0.1.0.jpg)
+
+```
+tinygo flash --target xiao --size short ./targets/sg48key/
+```
+
+* files
+    * [./kicad/sg48key](./kicad/sg48key/)
+
+## sgh60
+
+![](./img/sgh60-0.1.0.jpg)
+
+```
+tinygo flash --target waveshare-rp2040-zero --size short ./targets/sgh60/
+```
+
+* files
+    * [./kicad/sgh60](./kicad/sgh60/)
+
 ## wiokey-0.1.0
 
 ![](./img/wiokey-0.1.0.jpg)
