@@ -34,6 +34,7 @@ type KBer interface {
 	SetKeycode(layer, index int, key Keycode)
 	GetKeyCount() int
 	Init() error
+	Callback(layer, index int, state State)
 }
 
 type UpDowner interface {
@@ -204,6 +205,7 @@ func (d *Device) Tick() error {
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
 		}
+		d.kb[kbidx].Callback(layer, index, Press)
 	}
 
 	for _, xx := range pressToRelease {
@@ -252,6 +254,7 @@ func (d *Device) Tick() error {
 		} else {
 			d.Keyboard.Up(k.Keycode(x))
 		}
+		d.kb[kbidx].Callback(layer, index, PressToRelease)
 	}
 
 	return nil

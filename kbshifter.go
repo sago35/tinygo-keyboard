@@ -49,6 +49,12 @@ func (d *ShifterKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
+func (d *ShifterKeyboard) Callback(layer, index int, state State) {
+	if d.callback != nil {
+		d.callback(layer, index, state)
+	}
+}
+
 func (d *ShifterKeyboard) Get() []State {
 	d.Shifter.Read8Input()
 
@@ -68,22 +74,17 @@ func (d *ShifterKeyboard) Get() []State {
 		case NoneToPress:
 			if current {
 				d.State[c] = Press
-				d.callback(0, c, Press)
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, c, Press)
-				d.callback(0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
 				d.State[c] = NoneToPress
-				d.callback(0, c, Press)
 			} else {
 				d.State[c] = None
 			}

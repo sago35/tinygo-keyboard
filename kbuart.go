@@ -44,6 +44,12 @@ func (d *UartKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
+func (d *UartKeyboard) Callback(layer, index int, state State) {
+	if d.callback != nil {
+		d.callback(layer, index, state)
+	}
+}
+
 func (d *UartKeyboard) Get() []State {
 	uart := d.uart
 
@@ -78,7 +84,6 @@ func (d *UartKeyboard) Get() []State {
 			case None:
 				if current {
 					d.State[index] = NoneToPress
-					d.callback(0, index, Press)
 				} else {
 				}
 			case NoneToPress:
@@ -86,18 +91,15 @@ func (d *UartKeyboard) Get() []State {
 					d.State[index] = Press
 				} else {
 					d.State[index] = PressToRelease
-					d.callback(0, index, PressToRelease)
 				}
 			case Press:
 				if current {
 				} else {
 					d.State[index] = PressToRelease
-					d.callback(0, index, PressToRelease)
 				}
 			case PressToRelease:
 				if current {
 					d.State[index] = NoneToPress
-					d.callback(0, index, Press)
 				} else {
 					d.State[index] = None
 				}
