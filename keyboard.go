@@ -203,10 +203,8 @@ func (d *Device) Tick() error {
 				d.Mouse.Press(mouse.Button(x & 0x00FF))
 			case 0x20:
 				d.Mouse.WheelDown()
-				d.Mouse.Wheel(0)
 			case 0x40:
 				d.Mouse.WheelUp()
-				d.Mouse.Wheel(0)
 			}
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
