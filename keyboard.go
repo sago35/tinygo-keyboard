@@ -191,11 +191,12 @@ func (d *Device) Tick() error {
 		kbidx, layer, index := decKey(xx)
 		x := d.kb[kbidx].Key(layer, index)
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
-				d.baseLayer = int(x) & 0x0F
-			}
 			d.layer = int(x) & 0x0F
-			d.layerStack = append(d.layerStack, d.layer)
+			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
+				d.baseLayer = d.layer
+			} else {
+				d.layerStack = append(d.layerStack, d.layer)
+			}
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
 			machine.Flash.EraseBlocks(0, 1)
