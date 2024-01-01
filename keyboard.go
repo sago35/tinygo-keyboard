@@ -28,6 +28,7 @@ type Device struct {
 	layerStack []int
 	baseLayer  int
 	pressed    []uint32
+	repeat     map[uint32]time.Time
 }
 
 type KBer interface {
@@ -65,6 +66,7 @@ func New() *Device {
 		pressed:    make([]uint32, 0, 10),
 		flashCh:    make(chan bool, 10),
 		layerStack: make([]int, 0, 6),
+		repeat:     map[uint32]time.Time{},
 	}
 
 	SetDevice(d)
@@ -203,13 +205,32 @@ func (d *Device) Tick() error {
 				d.Mouse.Press(mouse.Button(x & 0x00FF))
 			case 0x20:
 				d.Mouse.WheelDown()
+				d.repeat[xx] = time.Now().Add(500 * time.Millisecond)
 			case 0x40:
 				d.Mouse.WheelUp()
+				d.repeat[xx] = time.Now().Add(500 * time.Millisecond)
 			}
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
 		}
 		d.kb[kbidx].Callback(layer, index, Press)
+	}
+
+	for xx, v := range d.repeat {
+		if 0 < v.Unix() && v.Sub(time.Now()) < 0 {
+			kbidx, layer, index := decKey(xx)
+			x := d.kb[kbidx].Key(layer, index)
+			if x&0xF000 == 0xD000 {
+				switch x & 0x00FF {
+				case 0x20:
+					d.Mouse.WheelDown()
+					d.repeat[xx] = time.Now().Add(100 * time.Millisecond)
+				case 0x40:
+					d.Mouse.WheelUp()
+					d.repeat[xx] = time.Now().Add(100 * time.Millisecond)
+				}
+			}
+		}
 	}
 
 	for _, xx := range pressToRelease {
@@ -233,8 +254,10 @@ func (d *Device) Tick() error {
 				d.Mouse.Release(mouse.Button(x & 0x00FF))
 			case 0x20:
 				//d.Mouse.WheelDown()
+				d.repeat[xx] = time.Time{}
 			case 0x40:
 				//d.Mouse.WheelUp()
+				d.repeat[xx] = time.Time{}
 			}
 		} else {
 			d.Keyboard.Up(k.Keycode(x))
