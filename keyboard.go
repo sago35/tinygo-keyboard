@@ -147,6 +147,7 @@ func (d *Device) Tick() error {
 	}
 
 	// read from key matrix
+	noneToPresse := []uint32{}
 	for kbidx, k := range d.kb {
 		state := k.Get()
 		for i := range state {
@@ -162,6 +163,7 @@ func (d *Device) Tick() error {
 					}
 				}
 				if !found {
+					noneToPresse = append(noneToPresse, x)
 					d.pressed = append(d.pressed, x)
 				}
 
@@ -179,7 +181,7 @@ func (d *Device) Tick() error {
 		}
 	}
 
-	for i, xx := range d.pressed {
+	for _, xx := range noneToPresse {
 		kbidx, layer, index := decKey(xx)
 		x := d.kb[kbidx].Key(layer, index)
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
@@ -196,14 +198,8 @@ func (d *Device) Tick() error {
 				d.Mouse.Press(mouse.Button(x & 0x00FF))
 			case 0x20:
 				d.Mouse.WheelDown()
-				// ここ上手にキーリピートさせたい感じはある
-				d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-				pressToRelease = append(pressToRelease, xx)
 			case 0x40:
 				d.Mouse.WheelUp()
-				// ここ上手にキーリピートさせたい感じはある
-				d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-				pressToRelease = append(pressToRelease, xx)
 			}
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
