@@ -199,8 +199,10 @@ func (d *Device) Tick() error {
 				d.Mouse.Press(mouse.Button(x & 0x00FF))
 			case 0x20:
 				d.Mouse.WheelDown()
+				d.Mouse.Wheel(0)
 			case 0x40:
 				d.Mouse.WheelUp()
+				d.Mouse.Wheel(0)
 			}
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
@@ -215,33 +217,6 @@ func (d *Device) Tick() error {
 			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
 				d.layer = d.baseLayer
 			}
-
-			pressed := []uint32{}
-			for _, pp := range d.pressed {
-				kbidx2, layer2, index2 := decKey(pp)
-				p := d.kb[kbidx2].Key(layer2, index2)
-
-				if p&0xF000 == 0xD000 {
-					switch p & 0x00FF {
-					case 0x01, 0x02, 0x04, 0x08, 0x10:
-						d.Mouse.Release(mouse.Button(p & 0x00FF))
-					case 0x20:
-						//d.Mouse.WheelDown()
-					case 0x40:
-						//d.Mouse.WheelUp()
-					}
-				} else {
-					switch k.Keycode(p) {
-					case keycodes.KeyLeftCtrl, keycodes.KeyRightCtrl:
-						pressed = append(pressed, pp)
-					default:
-						d.Keyboard.Up(k.Keycode(p))
-					}
-				}
-			}
-			d.pressed = d.pressed[:0]
-			d.pressed = append(d.pressed, pressed...)
-
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
