@@ -11,6 +11,7 @@ import (
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	"golang.org/x/exp/slices"
 )
 
 type Device struct {
@@ -23,9 +24,10 @@ type Device struct {
 
 	kb []KBer
 
-	layer     int
-	baseLayer int
-	pressed   []uint32
+	layer      int
+	layerStack []int
+	baseLayer  int
+	pressed    []uint32
 }
 
 type KBer interface {
@@ -58,10 +60,11 @@ func New() *Device {
 		Port: k.Port(),
 	}
 	d := &Device{
-		Keyboard: kb,
-		Mouse:    mouse.Port(),
-		pressed:  make([]uint32, 0, 10),
-		flashCh:  make(chan bool, 10),
+		Keyboard:   kb,
+		Mouse:      mouse.Port(),
+		pressed:    make([]uint32, 0, 10),
+		flashCh:    make(chan bool, 10),
+		layerStack: make([]int, 0, 6),
 	}
 
 	SetDevice(d)
@@ -190,6 +193,7 @@ func (d *Device) Tick() error {
 				d.baseLayer = int(x) & 0x0F
 			}
 			d.layer = int(x) & 0x0F
+			d.layerStack = append(d.layerStack, d.layer)
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
 			machine.Flash.EraseBlocks(0, 1)
@@ -215,7 +219,15 @@ func (d *Device) Tick() error {
 		x := d.kb[kbidx].Key(layer, index)
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
 			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
-				d.layer = d.baseLayer
+				layer = int(x) & 0x0F
+				idx := slices.Index(d.layerStack, layer)
+				slices.Delete(d.layerStack, idx, idx+1)
+				d.layerStack = d.layerStack[:len(d.layerStack)-1]
+				if len(d.layerStack) == 0 {
+					d.layer = d.baseLayer
+				} else {
+					d.layer = d.layerStack[len(d.layerStack)-1]
+				}
 			}
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
