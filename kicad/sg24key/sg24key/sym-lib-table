@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "foostan/kbd")(type "Legacy")(uri "${KIPRJMOD}/../../lib/kbd/kicad-symbols/kbd.lib")(options "")(descr ""))
+  (lib (name "xiao")(type "KiCad")(uri "${KIPRJMOD}/../../lib/xiao/102010388.kicad_sym")(options "")(descr ""))
+)
