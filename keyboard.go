@@ -11,6 +11,7 @@ import (
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	"golang.org/x/exp/slices"
 )
 
 type Device struct {
@@ -23,9 +24,11 @@ type Device struct {
 
 	kb []KBer
 
-	layer     int
-	baseLayer int
-	pressed   []Keycode
+	layer      int
+	layerStack []int
+	baseLayer  int
+	pressed    []uint32
+	repeat     map[uint32]time.Time
 }
 
 type KBer interface {
@@ -34,6 +37,7 @@ type KBer interface {
 	SetKeycode(layer, index int, key Keycode)
 	GetKeyCount() int
 	Init() error
+	Callback(layer, index int, state State)
 }
 
 type UpDowner interface {
@@ -57,10 +61,12 @@ func New() *Device {
 		Port: k.Port(),
 	}
 	d := &Device{
-		Keyboard: kb,
-		Mouse:    mouse.Port(),
-		pressed:  make([]Keycode, 0, 10),
-		flashCh:  make(chan bool, 10),
+		Keyboard:   kb,
+		Mouse:      mouse.Port(),
+		pressed:    make([]uint32, 0, 10),
+		flashCh:    make(chan bool, 10),
+		layerStack: make([]int, 0, 6),
+		repeat:     map[uint32]time.Time{},
 	}
 
 	SetDevice(d)
@@ -129,7 +135,7 @@ func (d *Device) GetMaxKeyCount() int {
 }
 
 func (d *Device) Tick() error {
-	pressToRelease := []Keycode{}
+	pressToRelease := []uint32{}
 
 	select {
 	case <-d.flashCh:
@@ -147,14 +153,15 @@ func (d *Device) Tick() error {
 	}
 
 	// read from key matrix
-	for _, k := range d.kb {
+	noneToPresse := []uint32{}
+	for kbidx, k := range d.kb {
 		state := k.Get()
 		for i := range state {
 			switch state[i] {
 			case None:
 				// skip
 			case NoneToPress:
-				x := k.Key(d.layer, i)
+				x := encKey(kbidx, d.layer, i)
 				found := false
 				for _, p := range d.pressed {
 					if x == p {
@@ -162,29 +169,34 @@ func (d *Device) Tick() error {
 					}
 				}
 				if !found {
+					noneToPresse = append(noneToPresse, x)
 					d.pressed = append(d.pressed, x)
 				}
 
 			case Press:
 			case PressToRelease:
-				x := k.Key(d.layer, i)
+				x := encKey(kbidx, d.layer, i)
 
 				for i, p := range d.pressed {
-					if x == p {
+					if (x & 0xFF00FFFF) == (p & 0xFF00FFFF) {
 						d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-						pressToRelease = append(pressToRelease, x)
+						pressToRelease = append(pressToRelease, p)
 					}
 				}
 			}
 		}
 	}
 
-	for i, x := range d.pressed {
+	for _, xx := range noneToPresse {
+		kbidx, layer, index := decKey(xx)
+		x := d.kb[kbidx].Key(layer, index)
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
-				d.baseLayer = int(x) & 0x0F
-			}
 			d.layer = int(x) & 0x0F
+			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
+				d.baseLayer = d.layer
+			} else {
+				d.layerStack = append(d.layerStack, d.layer)
+			}
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
 			machine.Flash.EraseBlocks(0, 1)
@@ -194,64 +206,78 @@ func (d *Device) Tick() error {
 				d.Mouse.Press(mouse.Button(x & 0x00FF))
 			case 0x20:
 				d.Mouse.WheelDown()
-				// ここ上手にキーリピートさせたい感じはある
-				d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-				pressToRelease = append(pressToRelease, x)
+				d.repeat[xx] = time.Now().Add(500 * time.Millisecond)
 			case 0x40:
 				d.Mouse.WheelUp()
-				// ここ上手にキーリピートさせたい感じはある
-				d.pressed = append(d.pressed[:i], d.pressed[i+1:]...)
-				pressToRelease = append(pressToRelease, x)
+				d.repeat[xx] = time.Now().Add(500 * time.Millisecond)
 			}
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
 		}
+		d.kb[kbidx].Callback(layer, index, Press)
 	}
 
-	for _, x := range pressToRelease {
-		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
-			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
-				d.layer = d.baseLayer
-			}
-
-			pressed := []Keycode{}
-			for _, p := range d.pressed {
-				if p&0xF000 == 0xD000 {
-					switch p & 0x00FF {
-					case 0x01, 0x02, 0x04, 0x08, 0x10:
-						d.Mouse.Release(mouse.Button(p & 0x00FF))
-					case 0x20:
-						//d.Mouse.WheelDown()
-					case 0x40:
-						//d.Mouse.WheelUp()
-					}
-				} else {
-					switch k.Keycode(p) {
-					case keycodes.KeyLeftCtrl, keycodes.KeyRightCtrl:
-						pressed = append(pressed, p)
-					default:
-						d.Keyboard.Up(k.Keycode(p))
-					}
+	for xx, v := range d.repeat {
+		if 0 < v.Unix() && v.Sub(time.Now()) < 0 {
+			kbidx, layer, index := decKey(xx)
+			x := d.kb[kbidx].Key(layer, index)
+			if x&0xF000 == 0xD000 {
+				switch x & 0x00FF {
+				case 0x20:
+					d.Mouse.WheelDown()
+					d.repeat[xx] = time.Now().Add(100 * time.Millisecond)
+				case 0x40:
+					d.Mouse.WheelUp()
+					d.repeat[xx] = time.Now().Add(100 * time.Millisecond)
 				}
 			}
-			d.pressed = d.pressed[:0]
-			d.pressed = append(d.pressed, pressed...)
+		}
+	}
 
+	for _, xx := range pressToRelease {
+		kbidx, layer, index := decKey(xx)
+		x := d.kb[kbidx].Key(layer, index)
+		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
+			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
+				layer = int(x) & 0x0F
+				idx := slices.Index(d.layerStack, layer)
+				slices.Delete(d.layerStack, idx, idx+1)
+				d.layerStack = d.layerStack[:len(d.layerStack)-1]
+				if len(d.layerStack) == 0 {
+					d.layer = d.baseLayer
+				} else {
+					d.layer = d.layerStack[len(d.layerStack)-1]
+				}
+			}
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
 				d.Mouse.Release(mouse.Button(x & 0x00FF))
 			case 0x20:
 				//d.Mouse.WheelDown()
+				d.repeat[xx] = time.Time{}
 			case 0x40:
 				//d.Mouse.WheelUp()
+				d.repeat[xx] = time.Time{}
 			}
 		} else {
 			d.Keyboard.Up(k.Keycode(x))
 		}
+		d.kb[kbidx].Callback(layer, index, PressToRelease)
 	}
 
 	return nil
+}
+
+func encKey(kb, layer, index int) uint32 {
+	return (uint32(kb) << 24) | (uint32(layer) << 16) | uint32(index)
+}
+
+func decKey(k uint32) (int, int, int) {
+	kbidx := k >> 24
+	layer := (k >> 16) & 0xFF
+	index := k & 0x0000FFFF
+	return int(kbidx), int(layer), int(index)
 }
 
 func (d *Device) Loop(ctx context.Context) error {

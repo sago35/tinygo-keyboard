@@ -51,6 +51,12 @@ func (d *SquaredMatrixKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
+func (d *SquaredMatrixKeyboard) Callback(layer, index int, state State) {
+	if d.callback != nil {
+		d.callback(layer, index, state)
+	}
+}
+
 func (d *SquaredMatrixKeyboard) Get() []State {
 	c := int(0)
 	cols := []int{}
@@ -85,11 +91,8 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 			case NoneToPress:
 				if current {
 					d.State[idx] = Press
-					d.callback(0, idx, Press)
 				} else {
 					d.State[idx] = PressToRelease
-					d.callback(0, idx, Press)
-					d.callback(0, idx, PressToRelease)
 				}
 			case Press:
 				if current {
@@ -97,7 +100,6 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 				} else {
 					if d.cycleCounter[idx] >= squaredMatrixCyclesToPreventChattering {
 						d.State[idx] = PressToRelease
-						d.callback(0, idx, PressToRelease)
 						d.cycleCounter[idx] = 0
 					} else {
 						d.cycleCounter[idx]++
@@ -106,7 +108,6 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 			case PressToRelease:
 				if current {
 					d.State[idx] = NoneToPress
-					d.callback(0, idx, Press)
 				} else {
 					d.State[idx] = None
 				}

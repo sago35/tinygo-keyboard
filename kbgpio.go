@@ -57,6 +57,12 @@ func (d *GpioKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
+func (d *GpioKeyboard) Callback(layer, index int, state State) {
+	if d.callback != nil {
+		d.callback(layer, index, state)
+	}
+}
+
 func (d *GpioKeyboard) Get() []State {
 	for c := range d.Col {
 		current := d.Col[c].Get()
@@ -80,11 +86,8 @@ func (d *GpioKeyboard) Get() []State {
 		case NoneToPress:
 			if current {
 				d.State[c] = Press
-				d.callback(0, c, Press)
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, c, Press)
-				d.callback(0, c, PressToRelease)
 			}
 		case Press:
 			if current {
@@ -92,7 +95,6 @@ func (d *GpioKeyboard) Get() []State {
 			} else {
 				if d.cycleCounter[c] >= gpioCyclesToPreventChattering {
 					d.State[c] = PressToRelease
-					d.callback(0, c, PressToRelease)
 					d.cycleCounter[c] = 0
 				} else {
 					d.cycleCounter[c]++
@@ -101,7 +103,6 @@ func (d *GpioKeyboard) Get() []State {
 		case PressToRelease:
 			if current {
 				d.State[c] = NoneToPress
-				d.callback(0, c, Press)
 			} else {
 				d.State[c] = None
 			}

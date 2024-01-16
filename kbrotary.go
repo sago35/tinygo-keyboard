@@ -49,6 +49,12 @@ func (d *RotaryKeyboard) SetCallback(fn Callback) {
 	d.callback = fn
 }
 
+func (d *RotaryKeyboard) Callback(layer, index int, state State) {
+	if d.callback != nil {
+		d.callback(layer, index, state)
+	}
+}
+
 func (d *RotaryKeyboard) Get() []State {
 	rot := []bool{false, false}
 	if newValue := d.enc.Value(); newValue != d.oldValue {
@@ -70,22 +76,17 @@ func (d *RotaryKeyboard) Get() []State {
 		case NoneToPress:
 			if current {
 				d.State[c] = Press
-				d.callback(0, c, Press)
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, c, Press)
-				d.callback(0, c, PressToRelease)
 			}
 		case Press:
 			if current {
 			} else {
 				d.State[c] = PressToRelease
-				d.callback(0, c, PressToRelease)
 			}
 		case PressToRelease:
 			if current {
 				d.State[c] = NoneToPress
-				d.callback(0, c, Press)
 			} else {
 				d.State[c] = None
 			}
