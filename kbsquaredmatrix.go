@@ -89,11 +89,7 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
-				if current {
-					d.State[idx] = Press
-				} else {
-					d.State[idx] = PressToRelease
-				}
+				d.State[idx] = Press
 			case Press:
 				if current {
 					d.cycleCounter[idx] = 0
@@ -106,11 +102,7 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 					}
 				}
 			case PressToRelease:
-				if current {
-					d.State[idx] = NoneToPress
-				} else {
-					d.State[idx] = None
-				}
+				d.State[idx] = None
 			}
 			d.Pins[j].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 		}

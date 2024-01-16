@@ -99,11 +99,7 @@ func (d *MatrixKeyboard) Get() []State {
 					d.cycleCounter[idx] = 0
 				}
 			case NoneToPress:
-				if current {
-					d.State[idx] = Press
-				} else {
-					d.State[idx] = PressToRelease
-				}
+				d.State[idx] = Press
 			case Press:
 				if current {
 					d.cycleCounter[idx] = 0
@@ -116,11 +112,7 @@ func (d *MatrixKeyboard) Get() []State {
 					}
 				}
 			case PressToRelease:
-				if current {
-					d.State[idx] = NoneToPress
-				} else {
-					d.State[idx] = None
-				}
+				d.State[idx] = None
 			}
 			if !d.options.InvertDiode {
 				d.Col[c].Low()

@@ -84,11 +84,7 @@ func (d *GpioKeyboard) Get() []State {
 				d.cycleCounter[c] = 0
 			}
 		case NoneToPress:
-			if current {
-				d.State[c] = Press
-			} else {
-				d.State[c] = PressToRelease
-			}
+			d.State[c] = Press
 		case Press:
 			if current {
 				d.cycleCounter[c] = 0
@@ -101,11 +97,7 @@ func (d *GpioKeyboard) Get() []State {
 				}
 			}
 		case PressToRelease:
-			if current {
-				d.State[c] = NoneToPress
-			} else {
-				d.State[c] = None
-			}
+			d.State[c] = None
 		}
 	}
 
