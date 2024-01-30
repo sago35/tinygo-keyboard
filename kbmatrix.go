@@ -15,9 +15,8 @@ type MatrixKeyboard struct {
 	Col          []machine.Pin
 	Row          []machine.Pin
 	cycleCounter []uint8
+	debounce     uint8
 }
-
-const matrixCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keycode, opt ...Option) *MatrixKeyboard {
 	col := len(colPins)
@@ -55,6 +54,7 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keyc
 		options:      o,
 		callback:     func(layer, index int, state State) {},
 		cycleCounter: cycleCnt,
+		debounce:     8,
 	}
 
 	d.kb = append(d.kb, k)
@@ -89,7 +89,7 @@ func (d *MatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					if d.cycleCounter[idx] >= matrixCyclesToPreventChattering {
+					if d.cycleCounter[idx] >= d.debounce {
 						d.State[idx] = NoneToPress
 						d.cycleCounter[idx] = 0
 					} else {
@@ -104,7 +104,7 @@ func (d *MatrixKeyboard) Get() []State {
 				if current {
 					d.cycleCounter[idx] = 0
 				} else {
-					if d.cycleCounter[idx] >= matrixCyclesToPreventChattering {
+					if d.cycleCounter[idx] >= d.debounce {
 						d.State[idx] = PressToRelease
 						d.cycleCounter[idx] = 0
 					} else {

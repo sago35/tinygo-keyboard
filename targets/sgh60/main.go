@@ -83,19 +83,22 @@ func run() error {
 	cont := true
 	x := NewADCDevice(ax, 0x3400, 0xD400, true)
 	y := NewADCDevice(ay, 0x3800, 0xE990, true)
+	ticker := time.Tick(1 * time.Millisecond)
+	cnt := 0
 	for cont {
+		<-ticker
 		err := d.Tick()
 		if err != nil {
 			return err
 		}
 
-		xx := x.Get2()
-		yy := y.Get2()
-
-		fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())
-		m.Move(int(xx), int(yy))
-
-		time.Sleep(10 * time.Millisecond)
+		if cnt%10 == 0 {
+			xx := x.Get2()
+			yy := y.Get2()
+			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())
+			m.Move(int(xx), int(yy))
+		}
+		cnt++
 	}
 
 	return nil

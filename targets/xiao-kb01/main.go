@@ -111,17 +111,21 @@ func run() error {
 	}
 
 	cont := true
-	ticker := time.Tick(4 * time.Millisecond)
+	ticker := time.Tick(1 * time.Millisecond)
+	cnt := 0
 	for cont {
 		<-ticker
 		err := d.Tick()
 		if err != nil {
 			return err
 		}
-		if changed.Get() != 0 {
-			ws.WriteColors(wsLeds[:])
-			changed.Set(0)
+		if cnt%4 == 0 {
+			if changed.Get() != 0 {
+				ws.WriteColors(wsLeds[:])
+				changed.Set(0)
+			}
 		}
+		cnt++
 	}
 
 	return nil

@@ -126,7 +126,7 @@ func run() error {
 			return err
 		}
 		ws.WriteColors(wsLeds[:])
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(1 * time.Millisecond)
 	}
 
 	return nil
