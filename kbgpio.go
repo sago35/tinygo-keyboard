@@ -14,9 +14,8 @@ type GpioKeyboard struct {
 
 	Col          []machine.Pin
 	cycleCounter []uint8
+	debounce     uint8
 }
-
-const gpioCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][]Keycode, opt ...Option) *GpioKeyboard {
 	col := len(pins)
@@ -47,6 +46,7 @@ func (d *Device) AddGpioKeyboard(pins []machine.Pin, keys [][]Keycode, opt ...Op
 		options:      o,
 		callback:     func(layer, index int, state State) {},
 		cycleCounter: cycleCnt,
+		debounce:     8,
 	}
 
 	d.kb = append(d.kb, k)
@@ -74,7 +74,7 @@ func (d *GpioKeyboard) Get() []State {
 		switch d.State[c] {
 		case None:
 			if current {
-				if d.cycleCounter[c] >= gpioCyclesToPreventChattering {
+				if d.cycleCounter[c] >= d.debounce {
 					d.State[c] = NoneToPress
 					d.cycleCounter[c] = 0
 				} else {
@@ -89,7 +89,7 @@ func (d *GpioKeyboard) Get() []State {
 			if current {
 				d.cycleCounter[c] = 0
 			} else {
-				if d.cycleCounter[c] >= gpioCyclesToPreventChattering {
+				if d.cycleCounter[c] >= d.debounce {
 					d.State[c] = PressToRelease
 					d.cycleCounter[c] = 0
 				} else {

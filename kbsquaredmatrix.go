@@ -13,9 +13,8 @@ type SquaredMatrixKeyboard struct {
 
 	Pins         []machine.Pin
 	cycleCounter []uint8
+	debounce     uint8
 }
-
-const squaredMatrixCyclesToPreventChattering = uint8(4)
 
 func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) *SquaredMatrixKeyboard {
 	state := make([]State, len(pins)*(len(pins)-1))
@@ -41,6 +40,7 @@ func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) 
 		Keys:         keydef,
 		callback:     func(layer, index int, state State) {},
 		cycleCounter: cycleCnt,
+		debounce:     8,
 	}
 
 	d.kb = append(d.kb, k)
@@ -79,7 +79,7 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 			switch d.State[idx] {
 			case None:
 				if current {
-					if d.cycleCounter[idx] >= squaredMatrixCyclesToPreventChattering {
+					if d.cycleCounter[idx] >= d.debounce {
 						d.State[idx] = NoneToPress
 						d.cycleCounter[idx] = 0
 					} else {
@@ -94,7 +94,7 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 				if current {
 					d.cycleCounter[idx] = 0
 				} else {
-					if d.cycleCounter[idx] >= squaredMatrixCyclesToPreventChattering {
+					if d.cycleCounter[idx] >= d.debounce {
 						d.State[idx] = PressToRelease
 						d.cycleCounter[idx] = 0
 					} else {
