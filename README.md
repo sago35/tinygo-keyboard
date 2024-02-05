@@ -20,6 +20,8 @@ The following are supported.
 * mouse click / mouse wheel
 * support TRRS (UART)
 * support [Vial](https://vial.rocks/)
+    * Keymap / Layers
+    * Matrix testers
 
 ## Microcontrollers
 
