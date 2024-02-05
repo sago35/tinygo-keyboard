@@ -166,6 +166,16 @@ func rxHandler2(b []byte) bool {
 		// id_get_keyboard_value
 		Changed = false
 		Changed2 = false
+		switch txb[1] {
+		case 0x03:
+			cols := device.GetMaxKeyCount()
+			rowSize := (cols + 7) / 8
+			for _, v := range device.pressed {
+				row, _, col := decKey(v)
+				idx := 2 + row*rowSize + (rowSize - 1) - col/8
+				txb[idx] |= byte(1 << (col % 8))
+			}
+		}
 	case 0x05:
 		//fmt.Printf("XXXXXXXXX % X\n", b)
 		//Keys[b[1]][b[2]][b[3]] = Keycode((uint16(b[4]) << 8) + uint16(b[5]))
