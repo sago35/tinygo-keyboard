@@ -1,11 +1,11 @@
-//go:build tinygo
+//go:build tinygo && (rp2040 || stm32 || k210 || esp32c3 || nrf || (avr && (atmega328p || atmega328pb)))
 
 package keyboard
 
 import (
 	"machine"
 
-	rotary_encoder "github.com/bgould/tinygo-rotary-encoder"
+	"tinygo.org/x/drivers/encoders"
 )
 
 type RotaryKeyboard struct {
@@ -13,15 +13,17 @@ type RotaryKeyboard struct {
 	Keys     [][]Keycode
 	callback Callback
 
-	enc      *rotary_encoder.Device
+	enc      *encoders.QuadratureDevice
 	oldValue int
 }
 
 func (d *Device) AddRotaryKeyboard(rotA, rotB machine.Pin, keys [][]Keycode) *RotaryKeyboard {
 	state := make([]State, 2)
 
-	enc := rotary_encoder.New(rotA, rotB)
-	enc.Configure()
+	enc := encoders.NewQuadratureViaInterrupt(rotA, rotB)
+	enc.Configure(encoders.QuadratureConfig{
+		Precision: 4,
+	})
 
 	keydef := make([][]Keycode, LayerCount)
 	for l := 0; l < len(keydef); l++ {
@@ -57,7 +59,7 @@ func (d *RotaryKeyboard) Callback(layer, index int, state State) {
 
 func (d *RotaryKeyboard) Get() []State {
 	rot := []bool{false, false}
-	if newValue := d.enc.Value(); newValue != d.oldValue {
+	if newValue := d.enc.Position(); newValue != d.oldValue {
 		if newValue < d.oldValue {
 			rot[0] = true
 		} else {
