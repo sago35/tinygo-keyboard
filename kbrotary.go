@@ -1,4 +1,4 @@
-//go:build tinygo
+//go:build tinygo && (rp2040 || stm32 || k210 || esp32c3 || nrf || (avr && (atmega328p || atmega328pb)))
 
 package keyboard
 
