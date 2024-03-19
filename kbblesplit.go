@@ -152,7 +152,7 @@ func (d *BleSplitKeyboard) GetKeyCount() int {
 }
 
 func (d *BleSplitKeyboard) Init() error {
-	d.adapter.SetConnectHandler(func(device bluetooth.Address, connected bool) {
+	d.adapter.SetConnectHandler(func(device bluetooth.Device, connected bool) {
 		println("connected:", connected)
 	})
 
