@@ -185,6 +185,14 @@ func (d *Device) Tick() error {
 				}
 			}
 		}
+
+		if uk, ok := k.(*UartKeyboard); ok {
+			if uk.MouseX != 0 || uk.MouseY != 0 {
+				d.Mouse.Move(int(uk.MouseX), int(uk.MouseY))
+				uk.MouseX = 0
+				uk.MouseY = 0
+			}
+		}
 	}
 
 	for _, xx := range noneToPresse {

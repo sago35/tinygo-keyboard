@@ -10,6 +10,8 @@ type UartKeyboard struct {
 	State    []State
 	Keys     [][]Keycode
 	callback Callback
+	MouseX   int8
+	MouseY   int8
 
 	uart *machine.UART
 	buf  []byte
@@ -74,6 +76,12 @@ func (d *UartKeyboard) Get() []State {
 				current = true
 			case 0x55: // release
 				current = false
+			case 0xF0: // mouse move
+				//fmt.Printf("move %d %d\n", int8(d.buf[1]), int8(d.buf[2]))
+				d.MouseX = int8(d.buf[1])
+				d.MouseY = int8(d.buf[2])
+				d.buf = d.buf[:0]
+				continue
 			default:
 				d.buf[0], d.buf[1] = d.buf[1], d.buf[2]
 				d.buf = d.buf[:2]
