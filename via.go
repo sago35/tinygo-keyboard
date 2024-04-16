@@ -158,13 +158,23 @@ func rxHandler2(b []byte) bool {
 
 	case 0x0D:
 		// DynamicKeymapMacroGetBufferSizeCommand
-		txb[1] = 0x07
-		txb[2] = 0x9B
+		sz := len(device.Macros)
+		txb[1] = byte(sz >> 8)
+		txb[2] = byte(sz)
 	case 0x0C:
 		// DynamicKeymapMacroGetCountCommand
 		txb[1] = 0x10
 	case 0x0E:
 		// DynamicKeymapMacroGetBufferCommand
+		offset := (uint16(b[1]) << 8) + uint16(b[2])
+		sz := b[3]
+		copy(txb[4:4+sz], device.Macros[offset:])
+	case 0x0F:
+		// CMD_VIA_MACRO_SET_BUFFER
+		offset := (uint16(b[1]) << 8) + uint16(b[2])
+		sz := b[3]
+		copy(device.Macros[offset:], txb[4:4+sz])
+		device.flashCh <- true
 	case 0x02:
 		// id_get_keyboard_value
 		Changed = false
@@ -258,7 +268,7 @@ func Save() error {
 	keyboards := len(device.kb)
 
 	cnt := device.GetMaxKeyCount()
-	wbuf := make([]byte, 4+layers*keyboards*cnt*2)
+	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros))
 	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -286,6 +296,8 @@ func Save() error {
 			offset += cnt * 2
 		}
 	}
+
+	copy(wbuf[offset:], device.Macros[:])
 
 	_, err = machine.Flash.WriteAt(wbuf[:], 0)
 	if err != nil {
