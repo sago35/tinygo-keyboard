@@ -2,8 +2,6 @@
 
 **The API is not yet fixed.**  
 
-**TinyGo 0.29 or later is required to build tinygo-keyboard 0.2.0**  
-
 ![](./img/top.jpg)
 
 The following are supported.  
@@ -20,8 +18,10 @@ The following are supported.
 * mouse click / mouse wheel
 * support TRRS (UART)
 * support [Vial](https://vial.rocks/)
-    * Keymap / Layers
+    * Keymap
+    * [Layers](https://get.vial.today/manual/layers.html) (MO(x), TO(x))
     * Matrix testers
+    * [Macros](https://get.vial.today/manual/macros.html)
 
 ## Microcontrollers
 
