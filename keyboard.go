@@ -152,7 +152,7 @@ func (d *Device) Tick() error {
 	case <-d.flashCh:
 		d.flashCnt = 1
 	default:
-		if d.flashCnt >= 500 {
+		if d.flashCnt >= 5000 {
 			d.flashCnt = 0
 			err := Save()
 			if err != nil {
