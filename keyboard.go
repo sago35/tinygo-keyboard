@@ -3,6 +3,7 @@
 package keyboard
 
 import (
+	"bytes"
 	"context"
 	"machine"
 	k "machine/usb/hid/keyboard"
@@ -18,6 +19,7 @@ type Device struct {
 	Keyboard UpDowner
 	Mouse    Mouser
 	Override [][]Keycode
+	Macros   [2048]byte
 	Debug    bool
 	flashCh  chan bool
 	flashCnt int
@@ -43,6 +45,7 @@ type KBer interface {
 type UpDowner interface {
 	Up(c k.Keycode) error
 	Down(c k.Keycode) error
+	Write(b []byte) (n int, err error)
 }
 
 type State uint8
@@ -97,7 +100,7 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	rbuf := make([]byte, 4+layers*keyboards*keys*2)
+	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros))
 	_, err := machine.Flash.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -119,6 +122,14 @@ func (d *Device) Init() error {
 			offset += keys * 2
 		}
 	}
+
+	for i, b := range rbuf[offset:] {
+		if b == 0xFF {
+			b = 0
+		}
+		device.Macros[i] = b
+	}
+	//copy(device.Macros[:], rbuf[offset:])
 
 	return nil
 }
@@ -200,6 +211,9 @@ func (d *Device) Tick() error {
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
 			machine.Flash.EraseBlocks(0, 1)
+		} else if x&0xFF00 == keycodes.TypeMacroKey {
+			no := uint8(x & 0x00FF)
+			d.RunMacro(no)
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
@@ -264,6 +278,54 @@ func (d *Device) Tick() error {
 			d.Keyboard.Up(k.Keycode(x))
 		}
 		d.kb[kbidx].Callback(layer, index, PressToRelease)
+	}
+
+	return nil
+}
+
+func (d *Device) RunMacro(no uint8) error {
+	macros := bytes.SplitN(d.Macros[:], []byte{0x00}, 16)
+
+	macro := macros[no]
+
+	for i := 0; i < len(macro); {
+		if macro[i] == 0x01 {
+			p := macro[i:]
+			if p[1] == 0x04 {
+				// delayMs
+				delayMs := int(p[2]) + int(p[3]-1)*255
+				time.Sleep(time.Duration(delayMs) * time.Millisecond)
+				i += 4
+			} else {
+				kc := keycodeViaToTGK(Keycode(p[2]))
+				sz := 3
+				if p[1] > 0x04 {
+					kc = Keycode(p[2]) + Keycode(p[3])<<8
+					sz += 1
+				}
+				i += sz
+				kc = keycodeViaToTGK(kc)
+
+				switch p[1] {
+				case 0x01, 0x05:
+					k.Keyboard.Down(k.Keycode(kc))
+					k.Keyboard.Up(k.Keycode(kc))
+				case 0x02, 0x06:
+					k.Keyboard.Down(k.Keycode(kc))
+				case 0x03, 0x07:
+					k.Keyboard.Up(k.Keycode(kc))
+				}
+			}
+		} else {
+			idx := bytes.Index(macro[i:], []byte{0x01})
+			if idx == -1 {
+				idx = len(macro)
+			} else {
+				idx = i + idx
+			}
+			k.Keyboard.Write(macro[i:idx])
+			i = idx
+		}
 	}
 
 	return nil
@@ -348,7 +410,11 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 		// restore default keymap for QMK
 		kc = keycodes.KeyRestoreDefaultKeymap
 	default:
-		kc = kc & 0x0FFF
+		if kc&0xFF00 == keycodes.TypeMacroKey {
+			// skip
+		} else {
+			kc = kc & 0x0FFF
+		}
 	}
 	return kc
 }
@@ -365,6 +431,12 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 		return
 	}
 	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, kbIndex, index, key)
+	kc := keycodeViaToTGK(key)
+
+	d.kb[kbIndex].SetKeycode(layer, index, kc)
+}
+
+func keycodeViaToTGK(key Keycode) Keycode {
 	kc := key | 0xF000
 
 	switch key {
@@ -395,9 +467,11 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 	case keycodes.KeyRestoreDefaultKeymap:
 		kc = keycodes.KeyRestoreDefaultKeymap
 	default:
+		if key&0xFF00 == keycodes.TypeMacroKey {
+			kc = key
+		}
 	}
-
-	d.kb[kbIndex].SetKeycode(layer, index, kc)
+	return kc
 }
 
 func (d *Device) Layer() int {
@@ -468,6 +542,10 @@ func (k *Keyboard) Down(c k.Keycode) error {
 	return nil
 }
 
+func (k *Keyboard) Write(b []byte) (n int, err error) {
+	return k.Port.Write(b)
+}
+
 // UartTxKeyboard is a keyboard that simply sends row/col corresponding to key
 // placement via UART. For instructions on how to set it up, see bellow.
 //
@@ -505,4 +583,8 @@ func (k *UartTxKeyboard) Down(c k.Keycode) error {
 		return err
 	}
 	return nil
+}
+
+func (k *UartTxKeyboard) Write(b []byte) (n int, err error) {
+	return len(b), nil
 }

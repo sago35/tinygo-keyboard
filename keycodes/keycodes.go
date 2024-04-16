@@ -11,6 +11,7 @@ const (
 	TypeMouse    = 0xD000
 	TypeModKey   = 0xFF00
 	TypeToKey    = 0xFF10
+	TypeMacroKey = 0x7700
 )
 
 const (
@@ -39,6 +40,25 @@ const (
 	KeyTo3 = TypeToKey | 0x03
 	KeyTo4 = TypeToKey | 0x04
 	KeyTo5 = TypeToKey | 0x05
+)
+
+const (
+	KeyMacro0  = TypeMacroKey | 0x00
+	KeyMacro1  = TypeMacroKey | 0x01
+	KeyMacro2  = TypeMacroKey | 0x02
+	KeyMacro3  = TypeMacroKey | 0x03
+	KeyMacro4  = TypeMacroKey | 0x04
+	KeyMacro5  = TypeMacroKey | 0x05
+	KeyMacro6  = TypeMacroKey | 0x06
+	KeyMacro7  = TypeMacroKey | 0x07
+	KeyMacro8  = TypeMacroKey | 0x08
+	KeyMacro9  = TypeMacroKey | 0x09
+	KeyMacro10 = TypeMacroKey | 0x0a
+	KeyMacro11 = TypeMacroKey | 0x0b
+	KeyMacro12 = TypeMacroKey | 0x0c
+	KeyMacro13 = TypeMacroKey | 0x0d
+	KeyMacro14 = TypeMacroKey | 0x0e
+	KeyMacro15 = TypeMacroKey | 0x0f
 )
 
 const (
