@@ -1,3 +1,8 @@
+0.5.0
+---
+
+* Add support for vial macros (#40)
+
 0.4.0
 ---
 
