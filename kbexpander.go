@@ -25,16 +25,27 @@ func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, r
 	state := make([]State, row*col)
 	cycleCnt := make([]uint8, len(state))
 
-	for c := range colPins {
-		colPins[c].SetMode(mcp23017.Output)
-	}
-	for r := range rowPins {
-		rowPins[r].SetMode(mcp23017.Output)
-	}
-
 	o := Options{}
 	for _, f := range opt {
 		f(&o)
+	}
+
+	for c := range colPins {
+		if !o.InvertDiode {
+			colPins[c].SetMode(mcp23017.Output)
+			colPins[c].Set(true)
+		} else {
+			colPins[c].SetMode(mcp23017.Input | mcp23017.Pullup)
+		}
+
+	}
+	for r := range rowPins {
+		if !o.InvertDiode {
+			rowPins[r].SetMode(mcp23017.Input | mcp23017.Pullup)
+		} else {
+			rowPins[r].SetMode(mcp23017.Output)
+			rowPins[r].Set(true)
+		}
 	}
 
 	keydef := make([][]Keycode, LayerCount)
@@ -77,18 +88,16 @@ func (d *ExpanderKeyboard) Get() []State {
 		for r := range d.Row {
 			current := false
 			if !d.options.InvertDiode {
-				d.Col[c].SetMode(mcp23017.Output)
-				d.Col[c].High()
+				d.Col[c].Set(false)
 				current, _ = d.Row[r].Get()
 			} else {
-				d.Row[r].SetMode(mcp23017.Output)
-				d.Row[r].High()
+				d.Row[r].Set(false)
 				current, _ = d.Col[c].Get()
 			}
 			idx := r*len(d.Col) + c
 			switch d.State[idx] {
 			case None:
-				if current {
+				if !current {
 					if d.cycleCounter[idx] >= d.debounce {
 						d.State[idx] = NoneToPress
 						d.cycleCounter[idx] = 0
@@ -101,7 +110,7 @@ func (d *ExpanderKeyboard) Get() []State {
 			case NoneToPress:
 				d.State[idx] = Press
 			case Press:
-				if current {
+				if !current {
 					d.cycleCounter[idx] = 0
 				} else {
 					if d.cycleCounter[idx] >= d.debounce {
@@ -115,9 +124,9 @@ func (d *ExpanderKeyboard) Get() []State {
 				d.State[idx] = None
 			}
 			if !d.options.InvertDiode {
-				d.Col[c].Low()
+				d.Col[c].Set(true)
 			} else {
-				d.Row[r].Low()
+				d.Row[r].Set(true)
 			}
 		}
 	}

@@ -67,9 +67,9 @@ func run() error {
 		machine.P0_31,
 	}
 
-	colPinsRight := []mcp23017.Pin{}
+	var colPinsRight []mcp23017.Pin
 
-	rowPinsRight := []mcp23017.Pin{}
+	var rowPinsRight []mcp23017.Pin
 
 	mkLeft := d.AddMatrixKeyboard(colPinsLeft, rowPinsLeft, [][]keyboard.Keycode{
 		{
