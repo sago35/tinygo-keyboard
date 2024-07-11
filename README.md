@@ -36,6 +36,11 @@ The following microcontrollers are supported.
 
 * [tutorial.md](./tutorial.md)
 
+## Additional Resources
+
+* [Create Your Own Keyboard with sago35/tinygo-keyboard (dev.to)](https://dev.to/sago35/create-your-own-keyboard-with-sago35tinygo-keyboard-4gbj)
+* [自作キーボードをTinyGoで作る (Qiita, Japanese)](https://qiita.com/sago35/items/b008ed03cd403742e7aa)
+
 ## sgkb-0.4.0
 
 ![](./img/sgkb-0.3.0.jpg)
