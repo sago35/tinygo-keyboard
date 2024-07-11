@@ -17,21 +17,15 @@ import (
 	"tinygo.org/x/tinydraw"
 )
 
-func main() {
-	usb.Product = "popcorne"
-
-	err := run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 type RCS struct {
 	row, col int
 	state    keyboard.State
 }
 
-func run() error {
+func main() {
+	usb.Product = "popcorne"
+
+	
 	machine.I2C0.Configure(machine.I2CConfig{
 		Frequency: 400 * machine.KHz,
 		SDA:       machine.P1_13,
@@ -147,5 +141,9 @@ func run() error {
 	loadKeyboardDef()
 
 	d.Debug = true
-	return d.Loop(context.Background())
+	err := d.Loop(context.Background())
+	
+	if err != nil {
+		log.Fatal(err)
+	}
 }

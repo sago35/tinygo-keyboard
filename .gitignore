@@ -2,3 +2,6 @@
 **/production/*.csv
 **/production/*.ipc
 **/production/
+*.elf
+*.uf2
+.idea
