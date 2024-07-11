@@ -5,3 +5,4 @@
 *.elf
 *.uf2
 .idea
+.vscode
