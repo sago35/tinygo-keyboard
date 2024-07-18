@@ -134,6 +134,10 @@ func (d *Device) Init() error {
 	return nil
 }
 
+func (d *Device) GetKeyboardCount() int {
+	return len(d.kb)
+}
+
 func (d *Device) GetMaxKeyCount() int {
 	cnt := 0
 	for _, k := range d.kb {
