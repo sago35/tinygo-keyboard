@@ -144,8 +144,8 @@ func rxHandler2(b []byte) bool {
 		for i := 0; i < int(sz/2); i++ {
 			//fmt.Printf("  %02X %02X\n", b[4+i+1], b[4+i+0])
 			tmp := i + int(offset)/2
-			layer := tmp / (cnt * len(device.kb))
-			tmp = tmp % (cnt * len(device.kb))
+			layer := tmp / (cnt * device.GetKeyboardCount())
+			tmp = tmp % (cnt * device.GetKeyboardCount())
 			kbd := tmp / cnt
 			idx := tmp % cnt
 			//layer := 0
@@ -265,7 +265,7 @@ func rxHandler2(b []byte) bool {
 
 func Save() error {
 	layers := 6
-	keyboards := len(device.kb)
+	keyboards := device.GetKeyboardCount()
 
 	cnt := device.GetMaxKeyCount()
 	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros))
