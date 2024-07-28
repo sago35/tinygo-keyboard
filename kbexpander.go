@@ -3,6 +3,7 @@
 package keyboard
 
 import (
+	"fmt"
 	"tinygo.org/x/drivers/mcp23017"
 )
 
@@ -12,41 +13,48 @@ type ExpanderKeyboard struct {
 	options  Options
 	callback Callback
 
-	Col          []mcp23017.Pin
-	Row          []mcp23017.Pin
+	Col          []int
+	Row          []int
 	cycleCounter []uint8
 	debounce     uint8
 	expander     *mcp23017.Device
 }
 
-func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, rowPins []mcp23017.Pin, keys [][]Keycode, opt ...Option) *ExpanderKeyboard {
+func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, rowPins []int, keys [][]Keycode, opt ...Option) *ExpanderKeyboard {
+	fmt.Printf("Initializing Expander\n")
+	fmt.Printf("Expander %d\n", expanderDevice)
 	col := len(colPins)
 	row := len(rowPins)
 	state := make([]State, row*col)
 	cycleCnt := make([]uint8, len(state))
 
+	fmt.Printf("Initializing Options\n")
 	o := Options{}
 	for _, f := range opt {
 		f(&o)
 	}
+	fmt.Printf("Initialized Options\n")
 
-	for c := range colPins {
+	for _, c := range colPins {
+		fmt.Printf("Col: %d\n", c)
+
 		if !o.InvertDiode {
-			colPins[c].SetMode(mcp23017.Output)
-			colPins[c].Set(true)
+			expanderDevice.Pin(c).SetMode(mcp23017.Output)
+			expanderDevice.Pin(c).Set(true)
 		} else {
-			colPins[c].SetMode(mcp23017.Input | mcp23017.Pullup)
+			expanderDevice.Pin(c).SetMode(mcp23017.Input | mcp23017.Pullup)
 		}
 
 	}
-	for r := range rowPins {
+	for _, r := range rowPins {
 		if !o.InvertDiode {
-			rowPins[r].SetMode(mcp23017.Input | mcp23017.Pullup)
+			expanderDevice.Pin(r).SetMode(mcp23017.Input | mcp23017.Pullup)
 		} else {
-			rowPins[r].SetMode(mcp23017.Output)
-			rowPins[r].Set(true)
+			expanderDevice.Pin(r).SetMode(mcp23017.Output)
+			expanderDevice.Pin(r).Set(true)
 		}
 	}
+	fmt.Printf("Initialized Expander Pins\n")
 
 	keydef := make([][]Keycode, LayerCount)
 	for l := 0; l < len(keydef); l++ {
@@ -66,9 +74,10 @@ func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, r
 		options:      o,
 		callback:     func(layer, index int, state State) {},
 		cycleCounter: cycleCnt,
-		debounce:     8,
+		debounce:     2,
 		expander:     expanderDevice,
 	}
+	fmt.Printf("Initialized ExpanderKeyboard\n")
 	d.kb = append(d.kb, k)
 	return k
 }
@@ -84,17 +93,17 @@ func (d *ExpanderKeyboard) Callback(layer, index int, state State) {
 }
 
 func (d *ExpanderKeyboard) Get() []State {
-	for c := range d.Col {
-		for r := range d.Row {
+	for cIdx, c := range d.Col {
+		for rIdx, r := range d.Row {
 			current := false
 			if !d.options.InvertDiode {
-				d.Col[c].Set(false)
-				current, _ = d.Row[r].Get()
+				d.expander.Pin(c).Set(false)
+				current, _ = d.expander.Pin(r).Get()
 			} else {
-				d.Row[r].Set(false)
-				current, _ = d.Col[c].Get()
+				d.expander.Pin(r).Set(false)
+				current, _ = d.expander.Pin(c).Get()
 			}
-			idx := r*len(d.Col) + c
+			idx := rIdx*len(d.Col) + cIdx
 			switch d.State[idx] {
 			case None:
 				if !current {
@@ -124,9 +133,9 @@ func (d *ExpanderKeyboard) Get() []State {
 				d.State[idx] = None
 			}
 			if !d.options.InvertDiode {
-				d.Col[c].Set(true)
+				d.expander.Pin(c).Set(true)
 			} else {
-				d.Row[r].Set(true)
+				d.expander.Pin(r).Set(true)
 			}
 		}
 	}

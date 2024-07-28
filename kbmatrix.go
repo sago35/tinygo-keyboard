@@ -54,7 +54,7 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keyc
 		options:      o,
 		callback:     func(layer, index int, state State) {},
 		cycleCounter: cycleCnt,
-		debounce:     8,
+		debounce:     2,
 	}
 
 	d.kb = append(d.kb, k)
