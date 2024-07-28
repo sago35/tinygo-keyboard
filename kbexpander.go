@@ -33,19 +33,19 @@ func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, r
 	for _, c := range colPins {
 
 		if !o.InvertDiode {
-			expanderDevice.Pin(c).SetMode(mcp23017.Output)
-			expanderDevice.Pin(c).Set(true)
+			_ = expanderDevice.Pin(c).SetMode(mcp23017.Output)
+			_ = expanderDevice.Pin(c).Set(true)
 		} else {
-			expanderDevice.Pin(c).SetMode(mcp23017.Input | mcp23017.Pullup)
+			_ = expanderDevice.Pin(c).SetMode(mcp23017.Input | mcp23017.Pullup)
 		}
 
 	}
 	for _, r := range rowPins {
 		if !o.InvertDiode {
-			expanderDevice.Pin(r).SetMode(mcp23017.Input | mcp23017.Pullup)
+			_ = expanderDevice.Pin(r).SetMode(mcp23017.Input | mcp23017.Pullup)
 		} else {
-			expanderDevice.Pin(r).SetMode(mcp23017.Output)
-			expanderDevice.Pin(r).Set(true)
+			_ = expanderDevice.Pin(r).SetMode(mcp23017.Output)
+			_ = expanderDevice.Pin(r).Set(true)
 		}
 	}
 
@@ -89,10 +89,10 @@ func (d *ExpanderKeyboard) Get() []State {
 		for rIdx, r := range d.Row {
 			current := false
 			if !d.options.InvertDiode {
-				d.expander.Pin(c).Set(false)
+				_ = d.expander.Pin(c).Set(false)
 				current, _ = d.expander.Pin(r).Get()
 			} else {
-				d.expander.Pin(r).Set(false)
+				_ = d.expander.Pin(r).Set(false)
 				current, _ = d.expander.Pin(c).Get()
 			}
 			idx := rIdx*len(d.Col) + cIdx
@@ -125,9 +125,9 @@ func (d *ExpanderKeyboard) Get() []State {
 				d.State[idx] = None
 			}
 			if !d.options.InvertDiode {
-				d.expander.Pin(c).Set(true)
+				_ = d.expander.Pin(c).Set(true)
 			} else {
-				d.expander.Pin(r).Set(true)
+				_ = d.expander.Pin(r).Set(true)
 			}
 		}
 	}
