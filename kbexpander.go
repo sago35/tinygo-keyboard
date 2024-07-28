@@ -3,7 +3,6 @@
 package keyboard
 
 import (
-	"fmt"
 	"tinygo.org/x/drivers/mcp23017"
 )
 
@@ -21,22 +20,17 @@ type ExpanderKeyboard struct {
 }
 
 func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, rowPins []int, keys [][]Keycode, opt ...Option) *ExpanderKeyboard {
-	fmt.Printf("Initializing Expander\n")
-	fmt.Printf("Expander %d\n", expanderDevice)
 	col := len(colPins)
 	row := len(rowPins)
 	state := make([]State, row*col)
 	cycleCnt := make([]uint8, len(state))
 
-	fmt.Printf("Initializing Options\n")
 	o := Options{}
 	for _, f := range opt {
 		f(&o)
 	}
-	fmt.Printf("Initialized Options\n")
 
 	for _, c := range colPins {
-		fmt.Printf("Col: %d\n", c)
 
 		if !o.InvertDiode {
 			expanderDevice.Pin(c).SetMode(mcp23017.Output)
@@ -54,7 +48,6 @@ func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, r
 			expanderDevice.Pin(r).Set(true)
 		}
 	}
-	fmt.Printf("Initialized Expander Pins\n")
 
 	keydef := make([][]Keycode, LayerCount)
 	for l := 0; l < len(keydef); l++ {
@@ -77,7 +70,6 @@ func (d *Device) AddExpanderKeyboard(expanderDevice *mcp23017.Device, colPins, r
 		debounce:     2,
 		expander:     expanderDevice,
 	}
-	fmt.Printf("Initialized ExpanderKeyboard\n")
 	d.kb = append(d.kb, k)
 	return k
 }
