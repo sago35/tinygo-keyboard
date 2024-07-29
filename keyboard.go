@@ -24,6 +24,8 @@ type Device struct {
 	flashCh  chan bool
 	flashCnt int
 
+	rgbMat []RGBMatrix
+
 	kb []KBer
 
 	layer      int

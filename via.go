@@ -195,10 +195,46 @@ func rxHandler2(b []byte) bool {
 		device.SetKeycodeVia(int(b[1]), int(b[2]), int(b[3]), Keycode((uint16(b[4])<<8)+uint16(b[5])))
 		device.flashCh <- true
 		//Changed = true
+	case 0x07:
+		// id_lighting_set_value
+		if device.IsRGBMatrixEnabled() {
+
+		}
 	case 0x08:
 		// id_lighting_get_value
-		txb[1] = 0x00
-		txb[2] = 0x00
+		if device.IsRGBMatrixEnabled() {
+			switch b[1] {
+			case 0x40:
+				// vialrgb_get_info
+				const vialRgbProtocolVersion = 1
+				txb[0] = vialRgbProtocolVersion & 0xFF
+				txb[1] = vialRgbProtocolVersion >> 8
+				txb[2] = device.GetRGBMatrixMaximumBrightness()
+			case 0x41:
+				// vialrgb_get_mode
+			case 0x42:
+				// vialrgb_get_supported
+			case 0x43:
+				// vialrgb_get_number_leds
+				txb[0] = byte(device.GetRGBMatrixLEDCount() & 0xFF)
+				txb[1] = byte(device.GetRGBMatrixLEDCount() >> 8)
+			case 0x44:
+				//vialrgb_get_led_info
+				ledPos := uint16(b[2]&0xFF) | (uint16(b[3]) >> 8)
+				position := device.GetRGBMatrixLEDMapping(ledPos)
+				// physical position
+				txb[0] = position.physicalX
+				txb[1] = position.physicalY
+				// flags
+				txb[2] = position.ledFlags
+				// matrix position
+				txb[3] = position.kbIndex
+				txb[4] = position.matrixIndex
+			}
+		} else {
+			txb[1] = 0x00
+			txb[2] = 0x00
+		}
 	case 0xFE: // vial
 		switch b[1] {
 		case 0x00:
@@ -216,6 +252,9 @@ func rxHandler2(b []byte) bool {
 			txb[9] = 0xF3
 			txb[10] = 0x54
 			txb[11] = 0xE2
+			if device.IsRGBMatrixEnabled() {
+				txb[12] = 1
+			}
 		case 0x01:
 			// Retrieve keyboard definition size
 			size := len(KeyboardDef)

@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/itchio/lzma v0.0.0-20190703113020-d3e24e3e3d49
+	github.com/sago35/tinygo-keyboard v0.0.0-20240718132338-1f0852885672
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
 	tinygo.org/x/drivers v0.27.0
 	tinygo.org/x/tinydraw v0.3.0
