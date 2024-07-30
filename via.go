@@ -198,7 +198,16 @@ func rxHandler2(b []byte) bool {
 	case 0x07:
 		// id_lighting_set_value
 		if device.IsRGBMatrixEnabled() {
-
+			switch b[1] {
+			case 0x41:
+				// VIALRGB_SET_MODE
+				rgbId := uint16(b[2]) | (uint16(b[3]) << 8)
+				device.SetCurrentRGBMode(rgbId)
+				device.SetCurrentSpeed(b[4])
+				device.SetCurrentHSV(b[5], b[6], b[7])
+			case 0x42:
+				// VIALRGB_DIRECT_FASTSET
+			}
 		}
 	case 0x08:
 		// id_lighting_get_value
@@ -212,8 +221,27 @@ func rxHandler2(b []byte) bool {
 				txb[2] = device.GetRGBMatrixMaximumBrightness()
 			case 0x41:
 				// vialrgb_get_mode
+				currentEffect := device.GetCurrentRGBMode()
+				txb[0] = byte(currentEffect & 0xFF)
+				txb[1] = byte(currentEffect >> 8)
+				txb[2] = device.GetCurrentSpeed()
+				txb[3] = device.GetCurrentHue()
+				txb[4] = device.GetCurrentSaturation()
+				txb[5] = device.GetCurrentValue()
 			case 0x42:
 				// vialrgb_get_supported
+				implementedEffects := device.GetSupportedRGBModes()
+				var length int
+				if len(implementedEffects) > 16 {
+					length = 16
+				} else {
+					length = len(implementedEffects)
+				}
+				// TODO test if this format is okay
+				for i := 0; i < length; i++ {
+					txb[i*2] = byte(implementedEffects[i] & 0xFF)
+					txb[i*2+1] = byte(implementedEffects[i] >> 8)
+				}
 			case 0x43:
 				// vialrgb_get_number_leds
 				txb[0] = byte(device.GetRGBMatrixLEDCount() & 0xFF)
