@@ -207,6 +207,29 @@ func rxHandler2(b []byte) bool {
 				device.SetCurrentHSV(b[5], b[6], b[7])
 			case 0x42:
 				// VIALRGB_DIRECT_FASTSET
+				if !device.IsDirectModeEnabled() {
+					break
+				}
+				if len(b) < 4 {
+					break
+				}
+				firstIndex := uint16(b[2]) | (uint16(b[3]) << 8)
+				numLeds := uint16(b[4])
+				if int(numLeds)*3 > len(b)-4 {
+					break
+				}
+				var i uint16
+				for i = 0; i < numLeds; i++ {
+					if i+firstIndex >= device.GetRGBMatrixLEDCount() {
+						break
+					}
+					device.SetDirectHSV(
+						b[i*3+5],
+						b[i*3+6],
+						b[i*3+7],
+						i+firstIndex,
+					)
+				}
 			}
 		}
 	case 0x08:
@@ -244,10 +267,16 @@ func rxHandler2(b []byte) bool {
 				}
 			case 0x43:
 				// vialrgb_get_number_leds
+				if !device.IsDirectModeEnabled() {
+					break
+				}
 				txb[0] = byte(device.GetRGBMatrixLEDCount() & 0xFF)
 				txb[1] = byte(device.GetRGBMatrixLEDCount() >> 8)
 			case 0x44:
 				//vialrgb_get_led_info
+				if !device.IsDirectModeEnabled() {
+					break
+				}
 				ledPos := uint16(b[2]&0xFF) | (uint16(b[3]) >> 8)
 				position := device.GetRGBMatrixLEDMapping(ledPos)
 				// physical position

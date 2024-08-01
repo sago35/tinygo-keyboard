@@ -1,15 +1,16 @@
 package keyboard
 
 type RGBMatrix struct {
-	maximumBrightness  uint8
-	ledCount           uint16
-	ledMatrixMapping   []LedMatrixPosition
-	implementedEffects []uint16
-	currentEffect      uint16
-	currentSpeed       uint8
-	currentHue         uint8
-	currentSaturation  uint8
-	currentValue       uint8
+	maximumBrightness   uint8
+	ledCount            uint16
+	ledMatrixMapping    []LedMatrixPosition
+	implementedEffects  []uint16
+	currentEffect       uint16
+	currentSpeed        uint8
+	currentHue          uint8
+	currentSaturation   uint8
+	currentValue        uint8
+	ledMatrixDirectVals []LedMatrixDirectModeColor
 }
 
 type LedMatrixPosition struct {
@@ -18,6 +19,12 @@ type LedMatrixPosition struct {
 	kbIndex     uint8
 	matrixIndex uint8
 	ledFlags    uint8
+}
+
+type LedMatrixDirectModeColor struct {
+	h uint8
+	s uint8
+	v uint8
 }
 
 const (
@@ -78,7 +85,7 @@ const (
 	VIALRGB_EFFECT_PIXEL_FRACTAL
 )
 
-func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMapping []LedMatrixPosition) {
+func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMapping []LedMatrixPosition, directMode bool) {
 	if int(ledCount) != len(ledMatrixMapping) {
 		panic("ledMatrixMapping must have length equal to number of ledMatrixMapping")
 	}
@@ -94,6 +101,9 @@ func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMappin
 		currentHue:        0,
 		currentSaturation: 0,
 		currentValue:      0,
+	}
+	if directMode {
+		rgbMatrix.ledMatrixDirectVals = make([]LedMatrixDirectModeColor, ledCount)
 	}
 	d.rgbMat = append(d.rgbMat, rgbMatrix)
 }
@@ -188,6 +198,28 @@ func (d *Device) SetCurrentHSV(hue uint8, saturation uint8, value uint8) {
 	d.rgbMat[0].currentValue = value
 }
 
+func (d *Device) SetDirectHSV(hue uint8, saturation uint8, value uint8, ledIndex uint16) {
+	if !d.IsDirectModeEnabled() {
+		return
+	}
+	rgb := d.rgbMat[0]
+	var actualValue uint8
+	if value > rgb.maximumBrightness {
+		actualValue = rgb.maximumBrightness
+	} else {
+		actualValue = value
+	}
+	rgb.ledMatrixDirectVals[ledIndex] = LedMatrixDirectModeColor{
+		h: hue,
+		s: saturation,
+		v: actualValue,
+	}
+}
+
 func (d *Device) IsRGBMatrixEnabled() bool {
 	return len(d.rgbMat) > 0
+}
+
+func (d *Device) IsDirectModeEnabled() bool {
+	return d.IsRGBMatrixEnabled() && d.rgbMat[0].ledMatrixDirectVals != nil
 }
