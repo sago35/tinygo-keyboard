@@ -400,6 +400,10 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 		kc = 0x00D9
 	case jp.WheelDown:
 		kc = 0x00DA
+	case jp.KeyMediaBrightnessDown:
+		kc = 0x00BE
+	case jp.KeyMediaBrightnessUp:
+		kc = 0x00BD
 	case jp.KeyMediaVolumeInc:
 		kc = 0x00A9
 	case jp.KeyMediaVolumeDec:
@@ -458,6 +462,10 @@ func keycodeViaToTGK(key Keycode) Keycode {
 		kc = jp.WheelUp
 	case 0x00DA:
 		kc = jp.WheelDown
+	case 0x00BD:
+		kc = jp.KeyMediaBrightnessUp
+	case 0x00BE:
+		kc = jp.KeyMediaBrightnessDown
 	case 0x00A9:
 		kc = jp.KeyMediaVolumeInc
 	case 0x00AA:
