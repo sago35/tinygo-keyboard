@@ -385,7 +385,7 @@ func (d *Device) Key(layer, kbIndex, index int) Keycode {
 }
 
 func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
-	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, kbIndex, index)
+	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, KbIndex, index)
 	if kbIndex >= len(d.kb) {
 		return 0
 	}
@@ -439,7 +439,7 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 	if kbIndex >= len(d.kb) {
 		return
 	}
-	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, kbIndex, index, key)
+	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, KbIndex, index, key)
 	kc := keycodeViaToTGK(key)
 
 	d.kb[kbIndex].SetKeycode(layer, index, kc)

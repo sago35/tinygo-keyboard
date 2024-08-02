@@ -280,13 +280,13 @@ func rxHandler2(b []byte) bool {
 				ledPos := uint16(b[2]&0xFF) | (uint16(b[3]) >> 8)
 				position := device.GetRGBMatrixLEDMapping(ledPos)
 				// physical position
-				txb[0] = position.physicalX
-				txb[1] = position.physicalY
+				txb[0] = position.PhysicalX
+				txb[1] = position.PhysicalY
 				// flags
 				txb[2] = position.LedFlags
 				// matrix position
-				txb[3] = position.kbIndex
-				txb[4] = position.matrixIndex
+				txb[3] = position.KbIndex
+				txb[4] = position.MatrixIndex
 			}
 		} else {
 			txb[1] = 0x00

@@ -22,10 +22,10 @@ type RGBMatrix struct {
 }
 
 type LedMatrixPosition struct {
-	physicalX   uint8
-	physicalY   uint8
-	kbIndex     uint8
-	matrixIndex uint8
+	PhysicalX   uint8
+	PhysicalY   uint8
+	KbIndex     uint8
+	MatrixIndex uint8
 	LedFlags    uint8
 }
 
@@ -148,8 +148,8 @@ func (d *Device) GetRGBMatrixLEDCount() uint16 {
 
 func (d *Device) GetRGBMatrixLEDMapping(ledIndex uint16) LedMatrixPosition {
 	invalidPosition := LedMatrixPosition{
-		kbIndex:     0xFF,
-		matrixIndex: 0xFF,
+		KbIndex:     0xFF,
+		MatrixIndex: 0xFF,
 	}
 	if !d.IsRGBMatrixEnabled() || ledIndex >= d.rgbMat.ledCount {
 		return invalidPosition
