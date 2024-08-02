@@ -262,8 +262,8 @@ func rxHandler2(b []byte) bool {
 				}
 				// TODO test if this format is okay
 				for i := 0; i < length; i++ {
-					txb[i*2] = byte(implementedEffects[i] & 0xFF)
-					txb[i*2+1] = byte(implementedEffects[i] >> 8)
+					txb[i*2] = byte(implementedEffects[i].AnimationType & 0xFF)
+					txb[i*2+1] = byte(implementedEffects[i].AnimationType >> 8)
 				}
 			case 0x43:
 				// vialrgb_get_number_leds
@@ -283,7 +283,7 @@ func rxHandler2(b []byte) bool {
 				txb[0] = position.physicalX
 				txb[1] = position.physicalY
 				// flags
-				txb[2] = position.ledFlags
+				txb[2] = position.LedFlags
 				// matrix position
 				txb[3] = position.kbIndex
 				txb[4] = position.matrixIndex

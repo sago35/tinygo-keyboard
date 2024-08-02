@@ -24,7 +24,7 @@ type Device struct {
 	flashCh  chan bool
 	flashCnt int
 
-	rgbMat []RGBMatrix
+	rgbMat *RGBMatrix
 
 	kb []KBer
 
@@ -132,6 +132,9 @@ func (d *Device) Init() error {
 		device.Macros[i] = b
 	}
 	//copy(device.Macros[:], rbuf[offset:])
+
+	// Start RGB task
+	go d.updateRGBTask()
 
 	return nil
 }

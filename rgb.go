@@ -1,16 +1,24 @@
 package keyboard
 
+import (
+	"image/color"
+	"time"
+	"tinygo.org/x/drivers/ws2812"
+)
+
 type RGBMatrix struct {
 	maximumBrightness   uint8
 	ledCount            uint16
-	ledMatrixMapping    []LedMatrixPosition
-	implementedEffects  []uint16
-	currentEffect       uint16
-	currentSpeed        uint8
-	currentHue          uint8
-	currentSaturation   uint8
-	currentValue        uint8
-	ledMatrixDirectVals []LedMatrixDirectModeColor
+	LedMatrixMapping    []LedMatrixPosition
+	implementedEffects  []RgbAnimation
+	currentEffect       RgbAnimation
+	CurrentSpeed        uint8
+	CurrentHue          uint8
+	CurrentSaturation   uint8
+	CurrentValue        uint8
+	LedMatrixDirectVals []LedMatrixDirectModeColor
+	LedMatrixVals       []color.RGBA
+	ledDriver           *ws2812.Device
 }
 
 type LedMatrixPosition struct {
@@ -18,13 +26,20 @@ type LedMatrixPosition struct {
 	physicalY   uint8
 	kbIndex     uint8
 	matrixIndex uint8
-	ledFlags    uint8
+	LedFlags    uint8
 }
 
 type LedMatrixDirectModeColor struct {
-	h uint8
-	s uint8
-	v uint8
+	H uint8
+	S uint8
+	V uint8
+}
+
+type RgbAnimationFunc func(matrix *RGBMatrix)
+
+type RgbAnimation struct {
+	AnimationFunc RgbAnimationFunc
+	AnimationType uint16
 }
 
 const (
@@ -85,41 +100,50 @@ const (
 	VIALRGB_EFFECT_PIXEL_FRACTAL
 )
 
-func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMapping []LedMatrixPosition, directMode bool) {
+func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMapping []LedMatrixPosition, animations []RgbAnimation, ledDriver *ws2812.Device) {
 	if int(ledCount) != len(ledMatrixMapping) {
-		panic("ledMatrixMapping must have length equal to number of ledMatrixMapping")
+		panic("LedMatrixMapping must have length equal to number of LedMatrixMapping")
+	}
+	effectOffAnimation := RgbAnimation{
+		AnimationFunc: func(matrix *RGBMatrix) {},
+		AnimationType: VIALRGB_EFFECT_OFF,
 	}
 	rgbMatrix := RGBMatrix{
 		maximumBrightness: brightness,
 		ledCount:          ledCount,
-		ledMatrixMapping:  ledMatrixMapping,
-		implementedEffects: []uint16{
-			VIALRGB_EFFECT_OFF,
+		LedMatrixMapping:  ledMatrixMapping,
+		implementedEffects: []RgbAnimation{
+			effectOffAnimation,
 		},
-		currentEffect:     VIALRGB_EFFECT_OFF,
-		currentSpeed:      0,
-		currentHue:        0,
-		currentSaturation: 0,
-		currentValue:      0,
+		currentEffect:     effectOffAnimation,
+		CurrentSpeed:      0,
+		CurrentHue:        0,
+		CurrentSaturation: 0,
+		CurrentValue:      0,
+		LedMatrixVals:     make([]color.RGBA, ledCount),
+		ledDriver:         ledDriver,
 	}
-	if directMode {
-		rgbMatrix.ledMatrixDirectVals = make([]LedMatrixDirectModeColor, ledCount)
+	for _, animation := range animations {
+		rgbMatrix.implementedEffects = append(rgbMatrix.implementedEffects, animation)
+		if animation.AnimationType == VIALRGB_EFFECT_DIRECT {
+			rgbMatrix.LedMatrixDirectVals = make([]LedMatrixDirectModeColor, ledCount)
+		}
 	}
-	d.rgbMat = append(d.rgbMat, rgbMatrix)
+	d.rgbMat = &rgbMatrix
 }
 
 func (d *Device) GetRGBMatrixMaximumBrightness() uint8 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[0].maximumBrightness
+	return d.rgbMat.maximumBrightness
 }
 
 func (d *Device) GetRGBMatrixLEDCount() uint16 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[1].ledCount
+	return d.rgbMat.ledCount
 }
 
 func (d *Device) GetRGBMatrixLEDMapping(ledIndex uint16) LedMatrixPosition {
@@ -127,99 +151,115 @@ func (d *Device) GetRGBMatrixLEDMapping(ledIndex uint16) LedMatrixPosition {
 		kbIndex:     0xFF,
 		matrixIndex: 0xFF,
 	}
-	if !d.IsRGBMatrixEnabled() || ledIndex >= d.rgbMat[0].ledCount {
+	if !d.IsRGBMatrixEnabled() || ledIndex >= d.rgbMat.ledCount {
 		return invalidPosition
 	}
-	return d.rgbMat[0].ledMatrixMapping[ledIndex]
+	return d.rgbMat.LedMatrixMapping[ledIndex]
 }
 
-func (d *Device) GetSupportedRGBModes() []uint16 {
+func (d *Device) GetSupportedRGBModes() []RgbAnimation {
 	if !d.IsRGBMatrixEnabled() {
-		return []uint16{}
+		return []RgbAnimation{}
 	}
-	return d.rgbMat[0].implementedEffects
+	return d.rgbMat.implementedEffects
 }
 
 func (d *Device) GetCurrentRGBMode() uint16 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[0].currentEffect
+	return d.rgbMat.currentEffect.AnimationType
 }
 
 func (d *Device) SetCurrentRGBMode(mode uint16) {
 	if !d.IsRGBMatrixEnabled() {
 		return
 	}
-	d.rgbMat[0].currentEffect = mode
+	for _, e := range d.rgbMat.implementedEffects {
+		if e.AnimationType == mode {
+			d.rgbMat.currentEffect = e
+		}
+	}
 }
 
 func (d *Device) GetCurrentSpeed() uint8 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[0].currentSpeed
+	return d.rgbMat.CurrentSpeed
 }
 
 func (d *Device) SetCurrentSpeed(speed uint8) {
 	if !d.IsRGBMatrixEnabled() {
 		return
 	}
-	d.rgbMat[0].currentSpeed = speed
+	d.rgbMat.CurrentSpeed = speed
 }
 
 func (d *Device) GetCurrentHue() uint8 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[0].currentHue
+	return d.rgbMat.CurrentHue
 }
 
 func (d *Device) GetCurrentSaturation() uint8 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[0].currentSaturation
+	return d.rgbMat.CurrentSaturation
 }
 
 func (d *Device) GetCurrentValue() uint8 {
 	if !d.IsRGBMatrixEnabled() {
 		return 0
 	}
-	return d.rgbMat[0].currentValue
+	return d.rgbMat.CurrentValue
 }
 
 func (d *Device) SetCurrentHSV(hue uint8, saturation uint8, value uint8) {
 	if !d.IsRGBMatrixEnabled() {
 		return
 	}
-	d.rgbMat[0].currentHue = hue
-	d.rgbMat[0].currentSaturation = saturation
-	d.rgbMat[0].currentValue = value
+	d.rgbMat.CurrentHue = hue
+	d.rgbMat.CurrentSaturation = saturation
+	d.rgbMat.CurrentValue = value
 }
 
 func (d *Device) SetDirectHSV(hue uint8, saturation uint8, value uint8, ledIndex uint16) {
 	if !d.IsDirectModeEnabled() {
 		return
 	}
-	rgb := d.rgbMat[0]
+	rgb := d.rgbMat
 	var actualValue uint8
 	if value > rgb.maximumBrightness {
 		actualValue = rgb.maximumBrightness
 	} else {
 		actualValue = value
 	}
-	rgb.ledMatrixDirectVals[ledIndex] = LedMatrixDirectModeColor{
-		h: hue,
-		s: saturation,
-		v: actualValue,
+	rgb.LedMatrixDirectVals[ledIndex] = LedMatrixDirectModeColor{
+		H: hue,
+		S: saturation,
+		V: actualValue,
+	}
+}
+
+func (d *Device) updateRGBTask() {
+	if !d.IsRGBMatrixEnabled() {
+		return
+	}
+	rgb := d.rgbMat
+	for {
+		time.Sleep(time.Millisecond * time.Duration(0xFF-rgb.CurrentSpeed))
+		rgb.currentEffect.AnimationFunc(rgb)
+		_ = rgb.ledDriver.WriteColors(rgb.LedMatrixVals)
 	}
 }
 
 func (d *Device) IsRGBMatrixEnabled() bool {
-	return len(d.rgbMat) > 0
+	return d.rgbMat != nil
 }
 
 func (d *Device) IsDirectModeEnabled() bool {
-	return d.IsRGBMatrixEnabled() && d.rgbMat[0].ledMatrixDirectVals != nil
+	return d.IsRGBMatrixEnabled() && d.rgbMat.LedMatrixDirectVals != nil
 }
