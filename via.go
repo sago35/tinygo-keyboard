@@ -121,12 +121,6 @@ func rxHandler(b []byte) {
 }
 
 func rxHandler2(b []byte) bool {
-	switch b[0] {
-	//case 0x12, 0x0E:
-	default:
-		//fmt.Printf("RxHandler % X\n", b)
-	}
-
 	copy(txb[:32], b)
 	switch b[0] {
 	case 0x01:
@@ -238,40 +232,43 @@ func rxHandler2(b []byte) bool {
 			switch b[1] {
 			case 0x40:
 				// vialrgb_get_info
-				const vialRgbProtocolVersion = 1
-				txb[0] = vialRgbProtocolVersion & 0xFF
-				txb[1] = vialRgbProtocolVersion >> 8
-				txb[2] = device.GetRGBMatrixMaximumBrightness()
+				const vialRgbProtocolVersion = 0x0001
+				txb[2] = vialRgbProtocolVersion & 0xFF
+				txb[3] = vialRgbProtocolVersion >> 8
+				txb[4] = device.GetRGBMatrixMaximumBrightness()
 			case 0x41:
 				// vialrgb_get_mode
 				currentEffect := device.GetCurrentRGBMode()
-				txb[0] = byte(currentEffect & 0xFF)
-				txb[1] = byte(currentEffect >> 8)
-				txb[2] = device.GetCurrentSpeed()
-				txb[3] = device.GetCurrentHue()
-				txb[4] = device.GetCurrentSaturation()
-				txb[5] = device.GetCurrentValue()
+				txb[2] = byte(currentEffect & 0xFF)
+				txb[3] = byte(currentEffect >> 8)
+				txb[4] = device.GetCurrentSpeed()
+				txb[5] = device.GetCurrentHue()
+				txb[6] = device.GetCurrentSaturation()
+				txb[7] = device.GetCurrentValue()
 			case 0x42:
 				// vialrgb_get_supported
 				implementedEffects := device.GetSupportedRGBModes()
 				var length int
-				if len(implementedEffects) > 16 {
-					length = 16
+				if len(implementedEffects) > 15 {
+					length = 15
 				} else {
 					length = len(implementedEffects)
 				}
-				// TODO test if this format is okay
 				for i := 0; i < length; i++ {
 					txb[i*2] = byte(implementedEffects[i].AnimationType & 0xFF)
 					txb[i*2+1] = byte(implementedEffects[i].AnimationType >> 8)
+				}
+				if length < 16 {
+					txb[length*2] = 0xFF
+					txb[length*2+1] = 0xFF
 				}
 			case 0x43:
 				// vialrgb_get_number_leds
 				if !device.IsDirectModeEnabled() {
 					break
 				}
-				txb[0] = byte(device.GetRGBMatrixLEDCount() & 0xFF)
-				txb[1] = byte(device.GetRGBMatrixLEDCount() >> 8)
+				txb[2] = byte(device.GetRGBMatrixLEDCount() & 0xFF)
+				txb[3] = byte(device.GetRGBMatrixLEDCount() >> 8)
 			case 0x44:
 				//vialrgb_get_led_info
 				if !device.IsDirectModeEnabled() {
@@ -280,13 +277,13 @@ func rxHandler2(b []byte) bool {
 				ledPos := uint16(b[2]&0xFF) | (uint16(b[3]) >> 8)
 				position := device.GetRGBMatrixLEDMapping(ledPos)
 				// physical position
-				txb[0] = position.PhysicalX
-				txb[1] = position.PhysicalY
+				txb[2] = position.PhysicalX
+				txb[3] = position.PhysicalY
 				// flags
-				txb[2] = position.LedFlags
+				txb[4] = position.LedFlags
 				// matrix position
-				txb[3] = position.KbIndex
-				txb[4] = position.MatrixIndex
+				txb[5] = position.KbIndex
+				txb[6] = position.MatrixIndex
 			}
 		} else {
 			txb[1] = 0x00
@@ -354,7 +351,6 @@ func rxHandler2(b []byte) bool {
 		return false
 	}
 	machine.SendUSBInPacket(6, txb[:32])
-	//fmt.Printf("Tx        % X\n", txb[:32])
 
 	return true
 }

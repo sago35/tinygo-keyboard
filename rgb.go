@@ -116,15 +116,15 @@ func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMappin
 			effectOffAnimation,
 		},
 		currentEffect:     effectOffAnimation,
-		CurrentSpeed:      0,
-		CurrentHue:        0,
-		CurrentSaturation: 0,
-		CurrentValue:      0,
+		CurrentSpeed:      0xFF,
+		CurrentHue:        0xFF,
+		CurrentSaturation: 0xFF,
+		CurrentValue:      brightness,
 		LedMatrixVals:     make([]color.RGBA, ledCount),
 		ledDriver:         ledDriver,
 	}
+	rgbMatrix.implementedEffects = append(rgbMatrix.implementedEffects, animations...)
 	for _, animation := range animations {
-		rgbMatrix.implementedEffects = append(rgbMatrix.implementedEffects, animation)
 		if animation.AnimationType == VIALRGB_EFFECT_DIRECT {
 			rgbMatrix.LedMatrixDirectVals = make([]LedMatrixDirectModeColor, ledCount)
 		}
