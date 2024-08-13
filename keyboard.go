@@ -125,6 +125,10 @@ func (d *Device) Init() error {
 		}
 	}
 
+	device.SetCurrentRGBMode(uint16(rbuf[offset]) & (uint16(rbuf[offset+1]) >> 8))
+	device.SetCurrentSpeed(rbuf[offset+2])
+	device.SetCurrentHSV(rbuf[offset+3], rbuf[offset+4], rbuf[offset+5])
+
 	for i, b := range rbuf[offset:] {
 		if b == 0xFF {
 			b = 0

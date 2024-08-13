@@ -360,7 +360,8 @@ func Save() error {
 	keyboards := device.GetKeyboardCount()
 
 	cnt := device.GetMaxKeyCount()
-	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros))
+	rgbStorageSize := 2 + 1 + 3 // currentEffect + speed + HSV
+	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros)+rgbStorageSize)
 	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -388,6 +389,14 @@ func Save() error {
 			offset += cnt * 2
 		}
 	}
+
+	wbuf[offset] = byte(device.GetCurrentRGBMode())
+	wbuf[offset+1] = byte(device.GetCurrentRGBMode() >> 8)
+	wbuf[offset+2] = device.GetCurrentSpeed()
+	wbuf[offset+3] = device.GetCurrentHue()
+	wbuf[offset+4] = device.GetCurrentSaturation()
+	wbuf[offset+5] = device.GetCurrentValue()
+	offset += 5
 
 	copy(wbuf[offset:], device.Macros[:])
 

@@ -105,7 +105,9 @@ func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMappin
 		panic("LedMatrixMapping must have length equal to number of LedMatrixMapping")
 	}
 	effectOffAnimation := RgbAnimation{
-		AnimationFunc: func(matrix *RGBMatrix) {},
+		AnimationFunc: func(matrix *RGBMatrix) {
+			matrix.ledDriver.WriteColors(matrix.LedMatrixVals)
+		},
 		AnimationType: VIALRGB_EFFECT_OFF,
 	}
 	rgbMatrix := RGBMatrix{
@@ -116,7 +118,7 @@ func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMappin
 			effectOffAnimation,
 		},
 		currentEffect:     effectOffAnimation,
-		CurrentSpeed:      0xFF,
+		CurrentSpeed:      0x00,
 		CurrentHue:        0xFF,
 		CurrentSaturation: 0xFF,
 		CurrentValue:      brightness,
@@ -250,7 +252,7 @@ func (d *Device) updateRGBTask() {
 	}
 	rgb := d.rgbMat
 	for {
-		time.Sleep(time.Millisecond * time.Duration(0xFF-rgb.CurrentSpeed))
+		time.Sleep(time.Millisecond * time.Duration(0x100-uint16(rgb.CurrentSpeed)))
 		rgb.currentEffect.AnimationFunc(rgb)
 		_ = rgb.ledDriver.WriteColors(rgb.LedMatrixVals)
 	}
