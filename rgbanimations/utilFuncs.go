@@ -32,3 +32,7 @@ func HSVToRGB(h, s, v uint8) (r, g, b, a uint8) {
 		return v, p, q, v
 	}
 }
+
+func Scale8(i uint8, scale uint8) uint8 {
+	return uint8((uint16(i) * uint16(scale)) >> 8)
+}
