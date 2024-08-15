@@ -132,21 +132,23 @@ const (
 )
 
 const (
-	KeyMediaPlay        = keycodes.TypeMediaKey | 0xB0
-	KeyMediaPause       = keycodes.TypeMediaKey | 0xB1
-	KeyMediaRecord      = keycodes.TypeMediaKey | 0xB2
-	KeyMediaFastForward = keycodes.TypeMediaKey | 0xB3
-	KeyMediaRewind      = keycodes.TypeMediaKey | 0xB4
-	KeyMediaNextTrack   = keycodes.TypeMediaKey | 0xB5
-	KeyMediaPrevTrack   = keycodes.TypeMediaKey | 0xB6
-	KeyMediaStop        = keycodes.TypeMediaKey | 0xB7
-	KeyMediaEject       = keycodes.TypeMediaKey | 0xB8
-	KeyMediaRandomPlay  = keycodes.TypeMediaKey | 0xB9
-	KeyMediaPlayPause   = keycodes.TypeMediaKey | 0xCD
-	KeyMediaPlaySkip    = keycodes.TypeMediaKey | 0xCE
-	KeyMediaMute        = keycodes.TypeMediaKey | 0xE2
-	KeyMediaVolumeInc   = keycodes.TypeMediaKey | 0xE9
-	KeyMediaVolumeDec   = keycodes.TypeMediaKey | 0xEA
+	KeyMediaBrightnessUp   = keycodes.TypeMediaKey | 0x6F
+	KeyMediaBrightnessDown = keycodes.TypeMediaKey | 0x70
+	KeyMediaPlay           = keycodes.TypeMediaKey | 0xB0
+	KeyMediaPause          = keycodes.TypeMediaKey | 0xB1
+	KeyMediaRecord         = keycodes.TypeMediaKey | 0xB2
+	KeyMediaFastForward    = keycodes.TypeMediaKey | 0xB3
+	KeyMediaRewind         = keycodes.TypeMediaKey | 0xB4
+	KeyMediaNextTrack      = keycodes.TypeMediaKey | 0xB5
+	KeyMediaPrevTrack      = keycodes.TypeMediaKey | 0xB6
+	KeyMediaStop           = keycodes.TypeMediaKey | 0xB7
+	KeyMediaEject          = keycodes.TypeMediaKey | 0xB8
+	KeyMediaRandomPlay     = keycodes.TypeMediaKey | 0xB9
+	KeyMediaPlayPause      = keycodes.TypeMediaKey | 0xCD
+	KeyMediaPlaySkip       = keycodes.TypeMediaKey | 0xCE
+	KeyMediaMute           = keycodes.TypeMediaKey | 0xE2
+	KeyMediaVolumeInc      = keycodes.TypeMediaKey | 0xE9
+	KeyMediaVolumeDec      = keycodes.TypeMediaKey | 0xEA
 )
 
 const (
