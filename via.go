@@ -199,6 +199,7 @@ func rxHandler2(b []byte) bool {
 				device.SetCurrentRGBMode(rgbId)
 				device.SetCurrentSpeed(b[4])
 				device.SetCurrentHSV(b[5], b[6], b[7])
+				device.flashCh <- true
 			case 0x42:
 				// VIALRGB_DIRECT_FASTSET
 				if !device.IsDirectModeEnabled() {
@@ -396,7 +397,7 @@ func Save() error {
 	wbuf[offset+3] = device.GetCurrentHue()
 	wbuf[offset+4] = device.GetCurrentSaturation()
 	wbuf[offset+5] = device.GetCurrentValue()
-	offset += 5
+	offset += 6
 
 	copy(wbuf[offset:], device.Macros[:])
 

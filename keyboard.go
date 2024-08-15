@@ -102,7 +102,8 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros))
+	rgbStorageSize := 2 + 1 + 3 // currentEffect + speed + HSV
+	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros)+rgbStorageSize)
 	_, err := machine.Flash.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -125,9 +126,11 @@ func (d *Device) Init() error {
 		}
 	}
 
-	device.SetCurrentRGBMode(uint16(rbuf[offset]) & (uint16(rbuf[offset+1]) >> 8))
+	modeID := uint16(rbuf[offset]) | (uint16(rbuf[offset+1]) >> 8)
+	device.SetCurrentRGBMode(modeID)
 	device.SetCurrentSpeed(rbuf[offset+2])
 	device.SetCurrentHSV(rbuf[offset+3], rbuf[offset+4], rbuf[offset+5])
+	offset += 6
 
 	for i, b := range rbuf[offset:] {
 		if b == 0xFF {
