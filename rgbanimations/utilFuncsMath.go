@@ -48,6 +48,13 @@ func Abs8(i int8) uint8 {
 	return uint8(i)
 }
 
+func Abs16(i int16) int16 {
+	if i < 0 {
+		return int16(-i)
+	}
+	return int16(i)
+}
+
 func Sin8(theta uint8) uint8 {
 	offset := theta
 	if theta&0x40 != 0 {
@@ -77,4 +84,31 @@ func Sin8(theta uint8) uint8 {
 	y++
 
 	return uint8(y)
+}
+
+func Atan28(dy int16, dx int16) uint8 {
+	if dy == 0 {
+		if dx >= 0 {
+			return 0
+		} else {
+			return 128
+		}
+	}
+
+	var absY int16
+	if dy < 0 {
+		absY = -dy
+	} else {
+		absY = dy
+	}
+	var a int8
+	if dx >= 0 {
+		a = int8(32 - (32 * (dx - absY) / (dx + absY)))
+	} else {
+		a = int8(96 - (32 * (dx + absY) / (dx - absY)))
+	}
+	if dy < 0 {
+		return uint8(-a)
+	}
+	return uint8(a)
 }

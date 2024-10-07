@@ -13,6 +13,8 @@ type RGBMatrix struct {
 	maximumBrightness   uint8
 	ledCount            uint16
 	LedMatrixMapping    []LedMatrixPosition
+	CenterXPhysical     uint8
+	CenterYPhysical     uint8
 	implementedEffects  []RgbAnimation
 	currentEffect       RgbAnimation
 	CurrentSpeed        uint8
@@ -113,10 +115,24 @@ func (d *Device) AddRGBMatrix(brightness uint8, ledCount uint16, ledMatrixMappin
 		},
 		AnimationType: VIALRGB_EFFECT_OFF,
 	}
+
+	maxX := uint8(0)
+	maxY := uint8(0)
+	for _, position := range ledMatrixMapping {
+		if maxX < position.PhysicalX {
+			maxX = position.PhysicalX
+		}
+		if maxY < position.PhysicalY {
+			maxY = position.PhysicalY
+		}
+	}
+
 	rgbMatrix := RGBMatrix{
 		maximumBrightness: brightness,
 		ledCount:          ledCount,
 		LedMatrixMapping:  ledMatrixMapping,
+		CenterXPhysical:   maxX / 2,
+		CenterYPhysical:   maxY / 2,
 		implementedEffects: []RgbAnimation{
 			effectOffAnimation,
 		},

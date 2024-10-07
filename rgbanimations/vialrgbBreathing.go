@@ -9,8 +9,6 @@ func GetBreathingAnim() keyboard.RgbAnimation {
 	}
 }
 
-var time = uint16(0)
-
 func vialRGBBreathing(matrix *keyboard.RGBMatrix) {
 	timeScaled := Scale16by8(time, matrix.CurrentSpeed)
 	v := Scale8(Abs8(int8(Sin8(uint8(timeScaled))-128))*8, matrix.CurrentValue)
