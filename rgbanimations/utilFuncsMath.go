@@ -33,6 +33,8 @@ func HSVToRGB(h, s, v uint8) (r, g, b, a uint8) {
 	}
 }
 
+// Math Functions based on lib8tion math8.h
+
 func Scale8(i uint8, scale uint8) uint8 {
 	return uint8((uint16(i) * uint16(scale)) >> 8)
 }
@@ -111,4 +113,32 @@ func Atan28(dy int16, dx int16) uint8 {
 		return uint8(-a)
 	}
 	return uint8(a)
+}
+
+func Sqrt16(x uint16) uint8 {
+	if x <= 1 {
+		return uint8(x)
+	}
+
+	low := uint8(1) // lower bound
+	var hi, mid uint8
+
+	if x > 7904 {
+		hi = 255
+	} else {
+		hi = uint8((x >> 5) + 5) // initial estimate for upper bound
+	}
+
+	for ok := true; ok; ok = hi >= mid { // emulation of do-while loop
+		mid = (low + hi) >> 1
+		if uint16(mid)*uint16(mid) > x {
+			hi = mid - 1
+		} else {
+			if mid == 255 {
+				return 255
+			}
+			low = mid + 1
+		}
+	}
+	return low - 1
 }
