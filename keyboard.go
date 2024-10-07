@@ -24,6 +24,8 @@ type Device struct {
 	flashCh  chan bool
 	flashCnt int
 
+	rgbMat *RGBMatrix
+
 	kb []KBer
 
 	layer      int
@@ -84,7 +86,7 @@ func (d *Device) OverrideCtrlH() {
 	}
 }
 
-func (d *Device) Init() error {
+func (d *Device) Init(ctx context.Context) error {
 	for _, k := range d.kb {
 		err := k.Init()
 		if err != nil {
@@ -100,7 +102,8 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros))
+	rgbStorageSize := 2 + 1 + 3 // currentEffect + speed + HSV
+	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros)+rgbStorageSize)
 	_, err := machine.Flash.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -123,6 +126,12 @@ func (d *Device) Init() error {
 		}
 	}
 
+	modeID := uint16(rbuf[offset]) | (uint16(rbuf[offset+1]) >> 8)
+	device.SetCurrentRGBMode(modeID)
+	device.SetCurrentSpeed(rbuf[offset+2])
+	device.SetCurrentHSV(rbuf[offset+3], rbuf[offset+4], rbuf[offset+5])
+	offset += 6
+
 	for i, b := range rbuf[offset:] {
 		if b == 0xFF {
 			b = 0
@@ -130,6 +139,11 @@ func (d *Device) Init() error {
 		device.Macros[i] = b
 	}
 	//copy(device.Macros[:], rbuf[offset:])
+
+	// Start RGB task
+	go func() {
+		_ = d.updateRGBTask(ctx)
+	}()
 
 	return nil
 }
@@ -347,7 +361,7 @@ func decKey(k uint32) (int, int, int) {
 }
 
 func (d *Device) Loop(ctx context.Context) error {
-	err := d.Init()
+	err := d.Init(ctx)
 	if err != nil {
 		return err
 	}
@@ -379,7 +393,7 @@ func (d *Device) Key(layer, kbIndex, index int) Keycode {
 }
 
 func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
-	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, kbIndex, index)
+	//fmt.Printf("    KeyVia(%d, %d, %d)\n", layer, KbIndex, index)
 	if kbIndex >= len(d.kb) {
 		return 0
 	}
@@ -437,7 +451,7 @@ func (d *Device) SetKeycodeVia(layer, kbIndex, index int, key Keycode) {
 	if kbIndex >= len(d.kb) {
 		return
 	}
-	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, kbIndex, index, key)
+	//fmt.Printf("SetKeycodeVia(%d, %d, %d, %04X)\n", layer, KbIndex, index, key)
 	kc := keycodeViaToTGK(key)
 
 	d.kb[kbIndex].SetKeycode(layer, index, kc)

@@ -121,12 +121,6 @@ func rxHandler(b []byte) {
 }
 
 func rxHandler2(b []byte) bool {
-	switch b[0] {
-	//case 0x12, 0x0E:
-	default:
-		//fmt.Printf("RxHandler % X\n", b)
-	}
-
 	copy(txb[:32], b)
 	switch b[0] {
 	case 0x01:
@@ -195,10 +189,107 @@ func rxHandler2(b []byte) bool {
 		device.SetKeycodeVia(int(b[1]), int(b[2]), int(b[3]), Keycode((uint16(b[4])<<8)+uint16(b[5])))
 		device.flashCh <- true
 		//Changed = true
+	case 0x07:
+		// id_lighting_set_value
+		if device.IsRGBMatrixEnabled() {
+			switch b[1] {
+			case 0x41:
+				// VIALRGB_SET_MODE
+				rgbId := uint16(b[2]) | (uint16(b[3]) << 8)
+				device.SetCurrentRGBMode(rgbId)
+				device.SetCurrentSpeed(b[4])
+				device.SetCurrentHSV(b[5], b[6], b[7])
+				device.flashCh <- true
+			case 0x42:
+				// VIALRGB_DIRECT_FASTSET
+				if !device.IsDirectModeEnabled() {
+					break
+				}
+				if len(b) < 4 {
+					break
+				}
+				firstIndex := uint16(b[2]) | (uint16(b[3]) << 8)
+				numLeds := uint16(b[4])
+				if int(numLeds)*3 > len(b)-4 {
+					break
+				}
+				var i uint16
+				for i = 0; i < numLeds; i++ {
+					if i+firstIndex >= device.GetRGBMatrixLEDCount() {
+						break
+					}
+					device.SetDirectHSV(
+						b[i*3+5],
+						b[i*3+6],
+						b[i*3+7],
+						i+firstIndex,
+					)
+				}
+			}
+		}
 	case 0x08:
 		// id_lighting_get_value
-		txb[1] = 0x00
-		txb[2] = 0x00
+		if device.IsRGBMatrixEnabled() {
+			switch b[1] {
+			case 0x40:
+				// vialrgb_get_info
+				const vialRgbProtocolVersion = 0x0001
+				txb[2] = vialRgbProtocolVersion & 0xFF
+				txb[3] = vialRgbProtocolVersion >> 8
+				txb[4] = device.GetRGBMatrixMaximumBrightness()
+			case 0x41:
+				// vialrgb_get_mode
+				currentEffect := device.GetCurrentRGBMode()
+				txb[2] = byte(currentEffect & 0xFF)
+				txb[3] = byte(currentEffect >> 8)
+				txb[4] = device.GetCurrentSpeed()
+				txb[5] = device.GetCurrentHue()
+				txb[6] = device.GetCurrentSaturation()
+				txb[7] = device.GetCurrentValue()
+			case 0x42:
+				// vialrgb_get_supported
+				implementedEffects := device.GetSupportedRGBModes()
+				var length int
+				if len(implementedEffects) > 15 {
+					length = 15
+				} else {
+					length = len(implementedEffects)
+				}
+				for i := 0; i < length; i++ {
+					txb[i*2] = byte(implementedEffects[i].AnimationType & 0xFF)
+					txb[i*2+1] = byte(implementedEffects[i].AnimationType >> 8)
+				}
+				if length < 16 {
+					txb[length*2] = 0xFF
+					txb[length*2+1] = 0xFF
+				}
+			case 0x43:
+				// vialrgb_get_number_leds
+				if !device.IsDirectModeEnabled() {
+					break
+				}
+				txb[2] = byte(device.GetRGBMatrixLEDCount() & 0xFF)
+				txb[3] = byte(device.GetRGBMatrixLEDCount() >> 8)
+			case 0x44:
+				//vialrgb_get_led_info
+				if !device.IsDirectModeEnabled() {
+					break
+				}
+				ledPos := uint16(b[2]&0xFF) | (uint16(b[3]) >> 8)
+				position := device.GetRGBMatrixLEDMapping(ledPos)
+				// physical position
+				txb[2] = position.PhysicalX
+				txb[3] = position.PhysicalY
+				// flags
+				txb[4] = position.LedFlags
+				// matrix position
+				txb[5] = position.KbIndex
+				txb[6] = position.MatrixIndex
+			}
+		} else {
+			txb[1] = 0x00
+			txb[2] = 0x00
+		}
 	case 0xFE: // vial
 		switch b[1] {
 		case 0x00:
@@ -216,6 +307,9 @@ func rxHandler2(b []byte) bool {
 			txb[9] = 0xF3
 			txb[10] = 0x54
 			txb[11] = 0xE2
+			if device.IsRGBMatrixEnabled() {
+				txb[12] = 1
+			}
 		case 0x01:
 			// Retrieve keyboard definition size
 			size := len(KeyboardDef)
@@ -258,7 +352,6 @@ func rxHandler2(b []byte) bool {
 		return false
 	}
 	machine.SendUSBInPacket(6, txb[:32])
-	//fmt.Printf("Tx        % X\n", txb[:32])
 
 	return true
 }
@@ -268,7 +361,8 @@ func Save() error {
 	keyboards := device.GetKeyboardCount()
 
 	cnt := device.GetMaxKeyCount()
-	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros))
+	rgbStorageSize := 2 + 1 + 3 // currentEffect + speed + HSV
+	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros)+rgbStorageSize)
 	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -296,6 +390,14 @@ func Save() error {
 			offset += cnt * 2
 		}
 	}
+
+	wbuf[offset] = byte(device.GetCurrentRGBMode())
+	wbuf[offset+1] = byte(device.GetCurrentRGBMode() >> 8)
+	wbuf[offset+2] = device.GetCurrentSpeed()
+	wbuf[offset+3] = device.GetCurrentHue()
+	wbuf[offset+4] = device.GetCurrentSaturation()
+	wbuf[offset+5] = device.GetCurrentValue()
+	offset += 6
 
 	copy(wbuf[offset:], device.Macros[:])
 
