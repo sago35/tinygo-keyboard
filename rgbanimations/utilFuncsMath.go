@@ -88,6 +88,10 @@ func Sin8(theta uint8) uint8 {
 	return uint8(y)
 }
 
+func Cos8(theta uint8) uint8 {
+	return Sin8(theta + 64)
+}
+
 func Atan28(dy int16, dx int16) uint8 {
 	if dy == 0 {
 		if dx >= 0 {
