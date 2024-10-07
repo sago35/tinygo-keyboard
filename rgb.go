@@ -1,6 +1,7 @@
 package keyboard
 
 import (
+	"context"
 	"image/color"
 	"time"
 	"tinygo.org/x/drivers/ws2812"
@@ -246,16 +247,25 @@ func (d *Device) SetDirectHSV(hue uint8, saturation uint8, value uint8, ledIndex
 	}
 }
 
-func (d *Device) updateRGBTask() {
+func (d *Device) updateRGBTask(ctx context.Context) error {
 	if !d.IsRGBMatrixEnabled() {
-		return
+		return nil
 	}
 	rgb := d.rgbMat
-	for {
-		time.Sleep(time.Millisecond * time.Duration(0x100-uint16(rgb.CurrentSpeed)))
+	ticker := time.Tick(10 * time.Millisecond)
+	cont := true
+	for cont {
+		select {
+		case <-ctx.Done():
+			cont = false
+			continue
+		case <-ticker:
+		default:
+		}
 		rgb.currentEffect.AnimationFunc(rgb)
 		_ = rgb.ledDriver.WriteColors(rgb.LedMatrixVals)
 	}
+	return nil
 }
 
 func (d *Device) IsRGBMatrixEnabled() bool {

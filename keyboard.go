@@ -86,7 +86,7 @@ func (d *Device) OverrideCtrlH() {
 	}
 }
 
-func (d *Device) Init() error {
+func (d *Device) Init(ctx context.Context) error {
 	for _, k := range d.kb {
 		err := k.Init()
 		if err != nil {
@@ -141,7 +141,9 @@ func (d *Device) Init() error {
 	//copy(device.Macros[:], rbuf[offset:])
 
 	// Start RGB task
-	go d.updateRGBTask()
+	go func() {
+		_ = d.updateRGBTask(ctx)
+	}()
 
 	return nil
 }
@@ -359,7 +361,7 @@ func decKey(k uint32) (int, int, int) {
 }
 
 func (d *Device) Loop(ctx context.Context) error {
-	err := d.Init()
+	err := d.Init(ctx)
 	if err != nil {
 		return err
 	}

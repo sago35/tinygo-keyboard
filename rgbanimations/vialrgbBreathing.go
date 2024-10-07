@@ -12,7 +12,8 @@ func GetBreathingAnim() keyboard.RgbAnimation {
 var time = uint16(0)
 
 func vialRGBBreathing(matrix *keyboard.RGBMatrix) {
-	v := Scale8(Abs8(int8(Sin8(uint8(time))-128))*8, matrix.CurrentValue)
+	timeScaled := Scale16by8(time, matrix.CurrentSpeed)
+	v := Scale8(Abs8(int8(Sin8(uint8(timeScaled))-128))*8, matrix.CurrentValue)
 	r, g, b, a := HSVToRGB(matrix.CurrentHue, matrix.CurrentSaturation, v)
 	for _, val := range matrix.LedMatrixVals {
 		val.R = r
