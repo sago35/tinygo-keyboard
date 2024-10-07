@@ -374,7 +374,6 @@ func (d *Device) Loop(ctx context.Context) error {
 			cont = false
 			continue
 		case <-ticker:
-		default:
 		}
 
 		err := d.Tick()
