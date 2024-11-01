@@ -5,6 +5,7 @@ package keyboard
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"machine"
 	k "machine/usb/hid/keyboard"
 	"machine/usb/hid/mouse"
@@ -20,6 +21,8 @@ type Device struct {
 	Mouse    Mouser
 	Override [][]Keycode
 	Macros   [2048]byte
+	Combos   [32][5]Keycode
+
 	Debug    bool
 	flashCh  chan bool
 	flashCnt int
@@ -31,6 +34,12 @@ type Device struct {
 	baseLayer  int
 	pressed    []uint32
 	repeat     map[uint32]time.Time
+
+	combosTimer    time.Time
+	combosPressed  map[uint32]struct{}
+	combosReleased []uint32
+	combosKey      uint32
+	founds         []Keycode
 }
 
 type KBer interface {
@@ -70,6 +79,11 @@ func New() *Device {
 		flashCh:    make(chan bool, 10),
 		layerStack: make([]int, 0, 6),
 		repeat:     map[uint32]time.Time{},
+
+		combosPressed:  map[uint32]struct{}{},
+		combosReleased: make([]uint32, 0, 10),
+		combosKey:      0xFFFFFFFF,
+		founds:         make([]Keycode, 10),
 	}
 
 	SetDevice(d)
@@ -100,7 +114,8 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros))
+	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros)+
+		len(device.Combos)*len(device.Combos[0])*2)
 	_, err := machine.Flash.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -123,13 +138,41 @@ func (d *Device) Init() error {
 		}
 	}
 
-	for i, b := range rbuf[offset:] {
+	macroSize := len(device.Macros)
+	for i, b := range rbuf[offset : offset+macroSize] {
 		if b == 0xFF {
 			b = 0
 		}
 		device.Macros[i] = b
 	}
-	//copy(device.Macros[:], rbuf[offset:])
+	offset += macroSize
+
+	for idx := range device.Combos {
+		device.Combos[idx][0] = Keycode(rbuf[offset+0]) + Keycode(rbuf[offset+1])<<8 // key 1
+		device.Combos[idx][1] = Keycode(rbuf[offset+2]) + Keycode(rbuf[offset+3])<<8 // key 2
+		device.Combos[idx][2] = Keycode(rbuf[offset+4]) + Keycode(rbuf[offset+5])<<8 // key 3
+		device.Combos[idx][3] = Keycode(rbuf[offset+6]) + Keycode(rbuf[offset+7])<<8 // key 4
+		device.Combos[idx][4] = Keycode(rbuf[offset+8]) + Keycode(rbuf[offset+9])<<8 // Output key
+
+		// Reinitialize to 0 when reading a value (0xFFFF) from uninitialized flash.
+		if device.Combos[idx][0] == 0xFFFF {
+			device.Combos[idx][0] = 0x0000
+		}
+		if device.Combos[idx][1] == 0xFFFF {
+			device.Combos[idx][1] = 0x0000
+		}
+		if device.Combos[idx][2] == 0xFFFF {
+			device.Combos[idx][2] = 0x0000
+		}
+		if device.Combos[idx][3] == 0xFFFF {
+			device.Combos[idx][3] = 0x0000
+		}
+		if device.Combos[idx][4] == 0xFFFF {
+			device.Combos[idx][4] = 0x0000
+		}
+
+		offset += len(device.Combos[0]) * 2
+	}
 
 	return nil
 }
@@ -202,9 +245,112 @@ func (d *Device) Tick() error {
 		}
 	}
 
+	d.founds = d.founds[:0]
 	for _, xx := range noneToPresse {
 		kbidx, layer, index := decKey(xx)
 		x := d.kb[kbidx].Key(layer, index)
+		for _, combo := range d.Combos {
+			for _, ckey := range combo[:4] {
+				if keycodeViaToTGK(ckey) == x {
+					uniq := true
+					for _, f := range d.founds {
+						if f == ckey {
+							uniq = false
+						}
+					}
+					if uniq {
+						d.founds = append(d.founds, ckey)
+					}
+					if d.combosTimer.IsZero() {
+						d.combosTimer = time.Now().Add(48 * time.Millisecond)
+					}
+					d.combosPressed[xx] = struct{}{}
+				}
+			}
+		}
+	}
+	if len(d.founds) == len(noneToPresse) {
+		// Remove the keys pressed before the Combos are completed.
+		noneToPresse = noneToPresse[:0]
+	} else {
+		// Cancel the Combos waiting state if a key unrelated to Combos is pressed.
+		d.combosTimer = time.Time{}
+		for xx := range d.combosPressed {
+			noneToPresse = append(noneToPresse, xx)
+			delete(d.combosPressed, xx)
+		}
+		pressToRelease = append(d.combosReleased, pressToRelease...)
+		d.combosReleased = d.combosReleased[:0]
+	}
+
+	if !d.combosTimer.IsZero() {
+		if time.Now().Before(d.combosTimer) {
+			// In the Combos waiting state, only record the events.
+			for _, xx := range pressToRelease {
+				d.combosReleased = append(d.combosReleased, xx)
+			}
+			return nil
+		} else {
+			// When the Combos waiting state is complete, press the key if there is a perfect match.
+			// If there is no match, reset `noneToPress` and `pressToRelease`.
+
+			matched := false
+			matchMax := 0
+			for _, combo := range d.Combos {
+				matchCnt := 0
+				zero := 0
+				for _, ckey := range combo[:4] {
+					if ckey == 0x0000 {
+						zero++
+					} else {
+						for xx := range d.combosPressed {
+							kbidx, layer, index := decKey(xx)
+							x := d.kb[kbidx].Key(layer, index)
+							if keycodeViaToTGK(ckey) == x {
+								matchCnt++
+							}
+						}
+					}
+				}
+				if matchCnt >= 2 && zero+matchCnt == 4 && matchCnt > matchMax {
+					matched = true
+					matchMax = matchCnt
+					d.combosKey = 0xFF000000 | uint32(keycodeViaToTGK(combo[4]))
+				}
+			}
+
+			if matched {
+				noneToPresse = append(noneToPresse, d.combosKey)
+
+				for k := range d.combosPressed {
+					delete(d.combosPressed, k)
+				}
+				d.combosReleased = d.combosReleased[:0]
+			} else {
+				for k := range d.combosPressed {
+					noneToPresse = append(noneToPresse, k)
+					delete(d.combosPressed, k)
+				}
+				for _, k := range d.combosReleased {
+					pressToRelease = append(pressToRelease, k)
+				}
+				d.combosReleased = d.combosReleased[:0]
+			}
+			d.combosTimer = time.Time{}
+		}
+	}
+
+	for _, xx := range noneToPresse {
+		kbidx, layer, index := decKey(xx)
+		var x Keycode
+		if kbidx < len(d.kb) {
+			x = d.kb[kbidx].Key(layer, index)
+		} else if kbidx >= 0xFF {
+			// Combos
+			x = Keycode(xx & 0x00FFFFFF)
+		} else {
+			return fmt.Errorf("kbidx error : %d", kbidx)
+		}
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
 			d.layer = int(x) & 0x0F
 			if x&keycodes.ToKeyMask == keycodes.ToKeyMask {
@@ -232,7 +378,9 @@ func (d *Device) Tick() error {
 		} else {
 			d.Keyboard.Down(k.Keycode(x))
 		}
-		d.kb[kbidx].Callback(layer, index, Press)
+		if kbidx < len(d.kb) {
+			d.kb[kbidx].Callback(layer, index, Press)
+		}
 	}
 
 	for xx, v := range d.repeat {
@@ -252,9 +400,23 @@ func (d *Device) Tick() error {
 		}
 	}
 
+	if len(pressToRelease) > 0 && d.combosKey != 0xFFFFFFFF {
+		// For simplicity, the release timing is set to when any key is released.
+		pressToRelease = append(pressToRelease, d.combosKey)
+		d.combosKey = 0xFFFFFFFF
+	}
+
 	for _, xx := range pressToRelease {
 		kbidx, layer, index := decKey(xx)
-		x := d.kb[kbidx].Key(layer, index)
+		var x Keycode
+		if kbidx < len(d.kb) {
+			x = d.kb[kbidx].Key(layer, index)
+		} else if kbidx >= 0xFF {
+			// Combos
+			x = Keycode(xx & 0x00FFFFFF)
+		} else {
+			return fmt.Errorf("kbidx error : %d", kbidx)
+		}
 		if x&keycodes.ModKeyMask == keycodes.ModKeyMask {
 			if x&keycodes.ToKeyMask != keycodes.ToKeyMask {
 				layer = int(x) & 0x0F
@@ -281,7 +443,9 @@ func (d *Device) Tick() error {
 		} else {
 			d.Keyboard.Up(k.Keycode(x))
 		}
-		d.kb[kbidx].Callback(layer, index, PressToRelease)
+		if kbidx < len(d.kb) {
+			d.kb[kbidx].Callback(layer, index, PressToRelease)
+		}
 	}
 
 	return nil
