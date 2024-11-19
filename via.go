@@ -244,9 +244,45 @@ func rxHandler2(b []byte) bool {
 			}
 		case 0x0D:
 			// vial_dynamic_entry_op
-			txb[0] = 0x00
-			txb[1] = 0x00
-			txb[2] = 0x00
+			switch b[2] {
+			case 0x00:
+				// DYNAMIC_VIAL_GET_NUMBER_OF_ENTRIES
+				txb[0] = 0x00
+				txb[1] = 0x20 // combos
+				txb[2] = 0x00
+			case 0x03:
+				// DYNAMIC_VIAL_COMBO_GET
+				txb[0] = 0x00
+				idx := b[3]
+				txb[1] = byte(device.Combos[idx][0])
+				txb[2] = byte(device.Combos[idx][0] >> 8)
+				txb[3] = byte(device.Combos[idx][1])
+				txb[4] = byte(device.Combos[idx][1] >> 8)
+				txb[5] = byte(device.Combos[idx][2])
+				txb[6] = byte(device.Combos[idx][2] >> 8)
+				txb[7] = byte(device.Combos[idx][3])
+				txb[8] = byte(device.Combos[idx][3] >> 8)
+				txb[9] = byte(device.Combos[idx][4])
+				txb[10] = byte(device.Combos[idx][4] >> 8)
+				// 00 0400 0500 0000 0000 0700 000000000000000000000000000000000000000000
+				// 0  1    3    5    7    9
+			case 0x04:
+				// DYNAMIC_VIAL_COMBO_SET
+				txb[0] = 0x00
+				idx := b[3]
+				// fe0d04 00 0400 0500 0000 0000 0700 000000000000000000000000000000000000
+				// 0 1 2  3  4    6    8    10   12
+				device.Combos[idx][0] = Keycode(b[4]) + Keycode(b[5])<<8   // key 1
+				device.Combos[idx][1] = Keycode(b[6]) + Keycode(b[7])<<8   // key 2
+				device.Combos[idx][2] = Keycode(b[8]) + Keycode(b[9])<<8   // key 3
+				device.Combos[idx][3] = Keycode(b[10]) + Keycode(b[11])<<8 // key 4
+				device.Combos[idx][4] = Keycode(b[12]) + Keycode(b[13])<<8 // Output key
+				device.flashCh <- true
+			default:
+				txb[0] = 0x00
+				txb[1] = 0x00
+				txb[2] = 0x00
+			}
 		case 0x05:
 			// vial_get_unlock_status
 			txb[0] = 1 // unlocked
@@ -268,7 +304,8 @@ func Save() error {
 	keyboards := device.GetKeyboardCount()
 
 	cnt := device.GetMaxKeyCount()
-	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros))
+	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.Macros)+
+		len(device.Combos)*len(device.Combos[0])*2)
 	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -297,7 +334,23 @@ func Save() error {
 		}
 	}
 
-	copy(wbuf[offset:], device.Macros[:])
+	macroSize := len(device.Macros)
+	copy(wbuf[offset:offset+macroSize], device.Macros[:])
+	offset += macroSize
+
+	for _, combo := range device.Combos {
+		wbuf[offset+0] = byte(combo[0])
+		wbuf[offset+1] = byte(combo[0] >> 8)
+		wbuf[offset+2] = byte(combo[1])
+		wbuf[offset+3] = byte(combo[1] >> 8)
+		wbuf[offset+4] = byte(combo[2])
+		wbuf[offset+5] = byte(combo[2] >> 8)
+		wbuf[offset+6] = byte(combo[3])
+		wbuf[offset+7] = byte(combo[3] >> 8)
+		wbuf[offset+8] = byte(combo[4])
+		wbuf[offset+9] = byte(combo[4] >> 8)
+		offset += len(device.Combos[0]) * 2
+	}
 
 	_, err = machine.Flash.WriteAt(wbuf[:], 0)
 	if err != nil {

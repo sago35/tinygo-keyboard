@@ -1,21 +1,21 @@
 smoketest: FORCE
 	go build .
 	mkdir -p out
-	tinygo build -o ./out/fric10key.uf2       --target xiao-rp2040           --size short ./targets/fric10key/
-	tinygo build -o ./out/gobadge.uf2         --target gobadge               --size short ./targets/gobadge/
-	tinygo build -o ./out/gopher-badge.uf2    --target gopher-badge          --size short ./targets/gopher-badge/
-	tinygo build -o ./out/macropad-rp2040.uf2 --target macropad-rp2040       --size short ./targets/macropad-rp2040/
-	tinygo build -o ./out/sg48key.uf2         --target xiao                  --size short ./targets/sg48key/
-	tinygo build -o ./out/sg48key-rp2040.uf2  --target xiao-rp2040           --size short ./targets/sg48key/
-	tinygo build -o ./out/sgh60.uf2           --target waveshare-rp2040-zero --size short ./targets/sgh60/
-	tinygo build -o ./out/sgkb-left.uf2       --target xiao-rp2040           --size short ./targets/sgkb/left/
-	tinygo build -o ./out/sgkb-left-0.3.0.uf2 --target xiao-rp2040           --size short ./targets/sgkb/left-0.3.0/
-	tinygo build -o ./out/sgkb-right.uf2      --target xiao-rp2040           --size short ./targets/sgkb/right/
-	tinygo build -o ./out/sgkey.uf2           --target xiao-rp2040           --size short ./targets/sgkey/
-	tinygo build -o ./out/wiokey.uf2          --target wioterminal           --size short ./targets/wiokey/
-	tinygo build -o ./out/xiao-kb01.uf2       --target xiao-rp2040           --size short ./targets/xiao-kb01/
-	tinygo build -o ./out/tut-gpio.uf2        --target xiao-rp2040           --size short ./tutorial/gpio/
-	tinygo build -o ./out/tut-gpio-vial.uf2   --target xiao-rp2040           --size short ./tutorial/gpio-vial/
+	tinygo build -o ./out/fric10key.uf2       --target xiao-rp2040           --size short --stack-size 8kb ./targets/fric10key/
+	tinygo build -o ./out/gobadge.uf2         --target gobadge               --size short --stack-size 8kb ./targets/gobadge/
+	tinygo build -o ./out/gopher-badge.uf2    --target gopher-badge          --size short --stack-size 8kb ./targets/gopher-badge/
+	tinygo build -o ./out/macropad-rp2040.uf2 --target macropad-rp2040       --size short --stack-size 8kb ./targets/macropad-rp2040/
+	tinygo build -o ./out/sg48key.uf2         --target xiao                  --size short --stack-size 8kb ./targets/sg48key/
+	tinygo build -o ./out/sg48key-rp2040.uf2  --target xiao-rp2040           --size short --stack-size 8kb ./targets/sg48key/
+	tinygo build -o ./out/sgh60.uf2           --target waveshare-rp2040-zero --size short --stack-size 8kb ./targets/sgh60/
+	tinygo build -o ./out/sgkb-left.uf2       --target xiao-rp2040           --size short --stack-size 8kb ./targets/sgkb/left/
+	tinygo build -o ./out/sgkb-left-0.3.0.uf2 --target xiao-rp2040           --size short --stack-size 8kb ./targets/sgkb/left-0.3.0/
+	tinygo build -o ./out/sgkb-right.uf2      --target xiao-rp2040           --size short --stack-size 8kb ./targets/sgkb/right/
+	tinygo build -o ./out/sgkey.uf2           --target xiao-rp2040           --size short --stack-size 8kb ./targets/sgkey/
+	tinygo build -o ./out/wiokey.uf2          --target wioterminal           --size short --stack-size 8kb ./targets/wiokey/
+	tinygo build -o ./out/xiao-kb01.uf2       --target xiao-rp2040           --size short --stack-size 8kb ./targets/xiao-kb01/
+	tinygo build -o ./out/tut-gpio.uf2        --target xiao-rp2040           --size short --stack-size 8kb ./tutorial/gpio/
+	tinygo build -o ./out/tut-gpio-vial.uf2   --target xiao-rp2040           --size short --stack-size 8kb ./tutorial/gpio-vial/
 
 FORCE:
 
