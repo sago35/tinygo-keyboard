@@ -22,6 +22,7 @@ The following are supported.
     * [Layers](https://get.vial.today/manual/layers.html) (MO(x), TO(x))
     * Matrix testers
     * [Macros](https://get.vial.today/manual/macros.html)
+    * [Combos](https://get.vial.today/manual/combos.html)
 
 ## Microcontrollers
 
@@ -47,12 +48,12 @@ The following microcontrollers are supported.
 
 ```
 # sgkb-0.4.0
-$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/left/
-$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/sgkb/left/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/sgkb/right/
 
 # sgkb-0.3.0 or before
-$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/left-0.3.0/
-$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/sgkb/left-0.3.0/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/sgkb/right/
 ```
 
 * files
@@ -84,7 +85,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkb/right/
 ![](./img/sg48key-0.1.0.jpg)
 
 ```
-tinygo flash --target xiao --size short ./targets/sg48key/
+tinygo flash --target xiao --size short --stack-size 8kb ./targets/sg48key/
 ```
 
 * files
@@ -96,7 +97,7 @@ tinygo flash --target xiao --size short ./targets/sg48key/
 ![](./img/sgh60-0.1.0.jpg)
 
 ```
-tinygo flash --target waveshare-rp2040-zero --size short ./targets/sgh60/
+tinygo flash --target waveshare-rp2040-zero --size short --stack-size 8kb ./targets/sgh60/
 ```
 
 * files
@@ -108,7 +109,7 @@ tinygo flash --target waveshare-rp2040-zero --size short ./targets/sgh60/
 ![](./img/wiokey-0.1.0.jpg)
 
 ```
-$ tinygo flash --target wioterminal --size short ./targets/wiokey/
+$ tinygo flash --target wioterminal --size short --stack-size 8kb ./targets/wiokey/
 ```
 
 * files
@@ -128,7 +129,7 @@ $ tinygo flash --target wioterminal --size short ./targets/wiokey/
 ![](./img/sgkey-0.1.0.jpg)
 
 ```
-$ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/sgkey/
 ```
 
 * files
@@ -151,7 +152,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/sgkey/
 ![](./img/fric10key-0.1.0.jpg)
 
 ```
-$ tinygo flash --target xiao-rp2040 --size short ./targets/fric10key/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/fric10key/
 ```
 
 * files
@@ -172,7 +173,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/fric10key/
 ![](./img/xiao-kb01-0.1.0.jpg)
 
 ```
-$ tinygo flash --target xiao-rp2040 --size short ./targets/xiao-kb01/
+$ tinygo flash --target xiao-rp2040 --size short --stack-size 8kb ./targets/xiao-kb01/
 ```
 
 * files
@@ -185,7 +186,7 @@ $ tinygo flash --target xiao-rp2040 --size short ./targets/xiao-kb01/
 ![](./img/gopher-badge.jpg)
 
 ```
-$ tinygo flash --target gopher-badge --size short ./targets/gopher-badge/
+$ tinygo flash --target gopher-badge --size short --stack-size 8kb ./targets/gopher-badge/
 ```
 
 * schema
@@ -194,7 +195,7 @@ $ tinygo flash --target gopher-badge --size short ./targets/gopher-badge/
 ## GoBadge / PyBadge
 
 ```
-$ tinygo flash --target gobadge --size short ./targets/gobadge
+$ tinygo flash --target gobadge --size short --stack-size 8kb ./targets/gobadge
 ```
 
 * schema
@@ -206,7 +207,7 @@ $ tinygo flash --target gobadge --size short ./targets/gobadge
 ![](./img/macropad-rp2040.jpg)
 
 ```
-$ tinygo flash --target macropad-rp2040 --size short ./targets/macropad-rp2040/
+$ tinygo flash --target macropad-rp2040 --size short --stack-size 8kb ./targets/macropad-rp2040/
 ```
 
 * schema
@@ -229,6 +230,9 @@ $ tinygo flash --target wioterminal --size short  --tags reset_to_default ./targ
 ```
 
 ## Note
+
+* Basically, the `--stack-size 8kb` settings is required.
+* If changing the version of tinygo-keyboard causes it to not work properly, please perform the `Restore default keymap` procedure.
 
 ## LICENSE
 
