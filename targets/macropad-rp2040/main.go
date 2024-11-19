@@ -11,8 +11,9 @@ import (
 
 	keyboard "github.com/sago35/tinygo-keyboard"
 	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	pio "github.com/tinygo-org/pio/rp2-pio"
+	"github.com/tinygo-org/pio/rp2-pio/piolib"
 	"tinygo.org/x/drivers/sh1106"
-	"tinygo.org/x/drivers/ws2812"
 	"tinygo.org/x/tinyfont"
 	"tinygo.org/x/tinyfont/freemono"
 )
@@ -31,6 +32,18 @@ var (
 	black = color.RGBA{0x00, 0x00, 0x00, 0xFF}
 )
 
+const (
+	rawWhite = 0x3F3F3FFF
+	rawRed   = 0x00FF00FF
+	rawGreen = 0xFF0000FF
+	rawBlue  = 0x0000FFFF
+	rawBlack = 0x000000FF
+)
+
+func writeColors(s pio.StateMachine, ws *piolib.WS2812B, colors []uint32) {
+	ws.WriteRaw(colors)
+}
+
 func run() error {
 	machine.SPI1.Configure(machine.SPIConfig{
 		Frequency: 48000000,
@@ -42,13 +55,18 @@ func run() error {
 	})
 	display.ClearDisplay()
 
-	neo := machine.WS2812
-	neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	ws := ws2812.New(neo)
-	wsLeds := [12]color.RGBA{}
-	for i := range wsLeds {
-		wsLeds[i] = black
+	wsPin := machine.WS2812
+	s, _ := pio.PIO0.ClaimStateMachine()
+	ws, _ := piolib.NewWS2812B(s, wsPin)
+	err := ws.EnableDMA(true)
+	if err != nil {
+		return err
 	}
+	wsLeds := [12]uint32{}
+	for i := range wsLeds {
+		wsLeds[i] = rawBlack
+	}
+	writeColors(s, ws, wsLeds[:])
 
 	d := keyboard.New()
 
@@ -92,9 +110,9 @@ func run() error {
 		col := index % 3
 		fmt.Printf("gk: %d %d %d %d %d\n", layer, index, row, col, state)
 		c := white
-		wsLeds[index] = white
+		wsLeds[index] = rawWhite
 		if state == keyboard.PressToRelease {
-			wsLeds[index] = black
+			wsLeds[index] = rawBlack
 			c = black
 		}
 		display.ClearBuffer()
@@ -114,7 +132,7 @@ func run() error {
 	// for Vial
 	loadKeyboardDef()
 
-	err := d.Init()
+	err = d.Init()
 	if err != nil {
 		return err
 	}
@@ -139,7 +157,7 @@ func run() error {
 		if err != nil {
 			return err
 		}
-		ws.WriteColors(wsLeds[:])
+		writeColors(s, ws, wsLeds[:])
 		time.Sleep(1 * time.Millisecond)
 	}
 
