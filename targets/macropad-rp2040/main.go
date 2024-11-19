@@ -119,6 +119,20 @@ func run() error {
 		return err
 	}
 
+	// Combos: A + B = J
+	d.Combos[1][0] = 0x0004
+	d.Combos[1][1] = 0x0005
+	d.Combos[1][2] = 0x0000
+	d.Combos[1][3] = 0x0000
+	d.Combos[1][4] = 0x000D
+
+	// Combos: A + B + C = K
+	d.Combos[0][0] = 0x0004
+	d.Combos[0][1] = 0x0005
+	d.Combos[0][2] = 0x0006
+	d.Combos[0][3] = 0x0000
+	d.Combos[0][4] = 0x000E
+
 	cont := true
 	for cont {
 		err := d.Tick()
