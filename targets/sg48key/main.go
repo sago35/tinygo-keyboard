@@ -79,9 +79,9 @@ func run() error {
 	}
 
 	cont := true
-	x := NewADCDevice(ax, 0x2000, 0xDC00, true)
-	y := NewADCDevice(ay, 0x2400, 0xD400, true)
-	ticker := time.Tick(1 * time.Millisecond)
+	x := NewADCDevice(ax, 0x3000, 0xD000, true)
+	y := NewADCDevice(ay, 0x3000, 0xD000, true)
+	ticker := time.Tick(2 * time.Millisecond)
 	cnt := 0
 	for cont {
 		<-ticker
@@ -90,7 +90,7 @@ func run() error {
 			return err
 		}
 
-		if cnt%10 == 0 {
+		if cnt%5 == 0 {
 			xx := x.Get2()
 			yy := y.Get2()
 			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())

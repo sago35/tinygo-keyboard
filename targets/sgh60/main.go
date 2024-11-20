@@ -81,8 +81,8 @@ func run() error {
 	}
 
 	cont := true
-	x := NewADCDevice(ax, 0x3400, 0xD400, true)
-	y := NewADCDevice(ay, 0x3800, 0xE990, true)
+	x := NewADCDevice(ax, 0x3000, 0xD000, true)
+	y := NewADCDevice(ay, 0x3000, 0xD000, true)
 	ticker := time.Tick(1 * time.Millisecond)
 	cnt := 0
 	for cont {
