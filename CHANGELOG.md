@@ -1,3 +1,15 @@
+0.6.0
+---
+
+* Add support for Vial's Combos
+* Add `Additional Resources` to README.md
+* Add device.GetKeyboardCount() (#43)
+* Added IO-Expander keyboard (#44)
+* Add KeyMediaBrightnessDown and KeyMediaBrightnessUp (#45)
+* Fix the issue where `time.Tick` was not working properly (#49)
+* Change the operation of ws2812 to use piolib
+* Update parameter of ADCDevice (#52)
+
 0.5.0
 ---
 
