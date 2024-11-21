@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
-	"github.com/sago35/tinygo-keyboard/keycodes/jp"
 	"golang.org/x/exp/slices"
 )
 
@@ -491,7 +490,24 @@ func (d *Device) RunMacro(no uint8) error {
 			} else {
 				idx = i + idx
 			}
-			k.Keyboard.Write(macro[i:idx])
+			if keycodes.CharToKeyCodeMap != nil {
+				for _, b := range macro[i:idx] {
+					kc := keycodes.CharToKeyCodeMap[b]
+					switch kc & keycodes.ModKeyMask {
+					case keycodes.TypeNormal:
+						k.Keyboard.Press(kc)
+					case keycodes.TypeNormal | keycodes.ShiftMask:
+						k.Keyboard.Down(keycodes.KeyLeftShift)
+						k.Keyboard.Press(kc ^ keycodes.ShiftMask)
+						k.Keyboard.Up(keycodes.KeyLeftShift)
+					default:
+						//skip
+					}
+					time.Sleep(10 * time.Millisecond)
+				}
+			} else {
+				k.Keyboard.Write(macro[i:idx])
+			}
 			i = idx
 		}
 	}
@@ -549,27 +565,27 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 	}
 	kc := d.kb[kbIndex].Key(layer, index)
 	switch kc {
-	case jp.MouseLeft:
+	case keycodes.MouseLeft:
 		kc = 0x00D1
-	case jp.MouseRight:
+	case keycodes.MouseRight:
 		kc = 0x00D2
-	case jp.MouseMiddle:
+	case keycodes.MouseMiddle:
 		kc = 0x00D3
-	case jp.MouseBack:
+	case keycodes.MouseBack:
 		kc = 0x00D4
-	case jp.MouseForward:
+	case keycodes.MouseForward:
 		kc = 0x00D5
-	case jp.WheelUp:
+	case keycodes.WheelUp:
 		kc = 0x00D9
-	case jp.WheelDown:
+	case keycodes.WheelDown:
 		kc = 0x00DA
-	case jp.KeyMediaBrightnessDown:
+	case keycodes.KeyMediaBrightnessDown:
 		kc = 0x00BE
-	case jp.KeyMediaBrightnessUp:
+	case keycodes.KeyMediaBrightnessUp:
 		kc = 0x00BD
-	case jp.KeyMediaVolumeInc:
+	case keycodes.KeyMediaVolumeInc:
 		kc = 0x00A9
-	case jp.KeyMediaVolumeDec:
+	case keycodes.KeyMediaVolumeDec:
 		kc = 0x00AA
 	case 0xFF10, 0xFF11, 0xFF12, 0xFF13, 0xFF14, 0xFF15:
 		// TO(x)
@@ -612,27 +628,27 @@ func keycodeViaToTGK(key Keycode) Keycode {
 
 	switch key {
 	case 0x00D1:
-		kc = jp.MouseLeft
+		kc = keycodes.MouseLeft
 	case 0x00D2:
-		kc = jp.MouseRight
+		kc = keycodes.MouseRight
 	case 0x00D3:
-		kc = jp.MouseMiddle
+		kc = keycodes.MouseMiddle
 	case 0x00D4:
-		kc = jp.MouseBack
+		kc = keycodes.MouseBack
 	case 0x00D5:
-		kc = jp.MouseForward
+		kc = keycodes.MouseForward
 	case 0x00D9:
-		kc = jp.WheelUp
+		kc = keycodes.WheelUp
 	case 0x00DA:
-		kc = jp.WheelDown
+		kc = keycodes.WheelDown
 	case 0x00BD:
-		kc = jp.KeyMediaBrightnessUp
+		kc = keycodes.KeyMediaBrightnessUp
 	case 0x00BE:
-		kc = jp.KeyMediaBrightnessDown
+		kc = keycodes.KeyMediaBrightnessDown
 	case 0x00A9:
-		kc = jp.KeyMediaVolumeInc
+		kc = keycodes.KeyMediaVolumeInc
 	case 0x00AA:
-		kc = jp.KeyMediaVolumeDec
+		kc = keycodes.KeyMediaVolumeDec
 	case 0x5200, 0x5201, 0x5202, 0x5203, 0x5204, 0x5205:
 		// TO(x)
 		kc = 0xFF10 | (kc & 0x000F)

@@ -1,5 +1,9 @@
 package keycodes
 
+import (
+	"machine/usb/hid/keyboard"
+)
+
 const (
 	ModKeyMask = 0xFF00
 	ToKeyMask  = 0x0010
@@ -64,4 +68,43 @@ const (
 const (
 	// restore default keymap for QMK
 	KeyRestoreDefaultKeymap = 0x7C03
+)
+
+// from machine/usb/hid/keyboard
+const (
+	ShiftMask = 0x0400
+)
+
+const (
+	KeyMediaBrightnessUp   = TypeMediaKey | 0x6F
+	KeyMediaBrightnessDown = TypeMediaKey | 0x70
+	KeyMediaPlay           = TypeMediaKey | 0xB0
+	KeyMediaPause          = TypeMediaKey | 0xB1
+	KeyMediaRecord         = TypeMediaKey | 0xB2
+	KeyMediaFastForward    = TypeMediaKey | 0xB3
+	KeyMediaRewind         = TypeMediaKey | 0xB4
+	KeyMediaNextTrack      = TypeMediaKey | 0xB5
+	KeyMediaPrevTrack      = TypeMediaKey | 0xB6
+	KeyMediaStop           = TypeMediaKey | 0xB7
+	KeyMediaEject          = TypeMediaKey | 0xB8
+	KeyMediaRandomPlay     = TypeMediaKey | 0xB9
+	KeyMediaPlayPause      = TypeMediaKey | 0xCD
+	KeyMediaPlaySkip       = TypeMediaKey | 0xCE
+	KeyMediaMute           = TypeMediaKey | 0xE2
+	KeyMediaVolumeInc      = TypeMediaKey | 0xE9
+	KeyMediaVolumeDec      = TypeMediaKey | 0xEA
+)
+
+const (
+	MouseLeft    = TypeMouse | 0x01 // mouse.Left
+	MouseRight   = TypeMouse | 0x02 // mouse.Right
+	MouseMiddle  = TypeMouse | 0x04 // mouse.Middle
+	MouseBack    = TypeMouse | 0x08 // mouse.Back
+	MouseForward = TypeMouse | 0x10 // mouse.Forward
+	WheelDown    = TypeMouse | 0x20
+	WheelUp      = TypeMouse | 0x40
+)
+
+var (
+	CharToKeyCodeMap *[256]keyboard.Keycode
 )
