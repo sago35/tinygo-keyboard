@@ -1,5 +1,9 @@
 package keycodes
 
+import (
+	"machine/usb/hid/keyboard"
+)
+
 const (
 	ModKeyMask = 0xFF00
 	ToKeyMask  = 0x0010
@@ -66,6 +70,11 @@ const (
 	KeyRestoreDefaultKeymap = 0x7C03
 )
 
+// from machine/usb/hid/keyboard
+const (
+	ShiftMask = 0x0400
+)
+
 const (
 	KeyMediaBrightnessUp   = TypeMediaKey | 0x6F
 	KeyMediaBrightnessDown = TypeMediaKey | 0x70
@@ -94,4 +103,8 @@ const (
 	MouseForward = TypeMouse | 0x10 // mouse.Forward
 	WheelDown    = TypeMouse | 0x20
 	WheelUp      = TypeMouse | 0x40
+)
+
+var (
+	CharToKeyCodeMap *[256]keyboard.Keycode
 )

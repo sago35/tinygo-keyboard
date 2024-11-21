@@ -490,7 +490,24 @@ func (d *Device) RunMacro(no uint8) error {
 			} else {
 				idx = i + idx
 			}
-			k.Keyboard.Write(macro[i:idx])
+			if keycodes.CharToKeyCodeMap != nil {
+				for _, b := range macro[i:idx] {
+					kc := keycodes.CharToKeyCodeMap[b]
+					switch kc & keycodes.ModKeyMask {
+					case keycodes.TypeNormal:
+						k.Keyboard.Press(kc)
+					case keycodes.TypeNormal | keycodes.ShiftMask:
+						k.Keyboard.Down(keycodes.KeyLeftShift)
+						k.Keyboard.Press(kc ^ keycodes.ShiftMask)
+						k.Keyboard.Up(keycodes.KeyLeftShift)
+					default:
+						//skip
+					}
+					time.Sleep(10 * time.Millisecond)
+				}
+			} else {
+				k.Keyboard.Write(macro[i:idx])
+			}
 			i = idx
 		}
 	}

@@ -1,8 +1,14 @@
 package jp
 
 import (
+	"machine/usb/hid/keyboard"
+
 	"github.com/sago35/tinygo-keyboard/keycodes"
 )
+
+func init() {
+	keycodes.CharToKeyCodeMap = &CharToKeyCodeMap
+}
 
 // for Japanese Keyboard
 // based on machine/usb/hid/keyboard/keycode.go
@@ -176,3 +182,135 @@ const (
 	KeyTo4 = keycodes.KeyTo4
 	KeyTo5 = keycodes.KeyTo5
 )
+
+var CharToKeyCodeMap = [256]keyboard.Keycode{
+	keyboard.ASCII00,
+	keyboard.ASCII01,
+	keyboard.ASCII02,
+	keyboard.ASCII03,
+	keyboard.ASCII04,
+	keyboard.ASCII05,
+	keyboard.ASCII06,
+	keyboard.ASCII07,
+	keyboard.ASCII08,
+	keyboard.ASCII09,
+	keyboard.ASCII0A,
+	keyboard.ASCII0B,
+	keyboard.ASCII0C,
+	keyboard.ASCII0D,
+	keyboard.ASCII0E,
+	keyboard.ASCII0F,
+	keyboard.ASCII10,
+	keyboard.ASCII11,
+	keyboard.ASCII12,
+	keyboard.ASCII13,
+	keyboard.ASCII14,
+	keyboard.ASCII15,
+	keyboard.ASCII16,
+	keyboard.ASCII17,
+	keyboard.ASCII18,
+	keyboard.ASCII19,
+	keyboard.ASCII1A,
+	keyboard.ASCII1B,
+	keyboard.ASCII1C,
+	keyboard.ASCII1D,
+	keyboard.ASCII1E,
+	keyboard.ASCII1F,
+
+	KeySpace,                           //  32   SPACE
+	Key1 | keycodes.ShiftMask,          //  33   !
+	Key2 | keycodes.ShiftMask,          //  34   "
+	Key3 | keycodes.ShiftMask,          //  35   #
+	Key4 | keycodes.ShiftMask,          //  36   $
+	Key5 | keycodes.ShiftMask,          //  37   %
+	Key6 | keycodes.ShiftMask,          //  38   &
+	Key7 | keycodes.ShiftMask,          //  39   '
+	Key8 | keycodes.ShiftMask,          //  40   (
+	Key9 | keycodes.ShiftMask,          //  41   )
+	KeyColon | keycodes.ShiftMask,      //  42   *
+	KeySemicolon | keycodes.ShiftMask,  //  43   +
+	KeyComma,                           //  44   ,
+	KeyMinus,                           //  45   -
+	KeyPeriod,                          //  46   .
+	KeySlash,                           //  47   /
+	Key0,                               //  48   0
+	Key1,                               //  49   1
+	Key2,                               //  50   2
+	Key3,                               //  51   3
+	Key4,                               //  52   4
+	Key5,                               //  53   5
+	Key6,                               //  54   6
+	Key7,                               //  55   7
+	Key8,                               //  55   8
+	Key9,                               //  57   9
+	KeyColon,                           //  58   :
+	KeySemicolon,                       //  59   ;
+	KeyComma | keycodes.ShiftMask,      //  60   <
+	KeyMinus | keycodes.ShiftMask,      //  61   =
+	KeyPeriod | keycodes.ShiftMask,     //  62   >
+	KeySlash | keycodes.ShiftMask,      //  63   ?
+	KeyAt,                              //  64   @
+	KeyA | keycodes.ShiftMask,          //  65   A
+	KeyB | keycodes.ShiftMask,          //  66   B
+	KeyC | keycodes.ShiftMask,          //  67   C
+	KeyD | keycodes.ShiftMask,          //  68   D
+	KeyE | keycodes.ShiftMask,          //  69   E
+	KeyF | keycodes.ShiftMask,          //  70   F
+	KeyG | keycodes.ShiftMask,          //  71   G
+	KeyH | keycodes.ShiftMask,          //  72   H
+	KeyI | keycodes.ShiftMask,          //  73   I
+	KeyJ | keycodes.ShiftMask,          //  74   J
+	KeyK | keycodes.ShiftMask,          //  75   K
+	KeyL | keycodes.ShiftMask,          //  76   L
+	KeyM | keycodes.ShiftMask,          //  77   M
+	KeyN | keycodes.ShiftMask,          //  78   N
+	KeyO | keycodes.ShiftMask,          //  79   O
+	KeyP | keycodes.ShiftMask,          //  80   P
+	KeyQ | keycodes.ShiftMask,          //  81   Q
+	KeyR | keycodes.ShiftMask,          //  82   R
+	KeyS | keycodes.ShiftMask,          //  83   S
+	KeyT | keycodes.ShiftMask,          //  84   T
+	KeyU | keycodes.ShiftMask,          //  85   U
+	KeyV | keycodes.ShiftMask,          //  86   V
+	KeyW | keycodes.ShiftMask,          //  87   W
+	KeyX | keycodes.ShiftMask,          //  88   X
+	KeyY | keycodes.ShiftMask,          //  89   Y
+	KeyZ | keycodes.ShiftMask,          //  90   Z
+	KeyLeftBrace,                       //  91   [
+	KeyBackslash,                       //  92   \
+	KeyRightBrace,                      //  93   ]
+	KeyHat,                             //  94   ^
+	KeyBackslash | keycodes.ShiftMask,  //  95   _
+	KeyAt | keycodes.ShiftMask,         //  96   `
+	KeyA,                               //  97   a
+	KeyB,                               //  98   b
+	KeyC,                               //  99   c
+	KeyD,                               // 100   d
+	KeyE,                               // 101   e
+	KeyF,                               // 102   f
+	KeyG,                               // 103   g
+	KeyH,                               // 104   h
+	KeyI,                               // 105   i
+	KeyJ,                               // 106   j
+	KeyK,                               // 107   k
+	KeyL,                               // 108   l
+	KeyM,                               // 109   m
+	KeyN,                               // 110   n
+	KeyO,                               // 111   o
+	KeyP,                               // 112   p
+	KeyQ,                               // 113   q
+	KeyR,                               // 114   r
+	KeyS,                               // 115   s
+	KeyT,                               // 116   t
+	KeyU,                               // 117   u
+	KeyV,                               // 118   v
+	KeyW,                               // 119   w
+	KeyX,                               // 120   x
+	KeyY,                               // 121   y
+	KeyZ,                               // 122   z
+	KeyLeftBrace | keycodes.ShiftMask,  // 123   {
+	KeyBackslash2 | keycodes.ShiftMask, // 124   |
+	KeyRightBrace | keycodes.ShiftMask, // 125   }
+	KeyHat | keycodes.ShiftMask,        // 126   ~
+	KeyDelete,                          // 127   DEL
+}
