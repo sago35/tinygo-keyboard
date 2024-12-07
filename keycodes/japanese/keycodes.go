@@ -1,4 +1,4 @@
-package jp
+package japanese
 
 import (
 	"machine/usb/hid/keyboard"
