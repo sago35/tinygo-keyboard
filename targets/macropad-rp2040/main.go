@@ -10,7 +10,7 @@ import (
 	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
-	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	jp "github.com/sago35/tinygo-keyboard/keycodes/japanese"
 	pio "github.com/tinygo-org/pio/rp2-pio"
 	"github.com/tinygo-org/pio/rp2-pio/piolib"
 	"tinygo.org/x/drivers/sh1106"

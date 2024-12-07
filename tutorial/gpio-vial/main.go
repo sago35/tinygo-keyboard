@@ -5,7 +5,7 @@ import (
 	"machine"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
-	"github.com/sago35/tinygo-keyboard/keycodes/jp"
+	jp "github.com/sago35/tinygo-keyboard/keycodes/japanese"
 )
 
 func main() {
