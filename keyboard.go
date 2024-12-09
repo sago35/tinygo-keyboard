@@ -245,41 +245,43 @@ func (d *Device) Tick() error {
 	}
 
 	d.founds = d.founds[:0]
-	for _, xx := range noneToPresse {
-		kbidx, layer, index := decKey(xx)
-		x := d.kb[kbidx].Key(layer, index)
-		for _, combo := range d.Combos {
-			for _, ckey := range combo[:4] {
-				if keycodeViaToTGK(ckey) == x {
-					uniq := true
-					for _, f := range d.founds {
-						if f == ckey {
-							uniq = false
+	if d.combosKey == 0xFFFFFFFF {
+		for _, xx := range noneToPresse {
+			kbidx, layer, index := decKey(xx)
+			x := d.kb[kbidx].Key(layer, index)
+			for _, combo := range d.Combos {
+				for _, ckey := range combo[:4] {
+					if keycodeViaToTGK(ckey) == x {
+						uniq := true
+						for _, f := range d.founds {
+							if f == ckey {
+								uniq = false
+							}
 						}
+						if uniq {
+							d.founds = append(d.founds, ckey)
+						}
+						if d.combosTimer.IsZero() {
+							d.combosTimer = time.Now().Add(48 * time.Millisecond)
+						}
+						d.combosPressed[xx] = struct{}{}
 					}
-					if uniq {
-						d.founds = append(d.founds, ckey)
-					}
-					if d.combosTimer.IsZero() {
-						d.combosTimer = time.Now().Add(48 * time.Millisecond)
-					}
-					d.combosPressed[xx] = struct{}{}
 				}
 			}
 		}
-	}
-	if len(d.founds) == len(noneToPresse) {
-		// Remove the keys pressed before the Combos are completed.
-		noneToPresse = noneToPresse[:0]
-	} else {
-		// Cancel the Combos waiting state if a key unrelated to Combos is pressed.
-		d.combosTimer = time.Time{}
-		for xx := range d.combosPressed {
-			noneToPresse = append(noneToPresse, xx)
-			delete(d.combosPressed, xx)
+		if len(d.founds) == len(noneToPresse) {
+			// Remove the keys pressed before the Combos are completed.
+			noneToPresse = noneToPresse[:0]
+		} else {
+			// Cancel the Combos waiting state if a key unrelated to Combos is pressed.
+			d.combosTimer = time.Time{}
+			for xx := range d.combosPressed {
+				noneToPresse = append(noneToPresse, xx)
+				delete(d.combosPressed, xx)
+			}
+			pressToRelease = append(d.combosReleased, pressToRelease...)
+			d.combosReleased = d.combosReleased[:0]
 		}
-		pressToRelease = append(d.combosReleased, pressToRelease...)
-		d.combosReleased = d.combosReleased[:0]
 	}
 
 	if !d.combosTimer.IsZero() {
@@ -321,9 +323,6 @@ func (d *Device) Tick() error {
 			if matched {
 				noneToPresse = append(noneToPresse, d.combosKey)
 
-				for k := range d.combosPressed {
-					delete(d.combosPressed, k)
-				}
 				d.combosReleased = d.combosReleased[:0]
 			} else {
 				for k := range d.combosPressed {
@@ -399,8 +398,13 @@ func (d *Device) Tick() error {
 		}
 	}
 
-	if len(pressToRelease) > 0 && d.combosKey != 0xFFFFFFFF {
-		// For simplicity, the release timing is set to when any key is released.
+	for _, xx := range pressToRelease {
+		if _, ok := d.combosPressed[xx]; ok {
+			delete(d.combosPressed, xx)
+		}
+	}
+	if len(pressToRelease) > 0 && d.combosKey != 0xFFFFFFFF && len(d.combosPressed) == 0 {
+		// Combos are deactivated when the last key that constitutes the combo is released.
 		pressToRelease = append(pressToRelease, d.combosKey)
 		d.combosKey = 0xFFFFFFFF
 	}
