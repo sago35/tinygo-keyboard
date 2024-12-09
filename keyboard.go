@@ -38,7 +38,7 @@ type Device struct {
 	combosPressed  map[uint32]struct{}
 	combosReleased []uint32
 	combosKey      uint32
-	founds         []Keycode
+	combosFounds   []Keycode
 }
 
 type KBer interface {
@@ -82,7 +82,7 @@ func New() *Device {
 		combosPressed:  map[uint32]struct{}{},
 		combosReleased: make([]uint32, 0, 10),
 		combosKey:      0xFFFFFFFF,
-		founds:         make([]Keycode, 10),
+		combosFounds:   make([]Keycode, 10),
 	}
 
 	SetDevice(d)
@@ -210,7 +210,7 @@ func (d *Device) Tick() error {
 	}
 
 	// read from key matrix
-	noneToPresse := []uint32{}
+	noneToPress := []uint32{}
 	for kbidx, k := range d.kb {
 		state := k.Get()
 		for i := range state {
@@ -226,7 +226,7 @@ func (d *Device) Tick() error {
 					}
 				}
 				if !found {
-					noneToPresse = append(noneToPresse, x)
+					noneToPress = append(noneToPress, x)
 					d.pressed = append(d.pressed, x)
 				}
 
@@ -244,22 +244,22 @@ func (d *Device) Tick() error {
 		}
 	}
 
-	d.founds = d.founds[:0]
+	d.combosFounds = d.combosFounds[:0]
 	if d.combosKey == 0xFFFFFFFF {
-		for _, xx := range noneToPresse {
+		for _, xx := range noneToPress {
 			kbidx, layer, index := decKey(xx)
 			x := d.kb[kbidx].Key(layer, index)
 			for _, combo := range d.Combos {
 				for _, ckey := range combo[:4] {
 					if keycodeViaToTGK(ckey) == x {
 						uniq := true
-						for _, f := range d.founds {
+						for _, f := range d.combosFounds {
 							if f == ckey {
 								uniq = false
 							}
 						}
 						if uniq {
-							d.founds = append(d.founds, ckey)
+							d.combosFounds = append(d.combosFounds, ckey)
 						}
 						if d.combosTimer.IsZero() {
 							d.combosTimer = time.Now().Add(48 * time.Millisecond)
@@ -269,14 +269,14 @@ func (d *Device) Tick() error {
 				}
 			}
 		}
-		if len(d.founds) == len(noneToPresse) {
+		if len(d.combosFounds) == len(noneToPress) {
 			// Remove the keys pressed before the Combos are completed.
-			noneToPresse = noneToPresse[:0]
+			noneToPress = noneToPress[:0]
 		} else {
 			// Cancel the Combos waiting state if a key unrelated to Combos is pressed.
 			d.combosTimer = time.Time{}
 			for xx := range d.combosPressed {
-				noneToPresse = append(noneToPresse, xx)
+				noneToPress = append(noneToPress, xx)
 				delete(d.combosPressed, xx)
 			}
 			pressToRelease = append(d.combosReleased, pressToRelease...)
@@ -321,12 +321,12 @@ func (d *Device) Tick() error {
 			}
 
 			if matched {
-				noneToPresse = append(noneToPresse, d.combosKey)
+				noneToPress = append(noneToPress, d.combosKey)
 
 				d.combosReleased = d.combosReleased[:0]
 			} else {
 				for k := range d.combosPressed {
-					noneToPresse = append(noneToPresse, k)
+					noneToPress = append(noneToPress, k)
 					delete(d.combosPressed, k)
 				}
 				for _, k := range d.combosReleased {
@@ -338,7 +338,7 @@ func (d *Device) Tick() error {
 		}
 	}
 
-	for _, xx := range noneToPresse {
+	for _, xx := range noneToPress {
 		kbidx, layer, index := decKey(xx)
 		var x Keycode
 		if kbidx < len(d.kb) {
