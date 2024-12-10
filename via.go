@@ -122,21 +122,18 @@ func rxHandler(b []byte) {
 
 func rxHandler2(b []byte) bool {
 	switch b[0] {
-	//case 0x12, 0x0E:
+	//case viaCommandDynamicKeymapGetBuffer, viaCommandDynamicKeymapMacroGetBuffer:
 	default:
 		//fmt.Printf("RxHandler % X\n", b)
 	}
 
 	copy(txb[:32], b)
 	switch b[0] {
-	case 0x01:
-		// GetProtocolVersionCount
+	case viaCommandGetProtocolVersion:
 		txb[2] = 0x09
-	case 0x11:
-		// DynamicKeymapGetLayerCountCommand
+	case viaCommandDynamicKeymapGetLayerCount:
 		txb[1] = 0x06
-	case 0x12:
-		// DynamicKeymapReadBufferCommand
+	case viaCommandDynamicKeymapGetBuffer:
 		offset := (uint16(b[1]) << 8) + uint16(b[2])
 		sz := b[3]
 		//fmt.Printf("  offset : %04X + %d\n", offset, sz)
@@ -156,27 +153,22 @@ func rxHandler2(b []byte) bool {
 			txb[4+2*i+0] = uint8(kc >> 8)
 		}
 
-	case 0x0D:
-		// DynamicKeymapMacroGetBufferSizeCommand
+	case viaCommandDynamicKeymapMacroGetBufferSize:
 		sz := len(device.Macros)
 		txb[1] = byte(sz >> 8)
 		txb[2] = byte(sz)
-	case 0x0C:
-		// DynamicKeymapMacroGetCountCommand
+	case viaCommandDynamicKeymapMacroGetCount:
 		txb[1] = 0x10
-	case 0x0E:
-		// DynamicKeymapMacroGetBufferCommand
+	case viaCommandDynamicKeymapMacroGetBuffer:
 		offset := (uint16(b[1]) << 8) + uint16(b[2])
 		sz := b[3]
 		copy(txb[4:4+sz], device.Macros[offset:])
-	case 0x0F:
-		// CMD_VIA_MACRO_SET_BUFFER
+	case viaCommandDynamicKeymapMacroSetBuffer:
 		offset := (uint16(b[1]) << 8) + uint16(b[2])
 		sz := b[3]
 		copy(device.Macros[offset:], txb[4:4+sz])
 		device.flashCh <- true
-	case 0x02:
-		// id_get_keyboard_value
+	case viaCommandGetKeyboardValue:
 		Changed = false
 		Changed2 = false
 		switch txb[1] {
@@ -189,19 +181,18 @@ func rxHandler2(b []byte) bool {
 				txb[idx] |= byte(1 << (col % 8))
 			}
 		}
-	case 0x05:
+	case viaCommandDynamicKeymapSetKeycode:
 		//fmt.Printf("XXXXXXXXX % X\n", b)
 		//Keys[b[1]][b[2]][b[3]] = Keycode((uint16(b[4]) << 8) + uint16(b[5]))
 		device.SetKeycodeVia(int(b[1]), int(b[2]), int(b[3]), Keycode((uint16(b[4])<<8)+uint16(b[5])))
 		device.flashCh <- true
 		//Changed = true
-	case 0x08:
-		// id_lighting_get_value
+	case viaCommandLightingGetValue:
 		txb[1] = 0x00
 		txb[2] = 0x00
-	case 0xFE: // vial
+	case viaCommandVialPrefix: // vial
 		switch b[1] {
-		case 0x00:
+		case vialGetKeyboardId:
 			// Get keyboard ID and Vial protocol version
 			const vialProtocolVersion = 0x00000006
 			txb[0] = vialProtocolVersion
@@ -216,14 +207,14 @@ func rxHandler2(b []byte) bool {
 			txb[9] = 0xF3
 			txb[10] = 0x54
 			txb[11] = 0xE2
-		case 0x01:
+		case vialGetSize:
 			// Retrieve keyboard definition size
 			size := len(KeyboardDef)
 			txb[0] = uint8(size)
 			txb[1] = uint8(size >> 8)
 			txb[2] = uint8(size >> 16)
 			txb[3] = uint8(size >> 24)
-		case 0x02:
+		case vialGetDef:
 			// Retrieve 32-bytes block of the definition, page ID encoded within 2 bytes
 			page := uint16(b[2]) + (uint16(b[3]) << 8)
 			start := page * 32
@@ -236,22 +227,18 @@ func rxHandler2(b []byte) bool {
 			}
 			//fmt.Printf("vial_get_def : page=%04X start=%04X end=%04X\n", page, start, end)
 			copy(txb[:32], KeyboardDef[start:end])
-		case 0x09:
-			// vial_qmk_settings_query
-			// 未対応
+		case vialQmkSettingsQuery:
+			// not impl
 			for i := range txb[:32] {
 				txb[i] = 0xFF
 			}
-		case 0x0D:
-			// vial_dynamic_entry_op
+		case vialDynamicEntryOp:
 			switch b[2] {
-			case 0x00:
-				// DYNAMIC_VIAL_GET_NUMBER_OF_ENTRIES
+			case dynamicVialGetNumberOfEntries:
 				txb[0] = 0x00
 				txb[1] = 0x20 // combos
 				txb[2] = 0x00
-			case 0x03:
-				// DYNAMIC_VIAL_COMBO_GET
+			case dynamicVialComboGet:
 				txb[0] = 0x00
 				idx := b[3]
 				txb[1] = byte(device.Combos[idx][0])
@@ -266,8 +253,7 @@ func rxHandler2(b []byte) bool {
 				txb[10] = byte(device.Combos[idx][4] >> 8)
 				// 00 0400 0500 0000 0000 0700 000000000000000000000000000000000000000000
 				// 0  1    3    5    7    9
-			case 0x04:
-				// DYNAMIC_VIAL_COMBO_SET
+			case dynamicVialComboSet:
 				txb[0] = 0x00
 				idx := b[3]
 				// fe0d04 00 0400 0500 0000 0000 0700 000000000000000000000000000000000000
@@ -283,8 +269,7 @@ func rxHandler2(b []byte) bool {
 				txb[1] = 0x00
 				txb[2] = 0x00
 			}
-		case 0x05:
-			// vial_get_unlock_status
+		case vialGetUnlockStatus:
 			txb[0] = 1 // unlocked
 			txb[1] = 0 // unlock_in_progress
 
@@ -368,3 +353,57 @@ func setupHandler(setup usb.Setup) bool {
 	}
 	return ok
 }
+
+// https://github.com/vial-kb/vial-qmk/quantum/via.h
+const (
+	viaCommandGetProtocolVersion              = 0x01 // always 0x01
+	viaCommandGetKeyboardValue                = 0x02
+	viaCommandSetKeyboardValue                = 0x03
+	viaCommandDynamicKeymapGetKeycode         = 0x04
+	viaCommandDynamicKeymapSetKeycode         = 0x05
+	viaCommandDynamicKeymapReset              = 0x06
+	viaCommandCustomSetValue                  = 0x07
+	viaCommandCustomGetValue                  = 0x08
+	viaCommandCustomSave                      = 0x09
+	viaCommandLightingSetValue                = 0x07
+	viaCommandLightingGetValue                = 0x08
+	viaCommandLightingSave                    = 0x09
+	viaCommandEepromReset                     = 0x0A
+	viaCommandBootloaderJump                  = 0x0B
+	viaCommandDynamicKeymapMacroGetCount      = 0x0C
+	viaCommandDynamicKeymapMacroGetBufferSize = 0x0D
+	viaCommandDynamicKeymapMacroGetBuffer     = 0x0E
+	viaCommandDynamicKeymapMacroSetBuffer     = 0x0F
+	viaCommandDynamicKeymapMacroReset         = 0x10
+	viaCommandDynamicKeymapGetLayerCount      = 0x11
+	viaCommandDynamicKeymapGetBuffer          = 0x12
+	viaCommandDynamicKeymapSetBuffer          = 0x13
+	viaCommandVialPrefix                      = 0xFE
+	viaCommandUnhandled                       = 0xFF
+)
+
+// https://github.com/vial-kb/vial-qmk/quantum/vial.h
+const (
+	vialGetKeyboardId    = 0x00
+	vialGetSize          = 0x01
+	vialGetDef           = 0x02
+	vialGetEncoder       = 0x03
+	vialSetEncoder       = 0x04
+	vialGetUnlockStatus  = 0x05
+	vialUnlockStart      = 0x06
+	vialUnlockPoll       = 0x07
+	vialLock             = 0x08
+	vialQmkSettingsQuery = 0x09
+	vialQmkSettingsGet   = 0x0A
+	vialQmkSettingsSet   = 0x0B
+	vialQmkSettingsReset = 0x0C
+	vialDynamicEntryOp   = 0x0D /* operate on tapdance, combos, etc */
+
+	dynamicVialGetNumberOfEntries = 0x00
+	dynamicVialTapDanceGet        = 0x01
+	dynamicVialTapDanceSet        = 0x02
+	dynamicVialComboGet           = 0x03
+	dynamicVialComboSet           = 0x04
+	dynamicVialKeyOverrideGet     = 0x05
+	dynamicVialKeyOverrideSet     = 0x06
+)
