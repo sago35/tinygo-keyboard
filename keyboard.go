@@ -587,10 +587,16 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 		kc = 0x00BE
 	case keycodes.KeyMediaBrightnessUp:
 		kc = 0x00BD
+	case keycodes.KeyMediaMute:
+		kc = 0x00A8
 	case keycodes.KeyMediaVolumeInc:
 		kc = 0x00A9
 	case keycodes.KeyMediaVolumeDec:
 		kc = 0x00AA
+	case keycodes.KeyMediaStop:
+		kc = 0x00AD
+	case keycodes.KeyMediaPlay:
+		kc = 0x00AE
 	case 0xFF10, 0xFF11, 0xFF12, 0xFF13, 0xFF14, 0xFF15:
 		// TO(x)
 		kc = 0x5200 | (kc & 0x000F)
@@ -649,10 +655,16 @@ func keycodeViaToTGK(key Keycode) Keycode {
 		kc = keycodes.KeyMediaBrightnessUp
 	case 0x00BE:
 		kc = keycodes.KeyMediaBrightnessDown
+	case 0x00A8:
+		kc = keycodes.KeyMediaMute
 	case 0x00A9:
 		kc = keycodes.KeyMediaVolumeInc
 	case 0x00AA:
 		kc = keycodes.KeyMediaVolumeDec
+	case 0x00AD:
+		kc = keycodes.KeyMediaStop
+	case 0x00AE:
+		kc = keycodes.KeyMediaPlay
 	case 0x5200, 0x5201, 0x5202, 0x5203, 0x5204, 0x5205:
 		// TO(x)
 		kc = 0xFF10 | (kc & 0x000F)
