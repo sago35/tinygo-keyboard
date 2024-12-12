@@ -14,6 +14,8 @@ type SquaredMatrixKeyboard struct {
 	Pins         []machine.Pin
 	cycleCounter []uint8
 	debounce     uint8
+
+	colsBuf []int
 }
 
 func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) *SquaredMatrixKeyboard {
@@ -41,6 +43,7 @@ func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) 
 		callback:     func(layer, index int, state State) {},
 		cycleCounter: cycleCnt,
 		debounce:     8,
+		colsBuf:      make([]int, len(pins)),
 	}
 
 	d.kb = append(d.kb, k)
@@ -59,7 +62,7 @@ func (d *SquaredMatrixKeyboard) Callback(layer, index int, state State) {
 
 func (d *SquaredMatrixKeyboard) Get() []State {
 	c := int(0)
-	cols := []int{}
+	cols := d.colsBuf[:0]
 	for i := range d.Pins {
 		for j := range d.Pins {
 			d.Pins[j].Configure(machine.PinConfig{Mode: machine.PinInputPullup})
