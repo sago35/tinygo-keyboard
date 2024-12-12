@@ -39,6 +39,9 @@ type Device struct {
 	combosReleased []uint32
 	combosKey      uint32
 	combosFounds   []Keycode
+
+	pressToReleaseBuf []uint32
+	noneToPressBuf    []uint32
 }
 
 type KBer interface {
@@ -83,6 +86,9 @@ func New() *Device {
 		combosReleased: make([]uint32, 0, 10),
 		combosKey:      0xFFFFFFFF,
 		combosFounds:   make([]Keycode, 10),
+
+		pressToReleaseBuf: make([]uint32, 0, 20),
+		noneToPressBuf:    make([]uint32, 0, 20),
 	}
 
 	SetDevice(d)
@@ -192,7 +198,7 @@ func (d *Device) GetMaxKeyCount() int {
 }
 
 func (d *Device) Tick() error {
-	pressToRelease := []uint32{}
+	pressToRelease := d.pressToReleaseBuf[:0]
 
 	select {
 	case <-d.flashCh:
@@ -210,7 +216,7 @@ func (d *Device) Tick() error {
 	}
 
 	// read from key matrix
-	noneToPress := []uint32{}
+	noneToPress := d.noneToPressBuf[:0]
 	for kbidx, k := range d.kb {
 		state := k.Get()
 		for i := range state {
