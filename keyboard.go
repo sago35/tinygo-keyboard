@@ -40,6 +40,8 @@ type Device struct {
 	combosKey      uint32
 	combosFounds   []Keycode
 
+	tapOrHold map[uint32]time.Time
+
 	pressToReleaseBuf []uint32
 	noneToPressBuf    []uint32
 }
@@ -86,6 +88,8 @@ func New() *Device {
 		combosReleased: make([]uint32, 0, 10),
 		combosKey:      0xFFFFFFFF,
 		combosFounds:   make([]Keycode, 10),
+
+		tapOrHold: map[uint32]time.Time{},
 
 		pressToReleaseBuf: make([]uint32, 0, 20),
 		noneToPressBuf:    make([]uint32, 0, 20),
@@ -346,6 +350,104 @@ func (d *Device) Tick() error {
 
 	for _, xx := range noneToPress {
 		kbidx, layer, index := decKey(xx)
+		x := d.kb[kbidx].Key(layer, index)
+		switch x & keycodes.QuantumMask {
+		case keycodes.TypeLxxxT, keycodes.TypeRxxxT:
+			d.tapOrHold[xx] = time.Now().Add(200 * time.Millisecond)
+		}
+	}
+
+	for xx, tt := range d.tapOrHold {
+		if tt.IsZero() {
+			// hold release
+			for _, yy := range pressToRelease {
+				if xx == yy {
+					kbidx, layer, index := decKey(xx)
+					x := d.kb[kbidx].Key(layer, index)
+					switch x & keycodes.QuantumMask {
+					case keycodes.TypeLxxxT:
+						if x&keycodes.TypeXCtl > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyLeftCtrl))
+						}
+						if x&keycodes.TypeXSft > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyLeftShift))
+						}
+						if x&keycodes.TypeXAlt > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyLeftAlt))
+						}
+						if x&keycodes.TypeXGui > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyWindows))
+						}
+					case keycodes.TypeRxxxT:
+						if x&keycodes.TypeXCtl > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyRightCtrl))
+						}
+						if x&keycodes.TypeXSft > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyRightShift))
+						}
+						if x&keycodes.TypeXAlt > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyLeftAlt))
+						}
+						if x&keycodes.TypeXGui > 0 {
+							pressToRelease = append(pressToRelease, uint32(0xFF000000)|uint32(keycodes.KeyWindows))
+						}
+					}
+					delete(d.tapOrHold, xx)
+				}
+			}
+		} else if time.Now().Before(tt) {
+			// tap
+			for _, yy := range pressToRelease {
+				if xx == yy {
+					kbidx, layer, index := decKey(xx)
+					x := d.kb[kbidx].Key(layer, index)
+					switch x & keycodes.QuantumMask {
+					case keycodes.TypeLxxxT, keycodes.TypeRxxxT:
+						kc := uint32(0xFF000000) | uint32(keycodeViaToTGK(x&0x00FF))
+						noneToPress = append(noneToPress, kc)
+						pressToRelease = append(pressToRelease, kc)
+					}
+					delete(d.tapOrHold, xx)
+				}
+			}
+		} else {
+			// hold
+			kbidx, layer, index := decKey(xx)
+			x := d.kb[kbidx].Key(layer, index)
+			switch x & keycodes.QuantumMask {
+			case keycodes.TypeLxxxT:
+				if x&keycodes.TypeXCtl > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyLeftCtrl))
+				}
+				if x&keycodes.TypeXSft > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyLeftShift))
+				}
+				if x&keycodes.TypeXAlt > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyLeftAlt))
+				}
+				if x&keycodes.TypeXGui > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyWindows))
+				}
+			case keycodes.TypeRxxxT:
+				if x&keycodes.TypeXCtl > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyRightCtrl))
+				}
+				if x&keycodes.TypeXSft > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyRightShift))
+				}
+				if x&keycodes.TypeXAlt > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyLeftAlt))
+				}
+				if x&keycodes.TypeXGui > 0 {
+					noneToPress = append(noneToPress, uint32(0xFF000000)|uint32(keycodes.KeyWindows))
+				}
+			}
+			d.tapOrHold[xx] = time.Time{}
+		}
+	}
+
+	for _, xx := range noneToPress {
+		kbidx, layer, index := decKey(xx)
 		var x Keycode
 		if kbidx < len(d.kb) {
 			x = d.kb[kbidx].Key(layer, index)
@@ -362,6 +464,36 @@ func (d *Device) Tick() error {
 			} else {
 				d.layerStack = append(d.layerStack, d.layer)
 			}
+		} else if x&keycodes.QuantumMask == keycodes.TypeLxxx && x&keycodes.QuantumTypeMask != 0 {
+			// TypeLxxx
+			if x&keycodes.TypeXCtl > 0 {
+				d.Keyboard.Down(keycodes.KeyLeftCtrl)
+			}
+			if x&keycodes.TypeXSft > 0 {
+				d.Keyboard.Down(keycodes.KeyLeftShift)
+			}
+			if x&keycodes.TypeXAlt > 0 {
+				d.Keyboard.Down(keycodes.KeyLeftAlt)
+			}
+			if x&keycodes.TypeXGui > 0 {
+				d.Keyboard.Down(keycodes.KeyWindows)
+			}
+			d.Keyboard.Down(k.Keycode(x&0x00FF | keycodes.TypeNormal))
+		} else if x&keycodes.QuantumMask == keycodes.TypeRxxx && x&keycodes.QuantumTypeMask != 0 {
+			// TypeRxxx
+			if x&keycodes.TypeXCtl > 0 {
+				d.Keyboard.Down(keycodes.KeyRightCtrl)
+			}
+			if x&keycodes.TypeXSft > 0 {
+				d.Keyboard.Down(keycodes.KeyRightShift)
+			}
+			if x&keycodes.TypeXAlt > 0 {
+				d.Keyboard.Down(keycodes.KeyLeftAlt)
+			}
+			if x&keycodes.TypeXGui > 0 {
+				d.Keyboard.Down(keycodes.KeyWindows)
+			}
+			d.Keyboard.Down(k.Keycode(x&0x00FF | keycodes.TypeNormal))
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
 			machine.Flash.EraseBlocks(0, 1)
@@ -438,6 +570,36 @@ func (d *Device) Tick() error {
 					d.layer = d.layerStack[len(d.layerStack)-1]
 				}
 			}
+		} else if x&keycodes.QuantumMask == keycodes.TypeLxxx && x&keycodes.QuantumTypeMask != 0 {
+			// TypeLxxx
+			if x&keycodes.TypeXCtl > 0 {
+				d.Keyboard.Up(keycodes.KeyLeftCtrl)
+			}
+			if x&keycodes.TypeXSft > 0 {
+				d.Keyboard.Up(keycodes.KeyLeftShift)
+			}
+			if x&keycodes.TypeXAlt > 0 {
+				d.Keyboard.Up(keycodes.KeyLeftAlt)
+			}
+			if x&keycodes.TypeXGui > 0 {
+				d.Keyboard.Up(keycodes.KeyWindows)
+			}
+			d.Keyboard.Up(k.Keycode(x&0x00FF | keycodes.TypeNormal))
+		} else if x&keycodes.QuantumMask == keycodes.TypeRxxx && x&keycodes.QuantumTypeMask != 0 {
+			// TypeRxxx
+			if x&keycodes.TypeXCtl > 0 {
+				d.Keyboard.Up(keycodes.KeyRightCtrl)
+			}
+			if x&keycodes.TypeXSft > 0 {
+				d.Keyboard.Up(keycodes.KeyRightShift)
+			}
+			if x&keycodes.TypeXAlt > 0 {
+				d.Keyboard.Up(keycodes.KeyLeftAlt)
+			}
+			if x&keycodes.TypeXGui > 0 {
+				d.Keyboard.Up(keycodes.KeyWindows)
+			}
+			d.Keyboard.Up(k.Keycode(x&0x00FF | keycodes.TypeNormal))
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
@@ -613,10 +775,20 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 		// restore default keymap for QMK
 		kc = keycodes.KeyRestoreDefaultKeymap
 	default:
-		if kc&0xFF00 == keycodes.TypeMacroKey {
+		switch kc & keycodes.QuantumMask {
+		case keycodes.TypeRxxx, keycodes.TypeLxxxT, keycodes.TypeRxxxT:
 			// skip
-		} else {
-			kc = kc & 0x0FFF
+		default:
+			if kc&keycodes.QuantumMask == 0 && kc&keycodes.QuantumTypeMask != 0 {
+				// skip (keycodes.TpeLxxx)
+			} else {
+				switch kc & keycodes.ModKeyMask {
+				case keycodes.TypeMacroKey:
+					// skip
+				default:
+					kc = kc & 0x0FFF
+				}
+			}
 		}
 	}
 	return kc
@@ -680,8 +852,19 @@ func keycodeViaToTGK(key Keycode) Keycode {
 	case keycodes.KeyRestoreDefaultKeymap:
 		kc = keycodes.KeyRestoreDefaultKeymap
 	default:
-		if key&0xFF00 == keycodes.TypeMacroKey {
+		switch key & keycodes.QuantumMask {
+		case keycodes.TypeRxxx, keycodes.TypeLxxxT, keycodes.TypeRxxxT:
 			kc = key
+		default:
+			if key&keycodes.QuantumMask == 0 && key&keycodes.QuantumTypeMask != 0 {
+				// keycodes.TpeLxxx
+				kc = key
+			} else {
+				switch key & 0xFF00 {
+				case keycodes.TypeMacroKey:
+					kc = key
+				}
+			}
 		}
 	}
 	return kc

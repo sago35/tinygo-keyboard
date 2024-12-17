@@ -5,8 +5,10 @@ import (
 )
 
 const (
-	ModKeyMask = 0xFF00
-	ToKeyMask  = 0x0010
+	ModKeyMask      = 0xFF00
+	QuantumMask     = 0xF000
+	QuantumTypeMask = 0x0F00
+	ToKeyMask       = 0x0010
 )
 
 const (
@@ -16,6 +18,26 @@ const (
 	TypeModKey   = 0xFF00
 	TypeToKey    = 0xFF10
 	TypeMacroKey = 0x7700
+	TypeLxxx     = 0x0000
+	TypeRxxx     = 0x1000
+	TypeLxxxT    = 0x2000
+	TypeRxxxT    = 0x3000
+)
+
+const (
+	TypeXCtl = 0x0100
+	TypeXSft = 0x0200
+	TypeXAlt = 0x0400
+	TypeXGui = 0x0800
+
+	TypeLCtlT = TypeLxxxT | TypeXCtl
+	TypeLSftT = TypeLxxxT | TypeXSft
+	TypeLAltT = TypeLxxxT | TypeXAlt
+	TypeLGuiT = TypeLxxxT | TypeXGui
+	TypeRCtlT = TypeRxxxT | TypeXCtl
+	TypeRSftT = TypeRxxxT | TypeXSft
+	TypeRAltT = TypeRxxxT | TypeXAlt
+	TypeRGuiT = TypeRxxxT | TypeXGui
 )
 
 const (
