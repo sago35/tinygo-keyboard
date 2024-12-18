@@ -22,6 +22,8 @@ The following are supported.
     * [Layers](https://get.vial.today/manual/layers.html) (MO(x), TO(x))
     * Matrix testers
     * [Macros](https://get.vial.today/manual/macros.html)
+    * [Mod-Tap](https://docs.qmk.fm/mod_tap)
+    * [Modifier Keys](https://docs.qmk.fm/feature_advanced_keycodes#modifier-keys)
     * [Combos](https://get.vial.today/manual/combos.html)
 
 ## Microcontrollers
