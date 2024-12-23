@@ -350,10 +350,12 @@ func (d *Device) Tick() error {
 
 	for _, xx := range noneToPress {
 		kbidx, layer, index := decKey(xx)
-		x := d.kb[kbidx].Key(layer, index)
-		switch x & keycodes.QuantumMask {
-		case keycodes.TypeLxxxT, keycodes.TypeRxxxT:
-			d.tapOrHold[xx] = time.Now().Add(200 * time.Millisecond)
+		if kbidx < len(d.kb) {
+			x := d.kb[kbidx].Key(layer, index)
+			switch x & keycodes.QuantumMask {
+			case keycodes.TypeLxxxT, keycodes.TypeRxxxT:
+				d.tapOrHold[xx] = time.Now().Add(200 * time.Millisecond)
+			}
 		}
 	}
 
