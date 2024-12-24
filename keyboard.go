@@ -157,6 +157,15 @@ func (d *Device) Init() error {
 	offset += macroSize
 
 	for idx := range device.Combos {
+		skip := true
+		for i := 0; i < 10; i++ {
+			if rbuf[offset+i] != 0xFF {
+				skip = false
+			}
+		}
+		if skip {
+			continue
+		}
 		device.Combos[idx][0] = Keycode(rbuf[offset+0]) + Keycode(rbuf[offset+1])<<8 // key 1
 		device.Combos[idx][1] = Keycode(rbuf[offset+2]) + Keycode(rbuf[offset+3])<<8 // key 2
 		device.Combos[idx][2] = Keycode(rbuf[offset+4]) + Keycode(rbuf[offset+5])<<8 // key 3
@@ -261,7 +270,7 @@ func (d *Device) Tick() error {
 			x := d.kb[kbidx].Key(layer, index)
 			for _, combo := range d.Combos {
 				for _, ckey := range combo[:4] {
-					if keycodeViaToTGK(ckey) == x {
+					if ckey == x {
 						uniq := true
 						for _, f := range d.combosFounds {
 							if f == ckey {
@@ -325,7 +334,7 @@ func (d *Device) Tick() error {
 						for xx := range d.combosPressed {
 							kbidx, layer, index := decKey(xx)
 							x := d.kb[kbidx].Key(layer, index)
-							if keycodeViaToTGK(ckey) == x {
+							if ckey == x {
 								matchCnt++
 							}
 						}
@@ -334,7 +343,7 @@ func (d *Device) Tick() error {
 				if matchCnt >= 2 && zero+matchCnt == 4 && matchCnt > matchMax && len(d.combosPressed) == matchCnt {
 					matched = true
 					matchMax = matchCnt
-					d.combosKey = 0xFF000000 | uint32(keycodeViaToTGK(combo[4]))
+					d.combosKey = 0xFF000000 | uint32(combo[4])
 				}
 			}
 
@@ -746,7 +755,13 @@ func (d *Device) KeyVia(layer, kbIndex, index int) Keycode {
 		return 0
 	}
 	kc := d.kb[kbIndex].Key(layer, index)
+	return keycodeTGKtoVia(kc)
+}
+
+func keycodeTGKtoVia(kc Keycode) Keycode {
 	switch kc {
+	case 0x0000:
+		kc = 0x0000
 	case keycodes.MouseLeft:
 		kc = 0x00D1
 	case keycodes.MouseRight:
@@ -825,6 +840,8 @@ func keycodeViaToTGK(key Keycode) Keycode {
 	kc := key | 0xF000
 
 	switch key {
+	case 0x0000:
+		kc = 0x0000
 	case 0x00D1:
 		kc = keycodes.MouseLeft
 	case 0x00D2:

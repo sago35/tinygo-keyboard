@@ -241,16 +241,16 @@ func rxHandler2(b []byte) bool {
 			case dynamicVialComboGet:
 				txb[0] = 0x00
 				idx := b[3]
-				txb[1] = byte(device.Combos[idx][0])
-				txb[2] = byte(device.Combos[idx][0] >> 8)
-				txb[3] = byte(device.Combos[idx][1])
-				txb[4] = byte(device.Combos[idx][1] >> 8)
-				txb[5] = byte(device.Combos[idx][2])
-				txb[6] = byte(device.Combos[idx][2] >> 8)
-				txb[7] = byte(device.Combos[idx][3])
-				txb[8] = byte(device.Combos[idx][3] >> 8)
-				txb[9] = byte(device.Combos[idx][4])
-				txb[10] = byte(device.Combos[idx][4] >> 8)
+				txb[1] = byte(keycodeTGKtoVia(device.Combos[idx][0]))
+				txb[2] = byte(keycodeTGKtoVia(device.Combos[idx][0]) >> 8)
+				txb[3] = byte(keycodeTGKtoVia(device.Combos[idx][1]))
+				txb[4] = byte(keycodeTGKtoVia(device.Combos[idx][1]) >> 8)
+				txb[5] = byte(keycodeTGKtoVia(device.Combos[idx][2]))
+				txb[6] = byte(keycodeTGKtoVia(device.Combos[idx][2]) >> 8)
+				txb[7] = byte(keycodeTGKtoVia(device.Combos[idx][3]))
+				txb[8] = byte(keycodeTGKtoVia(device.Combos[idx][3]) >> 8)
+				txb[9] = byte(keycodeTGKtoVia(device.Combos[idx][4]))
+				txb[10] = byte(keycodeTGKtoVia(device.Combos[idx][4]) >> 8)
 				// 00 0400 0500 0000 0000 0700 000000000000000000000000000000000000000000
 				// 0  1    3    5    7    9
 			case dynamicVialComboSet:
@@ -258,11 +258,11 @@ func rxHandler2(b []byte) bool {
 				idx := b[3]
 				// fe0d04 00 0400 0500 0000 0000 0700 000000000000000000000000000000000000
 				// 0 1 2  3  4    6    8    10   12
-				device.Combos[idx][0] = Keycode(b[4]) + Keycode(b[5])<<8   // key 1
-				device.Combos[idx][1] = Keycode(b[6]) + Keycode(b[7])<<8   // key 2
-				device.Combos[idx][2] = Keycode(b[8]) + Keycode(b[9])<<8   // key 3
-				device.Combos[idx][3] = Keycode(b[10]) + Keycode(b[11])<<8 // key 4
-				device.Combos[idx][4] = Keycode(b[12]) + Keycode(b[13])<<8 // Output key
+				device.Combos[idx][0] = keycodeViaToTGK(Keycode(b[4]) + Keycode(b[5])<<8)   // key 1
+				device.Combos[idx][1] = keycodeViaToTGK(Keycode(b[6]) + Keycode(b[7])<<8)   // key 2
+				device.Combos[idx][2] = keycodeViaToTGK(Keycode(b[8]) + Keycode(b[9])<<8)   // key 3
+				device.Combos[idx][3] = keycodeViaToTGK(Keycode(b[10]) + Keycode(b[11])<<8) // key 4
+				device.Combos[idx][4] = keycodeViaToTGK(Keycode(b[12]) + Keycode(b[13])<<8) // Output key
 				device.flashCh <- true
 			default:
 				txb[0] = 0x00
