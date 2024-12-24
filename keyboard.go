@@ -284,10 +284,18 @@ func (d *Device) Tick() error {
 			noneToPress = noneToPress[:0]
 		} else {
 			// Cancel the Combos waiting state if a key unrelated to Combos is pressed.
+			// Sort `d.combosPressed` so that the ones pressed earlier are triggered first.
 			d.combosTimer = time.Time{}
+			ofs := len(noneToPress)
+			noneToPress = d.noneToPressBuf[:ofs+len(d.combosPressed)]
+			for i := range noneToPress[:ofs] {
+				noneToPress[len(noneToPress)-1-i] = noneToPress[ofs-1-i]
+			}
+			idx := 0
 			for xx := range d.combosPressed {
-				noneToPress = append(noneToPress, xx)
+				noneToPress[idx] = xx
 				delete(d.combosPressed, xx)
+				idx++
 			}
 			pressToRelease = append(d.combosReleased, pressToRelease...)
 			d.combosReleased = d.combosReleased[:0]
