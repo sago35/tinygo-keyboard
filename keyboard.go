@@ -323,7 +323,7 @@ func (d *Device) Tick() error {
 						}
 					}
 				}
-				if matchCnt >= 2 && zero+matchCnt == 4 && matchCnt > matchMax {
+				if matchCnt >= 2 && zero+matchCnt == 4 && matchCnt > matchMax && len(d.combosPressed) == matchCnt {
 					matched = true
 					matchMax = matchCnt
 					d.combosKey = 0xFF000000 | uint32(keycodeViaToTGK(combo[4]))
