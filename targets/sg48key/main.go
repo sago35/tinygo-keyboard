@@ -71,6 +71,33 @@ func run() error {
 	// override ctrl-h to BackSpace
 	d.OverrideCtrlH()
 
+	// Combos
+	combos := []keyboard.Combo{
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyQ, jp.KeyZ},
+			OutputKey: jp.KeyMediaMute,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyX},
+			OutputKey: jp.KeyMediaVolumeDec,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyE, jp.KeyC},
+			OutputKey: jp.KeyMediaVolumeInc,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyR, jp.KeyV},
+			OutputKey: jp.KeyMediaBrightnessDown,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyT, jp.KeyB},
+			OutputKey: jp.KeyMediaBrightnessUp,
+		},
+	}
+	for i, c := range combos {
+		d.SetCombo(i, c)
+	}
+
 	loadKeyboardDef()
 
 	err := d.Init()
@@ -81,7 +108,7 @@ func run() error {
 	cont := true
 	x := NewADCDevice(ax, 0x3000, 0xD000, true)
 	y := NewADCDevice(ay, 0x3000, 0xD000, true)
-	ticker := time.Tick(2 * time.Millisecond)
+	ticker := time.Tick(500 * time.Microsecond)
 	cnt := 0
 	for cont {
 		<-ticker
@@ -90,7 +117,7 @@ func run() error {
 			return err
 		}
 
-		if cnt%5 == 0 {
+		if cnt%(5*3) == 0 {
 			xx := x.Get2()
 			yy := y.Get2()
 			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())

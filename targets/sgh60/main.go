@@ -73,6 +73,33 @@ func run() error {
 	// override ctrl-h to BackSpace
 	d.OverrideCtrlH()
 
+	// Combos
+	combos := []keyboard.Combo{
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyQ, jp.KeyZ},
+			OutputKey: jp.KeyMediaMute,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyX},
+			OutputKey: jp.KeyMediaVolumeDec,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyE, jp.KeyC},
+			OutputKey: jp.KeyMediaVolumeInc,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyR, jp.KeyV},
+			OutputKey: jp.KeyMediaBrightnessDown,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyT, jp.KeyB},
+			OutputKey: jp.KeyMediaBrightnessUp,
+		},
+	}
+	for i, c := range combos {
+		d.SetCombo(i, c)
+	}
+
 	loadKeyboardDef()
 
 	err := d.Init()
