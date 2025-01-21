@@ -29,14 +29,22 @@ type RCS struct {
 	state    keyboard.State
 }
 
+var (
+	i2c    = machine.I2C0
+	sclPin machine.Pin
+	sdaPin machine.Pin
+)
+
 func run() error {
-	machine.I2C0.Configure(machine.I2CConfig{
+	i2c.Configure(machine.I2CConfig{
 		Frequency: machine.TWI_FREQ_400KHZ,
+		SCL:       sclPin,
+		SDA:       sdaPin,
 	})
 
 	ch := make(chan RCS, 16)
 
-	display := ssd1306.NewI2C(machine.I2C0)
+	display := ssd1306.NewI2C(i2c)
 	display.Configure(ssd1306.Config{
 		Address: 0x3C,
 		Width:   128,
