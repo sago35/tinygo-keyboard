@@ -19,8 +19,8 @@ type Device struct {
 	Keyboard UpDowner
 	Mouse    Mouser
 	Override [][]Keycode
-	Macros   [2048]byte
 	Combos   [32][5]Keycode
+	Macros   [16]int
 
 	Debug    bool
 	flashCh  chan bool
@@ -39,6 +39,8 @@ type Device struct {
 	combosReleased []uint32
 	combosKey      uint32
 	combosFounds   []Keycode
+
+	MacroBuf [2048]byte
 
 	tapOrHold map[uint32]time.Time
 
@@ -123,7 +125,7 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.Macros)+
+	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
 		len(device.Combos)*len(device.Combos[0])*2)
 	_, err := machine.Flash.ReadAt(rbuf, 0)
 	if err != nil {
@@ -147,12 +149,24 @@ func (d *Device) Init() error {
 		}
 	}
 
-	macroSize := len(device.Macros)
-	for i, b := range rbuf[offset : offset+macroSize] {
-		if b == 0xFF {
-			b = 0
+	macroSize := len(device.MacroBuf)
+	allFF := true
+	for _, b := range rbuf[offset : offset+macroSize] {
+		if b != 0xFF {
+			allFF = false
 		}
-		device.Macros[i] = b
+	}
+
+	if !allFF {
+		for i, b := range rbuf[offset : offset+macroSize] {
+			device.MacroBuf[i] = b
+		}
+		macros := bytes.SplitN(d.MacroBuf[:], []byte{0x00}, 16)
+		ofs := 0
+		for i, v := range macros {
+			d.Macros[i] = ofs + len(v)
+			ofs += len(v) + 1
+		}
 	}
 	offset += macroSize
 
@@ -642,9 +656,13 @@ func (d *Device) Tick() error {
 }
 
 func (d *Device) RunMacro(no uint8) error {
-	macros := bytes.SplitN(d.Macros[:], []byte{0x00}, 16)
+	d.resetMacros()
 
-	macro := macros[no]
+	macro := d.MacroBuf[d.Macros[no]:]
+	idx := bytes.Index(macro, []byte{0x00})
+	if idx >= 0 {
+		macro = macro[:idx]
+	}
 
 	for i := 0; i < len(macro); {
 		if macro[i] == 0x01 {
@@ -659,10 +677,10 @@ func (d *Device) RunMacro(no uint8) error {
 				sz := 3
 				if p[1] > 0x04 {
 					kc = Keycode(p[2]) + Keycode(p[3])<<8
+					kc = keycodeViaToTGK(kc)
 					sz += 1
 				}
 				i += sz
-				kc = keycodeViaToTGK(kc)
 
 				switch p[1] {
 				case 0x01, 0x05:
