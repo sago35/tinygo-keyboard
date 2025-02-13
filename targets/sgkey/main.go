@@ -8,8 +8,10 @@ import (
 	"log"
 	"machine"
 	"machine/usb"
+	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
+	"github.com/sago35/tinygo-keyboard/keycodes"
 	jp "github.com/sago35/tinygo-keyboard/keycodes/japanese"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinydraw"
@@ -36,6 +38,8 @@ var (
 )
 
 func run() error {
+	//time.Sleep(3 * time.Second)
+
 	i2c.Configure(machine.I2CConfig{
 		Frequency: machine.TWI_FREQ_400KHZ,
 		SCL:       sclPin,
@@ -67,7 +71,7 @@ func run() error {
 
 	mk := d.AddMatrixKeyboard(colPins, rowPins, [][]keyboard.Keycode{
 		{
-			jp.KeyT, jp.KeyI, jp.KeyN,
+			keycodes.KeyMacro0, keycodes.KeyMacro1, keycodes.KeyMacro2,
 			jp.KeyY, jp.KeyG, jp.KeyO,
 		},
 	})
@@ -79,6 +83,27 @@ func run() error {
 		case ch <- RCS{row: row, col: col, state: state}:
 		}
 	})
+
+	d.SetMacro(0,
+		"macro0",
+		time.Duration(3*time.Millisecond),
+		keyboard.Keycode(jp.KeyA),
+		jp.KeyB,
+		keyboard.MacroDown(jp.KeyB),
+		time.Duration(1000*time.Millisecond),
+		keyboard.MacroUp(jp.KeyB),
+	)
+	d.SetMacro(1,
+		"macro1",
+	)
+	d.SetMacro(2,
+		jp.KeyM,
+		jp.KeyA,
+		jp.KeyC,
+		jp.KeyR,
+		jp.KeyO,
+		jp.Key3,
+	)
 
 	go func() {
 		for {
