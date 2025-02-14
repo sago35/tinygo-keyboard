@@ -11,7 +11,6 @@ import (
 	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
-	"github.com/sago35/tinygo-keyboard/keycodes"
 	jp "github.com/sago35/tinygo-keyboard/keycodes/japanese"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinydraw"
@@ -71,7 +70,7 @@ func run() error {
 
 	mk := d.AddMatrixKeyboard(colPins, rowPins, [][]keyboard.Keycode{
 		{
-			keycodes.KeyMacro0, keycodes.KeyMacro1, keycodes.KeyMacro2,
+			jp.KeyMacro0, jp.KeyMacro1, jp.KeyMacro2,
 			jp.KeyY, jp.KeyG, jp.KeyO,
 		},
 	})
