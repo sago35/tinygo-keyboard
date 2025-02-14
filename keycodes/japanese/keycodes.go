@@ -183,6 +183,30 @@ const (
 	KeyTo5 = keycodes.KeyTo5
 )
 
+const (
+	KeyMacro0  = keycodes.KeyMacro0
+	KeyMacro1  = keycodes.KeyMacro1
+	KeyMacro2  = keycodes.KeyMacro2
+	KeyMacro3  = keycodes.KeyMacro3
+	KeyMacro4  = keycodes.KeyMacro4
+	KeyMacro5  = keycodes.KeyMacro5
+	KeyMacro6  = keycodes.KeyMacro6
+	KeyMacro7  = keycodes.KeyMacro7
+	KeyMacro8  = keycodes.KeyMacro8
+	KeyMacro9  = keycodes.KeyMacro9
+	KeyMacro10 = keycodes.KeyMacro10
+	KeyMacro11 = keycodes.KeyMacro11
+	KeyMacro12 = keycodes.KeyMacro12
+	KeyMacro13 = keycodes.KeyMacro13
+	KeyMacro14 = keycodes.KeyMacro14
+	KeyMacro15 = keycodes.KeyMacro15
+)
+
+const (
+	// restore default keymap for QMK
+	KeyRestoreDefaultKeymap = keycodes.KeyRestoreDefaultKeymap
+)
+
 var CharToKeyCodeMap = [256]keyboard.Keycode{
 	keyboard.ASCII00,
 	keyboard.ASCII01,
