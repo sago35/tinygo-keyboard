@@ -709,6 +709,16 @@ func (d *Device) RunMacro(no uint8) error {
 						k.Keyboard.Down(keycodes.KeyLeftShift)
 						k.Keyboard.Press(kc ^ keycodes.ShiftMask)
 						k.Keyboard.Up(keycodes.KeyLeftShift)
+					case keycodes.TypeNormal | keycodes.AltGrMask:
+						k.Keyboard.Down(keycodes.KeyRightAlt)
+						k.Keyboard.Press(kc ^ keycodes.AltGrMask)
+						k.Keyboard.Up(keycodes.KeyRightAlt)
+					case keycodes.TypeNormal | keycodes.AltGrMask | keycodes.ShiftMask:
+						k.Keyboard.Down(keycodes.KeyRightAlt)
+						k.Keyboard.Down(keycodes.KeyLeftShift)
+						k.Keyboard.Press(kc ^ keycodes.AltGrMask ^ keycodes.ShiftMask)
+						k.Keyboard.Up(keycodes.KeyRightAlt)
+						k.Keyboard.Up(keycodes.KeyLeftShift)
 					default:
 						//skip
 					}

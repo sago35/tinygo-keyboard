@@ -135,6 +135,7 @@ const (
 	KeyWindows     = keycodes.TypeNormal | 0xE3
 	KeyRightCtrl   = keycodes.TypeNormal | 0xE4
 	KeyRightShift  = keycodes.TypeNormal | 0xE5
+	KeyRightAlt    = keycodes.TypeNormal | 0xE6
 )
 
 const (
