@@ -266,7 +266,7 @@ var CharToKeyCodeMap = [256]keyboard.Keycode{
 	Key5,                               //  53   5
 	Key6,                               //  54   6
 	Key7,                               //  55   7
-	Key8,                               //  55   8
+	Key8,                               //  56   8
 	Key9,                               //  57   9
 	KeyColon,                           //  58   :
 	KeySemicolon,                       //  59   ;
