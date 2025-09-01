@@ -112,7 +112,7 @@ func run() error {
 				if x.state == keyboard.PressToRelease {
 					c = color.RGBA{0, 0, 0, 255}
 				}
-				tinydraw.FilledRectangle(&display, 10+20*int16(x.col), 10+20*int16(x.row), 18, 18, c)
+				tinydraw.FilledRectangle(display, 10+20*int16(x.col), 10+20*int16(x.row), 18, 18, c)
 				display.Display()
 			}
 		}
