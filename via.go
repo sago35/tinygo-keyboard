@@ -8,6 +8,11 @@ import (
 	"machine/usb/descriptor"
 )
 
+const (
+	EPxIN  = usb.MIDI_ENDPOINT_IN
+	EPxOUT = usb.MIDI_ENDPOINT_OUT
+)
+
 func init() {
 	// vial-gui requires the following magic word.
 	usb.Serial = "vial:f64c2b3c"
@@ -42,19 +47,19 @@ func init() {
 		// Descriptor Length: 34 bytes (0x0022)
 
 		// Endpoint Descriptor
-		0x07, 0x05, 0x86, 0x03, 0x20, 0x00, 0x01,
+		0x07, 0x05, 0x80 | EPxIN, 0x03, 0x20, 0x00, 0x01,
 		// Length: 7 bytes
 		// Descriptor Type: Endpoint (0x05)
-		// Endpoint Address: 0x86 (Endpoint 6, IN direction)
+		// Endpoint Address: 0x8x (Endpoint X, IN direction)
 		// Attributes: 3 (Interrupt transfer type)
 		// Maximum Packet Size: 32 bytes (0x0020)
 		// Interval: 1 ms
 
 		// Endpoint Descriptor
-		0x07, 0x05, 0x07, 0x03, 0x20, 0x00, 0x01,
+		0x07, 0x05, 0x00 | EPxOUT, 0x03, 0x20, 0x00, 0x01,
 		// Length: 7 bytes
 		// Descriptor Type: Endpoint (0x05)
-		// Endpoint Address: 0x07 (Endpoint 7, OUT direction)
+		// Endpoint Address: 0x0x (Endpoint X, OUT direction)
 		// Attributes: 3 (Interrupt transfer type)
 		// Maximum Packet Size: 32 bytes (0x0020)
 		// Interval: 1 ms
@@ -83,13 +88,13 @@ func init() {
 	machine.ConfigureUSBEndpoint(descriptor.CDCHID,
 		[]usb.EndpointConfig{
 			{
-				Index:     usb.MIDI_ENDPOINT_OUT,
+				Index:     EPxOUT,
 				IsIn:      false,
 				Type:      usb.ENDPOINT_TYPE_INTERRUPT,
 				RxHandler: rxHandler,
 			},
 			{
-				Index: usb.MIDI_ENDPOINT_IN,
+				Index: EPxIN,
 				IsIn:  true,
 				Type:  usb.ENDPOINT_TYPE_INTERRUPT,
 			},
@@ -278,7 +283,7 @@ func rxHandler2(b []byte) bool {
 	default:
 		return false
 	}
-	machine.SendUSBInPacket(6, txb[:32])
+	machine.SendUSBInPacket(EPxIN, txb[:32])
 	//fmt.Printf("Tx        % X\n", txb[:32])
 
 	return true
