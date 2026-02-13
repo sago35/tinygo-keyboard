@@ -12,11 +12,14 @@ type SquaredMatrixKeyboard struct {
 	callback Callback
 
 	Pins         []machine.Pin
+	IndexMap     IndexMapFunc
 	cycleCounter []uint8
 	debounce     uint8
 
 	colsBuf []int
 }
+
+type IndexMapFunc func(i, j, col, row, numPins int) int
 
 func (d *Device) AddSquaredMatrixKeyboard(pins []machine.Pin, keys [][]Keycode) *SquaredMatrixKeyboard {
 	state := make([]State, len(pins)*(len(pins)-1))
@@ -77,7 +80,13 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 			d.Pins[j].Configure(machine.PinConfig{Mode: machine.PinOutput})
 			d.Pins[j].Low()
 			current := !d.Pins[c].Get()
-			idx := r*(len(cols)+1) + c
+			indexer := d.IndexMap
+			if indexer == nil {
+				indexer = func(i, j, col, row, numPins int) int {
+					return row*numPins + col
+				}
+			}
+			idx := indexer(i, j, c, r, len(cols)+1)
 
 			switch d.State[idx] {
 			case None:
