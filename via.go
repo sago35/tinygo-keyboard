@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	EPxIN  = usb.MIDI_ENDPOINT_IN
-	EPxOUT = usb.MIDI_ENDPOINT_OUT
+	EPxIN  = 6
+	EPxOUT = 7
 )
 
 func init() {
