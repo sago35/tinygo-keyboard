@@ -70,21 +70,21 @@ func run() error {
 			0, jp.KeyY, jp.KeyU, jp.KeyI, jp.KeyO, jp.KeyP, jp.KeyAt, jp.KeyLeftBrace, jp.KeyEnter, 0,
 			0, jp.KeyH, jp.KeyJ, jp.KeyK, jp.KeyL, jp.KeySemicolon, jp.KeyColon, jp.KeyRightBrace, 0, 0,
 			jp.KeyB, jp.KeyN, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash, jp.KeyUp, jp.KeyDelete, 0,
-			0, jp.KeySpace, jp.KeyMod2, jp.KeyHiragana, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyLeft, jp.KeyDown, jp.KeyRight, 0,
+			0, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyLeft, jp.KeyDown, jp.KeyRight, 0,
 		},
 		{
 			0, jp.KeyF6, jp.KeyF7, jp.KeyF8, jp.KeyF9, jp.KeyF10, jp.KeyF11, jp.KeyF12, jp.KeyBackslash2, jp.KeyBackspace,
 			0, jp.KeyY, jp.KeyU, jp.KeyTab, jp.KeyO, jp.WheelUp, jp.KeyAt, jp.KeyLeftBrace, jp.KeyEnter, 0,
 			0, jp.KeyLeft, jp.KeyDown, jp.KeyUp, jp.KeyRight, jp.KeySemicolon, jp.KeyColon, jp.KeyRightBrace, 0, 0,
 			jp.MouseForward, jp.WheelDown, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash, jp.KeyPageUp, jp.KeyDelete, 0,
-			0, jp.KeySpace, jp.KeyMod2, jp.KeyHiragana, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyHome, jp.KeyPageDown, jp.KeyEnd, 0,
+			0, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyHome, jp.KeyPageDown, jp.KeyEnd, 0,
 		},
 		{
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, jp.Key6, jp.Key7, jp.Key8, jp.Key9, jp.Key0, jp.KeyBackspace, 0, 0, 0,
 			0, jp.KeyHome, jp.KeyPageDown, jp.KeyPageUp, jp.KeyEnd, jp.KeyEnter, jp.KeyEsc, 0, 0, 0,
 			jp.KeyF5, jp.KeyF6, jp.KeyF7, jp.KeyF8, jp.KeyF9, jp.KeyF10, jp.KeyF11, 0, 0, 0,
-			0, jp.KeySpace, jp.KeyMod2, jp.KeyHiragana, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyF12, 0, 0, 0,
+			0, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyLeftAlt, jp.KeyPrintscreen, jp.KeyF12, 0, 0, 0,
 		},
 	})
 	uk.SetCallback(func(layer, index int, state keyboard.State) {
