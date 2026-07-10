@@ -62,6 +62,13 @@ func (a *ADCDevice) Get2() int16 {
 
 	ret := int(a.Value)
 	ret += 0x4000
+	// Round to the nearest 2048-wide zone instead of always flooring. Without
+	// this, zone 0 (the dead zone's center bucket) covers only [0, 2047] -
+	// entirely on the positive side of true center - so the negative side of
+	// the dead zone is one zone (2048 counts) narrower than the positive
+	// side, and the stick registers movement much more easily to one side
+	// (observed as a slight drift) than the other.
+	ret += 1024
 	ret >>= 11
 	ret -= 8
 
