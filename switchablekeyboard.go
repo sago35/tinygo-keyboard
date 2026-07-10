@@ -35,6 +35,14 @@ type SwitchableKeyboard struct {
 	// to handle output switching and unpair.
 	OverrideCtrlH bool
 
+	// MuteBLEOnUSB stops advertising and disconnects the current BLE central
+	// (if any) whenever USB becomes the active output, and resumes
+	// advertising when switching back to BLE. Off by default: switching back
+	// to BLE then requires reconnecting rather than being instant. Only takes
+	// effect if BLE implements MuteRadio()/UnmuteRadio() (true for
+	// *BLETxKeyboard).
+	MuteBLEOnUSB bool
+
 	active   int
 	pressed  []k.Keycode
 	override []k.Keycode
@@ -57,7 +65,29 @@ func (s *SwitchableKeyboard) Init() error {
 	if s.output() == nil {
 		s.active = OutputUSB
 	}
+	s.applyRadioMute()
 	return nil
+}
+
+// applyRadioMute mutes or unmutes the BLE radio according to MuteBLEOnUSB and
+// the currently active output. It is a no-op unless MuteBLEOnUSB is set and
+// BLE implements MuteRadio()/UnmuteRadio() (true for *BLETxKeyboard).
+func (s *SwitchableKeyboard) applyRadioMute() {
+	if !s.MuteBLEOnUSB {
+		return
+	}
+	r, ok := s.BLE.(interface {
+		MuteRadio() error
+		UnmuteRadio() error
+	})
+	if !ok {
+		return
+	}
+	if s.active == OutputUSB {
+		r.MuteRadio()
+	} else {
+		r.UnmuteRadio()
+	}
 }
 
 func (s *SwitchableKeyboard) output() UpDowner {
@@ -157,6 +187,7 @@ func (s *SwitchableKeyboard) SetOutput(n int) {
 	s.pressed = s.pressed[:0]
 	s.override = s.override[:0]
 	s.active = n
+	s.applyRadioMute()
 }
 
 // Output returns the currently active output (OutputUSB or OutputBLE).
