@@ -6,6 +6,7 @@ smoketest: FORCE
 	tinygo build -o ./out/gopher-badge.uf2    --target gopher-badge          --size short --stack-size 8kb ./targets/gopher-badge/
 	tinygo build -o ./out/macropad-rp2040.uf2 --target macropad-rp2040       --size short --stack-size 8kb ./targets/macropad-rp2040/
 	tinygo build -o ./out/sg48key.uf2         --target xiao                  --size short --stack-size 8kb ./targets/sg48key/
+	tinygo build -o ./out/sg48key-ble.uf2     --target xiao-ble              --size short --stack-size 8kb ./targets/sg48key/
 	tinygo build -o ./out/sg48key-rp2040.uf2  --target xiao-rp2040           --size short --stack-size 8kb ./targets/sg48key/
 	tinygo build -o ./out/sgh60.uf2           --target waveshare-rp2040-zero --size short --stack-size 8kb ./targets/sgh60/
 	tinygo build -o ./out/sgkb-left.uf2       --target xiao-rp2040           --size short --stack-size 8kb ./targets/sgkb/left/
