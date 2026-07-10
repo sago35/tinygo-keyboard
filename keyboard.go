@@ -57,10 +57,17 @@ type KBer interface {
 	Callback(layer, index int, state State)
 }
 
-type UpDowner interface {
+// PortUpDowner is the interface satisfied by machine/usb/hid/keyboard's
+// Port(), which is used as the underlying output of Keyboard.
+type PortUpDowner interface {
 	Up(c k.Keycode) error
 	Down(c k.Keycode) error
 	Write(b []byte) (n int, err error)
+}
+
+type UpDowner interface {
+	PortUpDowner
+	Init() error
 }
 
 type State uint8
@@ -102,6 +109,14 @@ func New() *Device {
 	return d
 }
 
+// NewUSBKeyboard returns an UpDowner that sends reports to the USB HID port,
+// e.g. for use as SwitchableKeyboard.USB.
+func NewUSBKeyboard() *Keyboard {
+	return &Keyboard{
+		Port: k.Port(),
+	}
+}
+
 func (d *Device) OverrideCtrlH() {
 	d.Keyboard = &Keyboard{
 		Port:          k.Port(),
@@ -110,6 +125,11 @@ func (d *Device) OverrideCtrlH() {
 }
 
 func (d *Device) Init() error {
+	err := d.Keyboard.Init()
+	if err != nil {
+		return err
+	}
+
 	for _, k := range d.kb {
 		err := k.Init()
 		if err != nil {
@@ -127,7 +147,7 @@ func (d *Device) Init() error {
 	// TODO: refactor
 	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
 		len(device.Combos)*len(device.Combos[0])*2)
-	_, err := machine.Flash.ReadAt(rbuf, 0)
+	_, err = machine.Flash.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
 	}
@@ -934,8 +954,12 @@ type Keycode k.Keycode
 type Keyboard struct {
 	pressed       []k.Keycode
 	override      []k.Keycode
-	Port          UpDowner
+	Port          PortUpDowner
 	overrideCtrlH bool
+}
+
+func (k *Keyboard) Init() error {
+	return nil
 }
 
 func (k *Keyboard) Up(c k.Keycode) error {
@@ -1004,6 +1028,10 @@ func (k *Keyboard) Write(b []byte) (n int, err error) {
 type UartTxKeyboard struct {
 	pressed []k.Keycode
 	Uart    *machine.UART
+}
+
+func (k *UartTxKeyboard) Init() error {
+	return nil
 }
 
 func (k *UartTxKeyboard) Up(c k.Keycode) error {
