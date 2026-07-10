@@ -93,6 +93,16 @@ const (
 	KeyRestoreDefaultKeymap = 0x7C03
 )
 
+// QMK connection keycodes. KeyOutput* switch the output of a
+// SwitchableKeyboard at runtime; KeyBluetoothUnpair deletes the stored BLE
+// bond so a new central can pair.
+const (
+	KeyOutputNext      = 0x7781 // OU_NEXT
+	KeyOutputUSB       = 0x7784 // OU_USB
+	KeyOutputBLE       = 0x7786 // OU_BT (QK_OUTPUT_BLUETOOTH)
+	KeyBluetoothUnpair = 0x7792 // BT_UNPR (QK_BLUETOOTH_UNPAIR)
+)
+
 // from machine/usb/hid/keyboard
 const (
 	ShiftMask = 0x0400

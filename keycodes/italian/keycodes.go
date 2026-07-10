@@ -327,3 +327,11 @@ var CharToKeyCodeMap = [256]keyboard.Keycode{
 	KeyIGrave | keycodes.AltGrMask,                      // 126   ~
 	KeyDelete,                                           // 127   DEL
 }
+
+const (
+	KeyOutputNext = keycodes.KeyOutputNext
+	KeyOutputUSB  = keycodes.KeyOutputUSB
+	KeyOutputBLE  = keycodes.KeyOutputBLE
+
+	KeyBluetoothUnpair = keycodes.KeyBluetoothUnpair
+)
