@@ -296,18 +296,18 @@ func Save() error {
 	cnt := device.GetMaxKeyCount()
 	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.MacroBuf)+
 		len(device.Combos)*len(device.Combos[0])*2)
-	needed := int64(len(wbuf)) / machine.Flash.EraseBlockSize()
+	needed := int64(len(wbuf)) / FlashDevice.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
 	}
 
-	err := machine.Flash.EraseBlocks(0, needed)
+	err := FlashDevice.EraseBlocks(0, needed)
 	if err != nil {
 		return err
 	}
 
 	// TODO: Size should be written last
-	sz := machine.Flash.Size()
+	sz := FlashDevice.Size()
 	wbuf[0] = byte(sz >> 24)
 	wbuf[1] = byte(sz >> 16)
 	wbuf[2] = byte(sz >> 8)
@@ -342,7 +342,7 @@ func Save() error {
 		offset += len(device.Combos[0]) * 2
 	}
 
-	_, err = machine.Flash.WriteAt(wbuf[:], 0)
+	_, err = FlashDevice.WriteAt(wbuf[:], 0)
 	if err != nil {
 		return err
 	}

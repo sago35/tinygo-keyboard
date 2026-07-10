@@ -81,6 +81,12 @@ const (
 
 type Callback func(layer, index int, state State)
 
+// FlashDevice is the block device used to persist the keymap, macros and
+// combos. It defaults to machine.Flash. BLETxKeyboard.Init replaces it with
+// a SoftDevice-based implementation, because direct NVMC access hangs while
+// the SoftDevice is enabled.
+var FlashDevice machine.BlockDevice = machine.Flash
+
 func New() *Device {
 	kb := &Keyboard{
 		Port: k.Port(),
@@ -147,12 +153,12 @@ func (d *Device) Init() error {
 	// TODO: refactor
 	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
 		len(device.Combos)*len(device.Combos[0])*2)
-	_, err = machine.Flash.ReadAt(rbuf, 0)
+	_, err = FlashDevice.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
 	}
 	sz := (int64(rbuf[0]) << 24) + (int64(rbuf[1]) << 16) + (int64(rbuf[2]) << 8) + int64(rbuf[3])
-	if sz != machine.Flash.Size() {
+	if sz != FlashDevice.Size() {
 		// No settings are saved
 		return nil
 	}
@@ -549,7 +555,7 @@ func (d *Device) Tick() error {
 			d.Keyboard.Down(k.Keycode(x&0x00FF | keycodes.TypeNormal))
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
-			machine.Flash.EraseBlocks(0, 1)
+			FlashDevice.EraseBlocks(0, 1)
 		} else if x&0xFF00 == keycodes.TypeMacroKey {
 			no := uint8(x & 0x00FF)
 			d.RunMacro(no)
