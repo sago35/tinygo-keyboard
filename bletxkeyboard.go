@@ -6,18 +6,22 @@ import (
 	"fmt"
 	"machine/usb"
 	k "machine/usb/hid/keyboard"
+	"machine/usb/hid/mouse"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
 	"tinygo.org/x/bluetooth"
 )
 
-// bleReportMap contains two reports distinguished by report IDs:
+// bleReportMap contains three reports distinguished by report IDs:
 //
 //   - Report ID 1: keyboard. 8 modifier bits, 1 reserved byte, 5 LED output
 //     bits and 6 key codes (the same layout as the USB boot protocol). The
 //     key code range is 0-255 so that keys such as the japanese ones
 //     (0x87-0x90) can be sent.
 //   - Report ID 2: consumer control (media keys). A single 16-bit usage.
+//   - Report ID 3: mouse. 5 button bits + 3 padding bits, relative X/Y
+//     (8-bit signed each) and relative wheel (8-bit signed). Same 4-byte
+//     payload layout as machine/usb/hid/mouse's tx().
 //
 // Note: over HID over GATT, the report ID is conveyed by the Report
 // Reference descriptor of each report characteristic and is NOT prefixed to
@@ -69,6 +73,40 @@ var bleReportMap = []byte{
 	0x95, 0x01, //   Report Count (1)
 	0x81, 0x00, //   Input (Data, Array): media key
 	0xC0, // End Collection
+
+	0x05, 0x01, // Usage Page (Generic Desktop)
+	0x09, 0x02, // Usage (Mouse)
+	0xA1, 0x01, // Collection (Application)
+	0x85, 0x03, //   Report ID (3)
+	0x09, 0x01, //   Usage (Pointer)
+	0xA1, 0x00, //   Collection (Physical)
+	0x05, 0x09, //     Usage Page (Button)
+	0x19, 0x01, //     Usage Minimum (Button 1)
+	0x29, 0x05, //     Usage Maximum (Button 5)
+	0x15, 0x00, //     Logical Minimum (0)
+	0x25, 0x01, //     Logical Maximum (1)
+	0x95, 0x05, //     Report Count (5)
+	0x75, 0x01, //     Report Size (1)
+	0x81, 0x02, //     Input (Data, Variable, Absolute): buttons
+	0x95, 0x01, //     Report Count (1)
+	0x75, 0x03, //     Report Size (3)
+	0x81, 0x01, //     Input (Constant): padding
+	0x05, 0x01, //     Usage Page (Generic Desktop)
+	0x09, 0x30, //     Usage (X)
+	0x09, 0x31, //     Usage (Y)
+	0x15, 0x81, //     Logical Minimum (-127)
+	0x25, 0x7F, //     Logical Maximum (127)
+	0x75, 0x08, //     Report Size (8)
+	0x95, 0x02, //     Report Count (2)
+	0x81, 0x06, //     Input (Data, Variable, Relative): X, Y
+	0x09, 0x38, //     Usage (Wheel)
+	0x15, 0x81, //     Logical Minimum (-127)
+	0x25, 0x7F, //     Logical Maximum (127)
+	0x75, 0x08, //     Report Size (8)
+	0x95, 0x01, //     Report Count (1)
+	0x81, 0x06, //     Input (Data, Variable, Relative): wheel
+	0xC0, //   End Collection
+	0xC0, // End Collection
 }
 
 // BLETxKeyboard is a keyboard that sends key events to a BLE central via the
@@ -79,14 +117,16 @@ var bleReportMap = []byte{
 type BLETxKeyboard struct {
 	InputReport    bluetooth.Characteristic
 	ConsumerReport bluetooth.Characteristic
+	MouseReport    bluetooth.Characteristic
 
 	// Name is the advertised device name. If empty, usb.Product is used
 	// (falling back to "tinygo-keyboard" when that is empty too), so the
 	// keyboard shows up under the same name over USB and BLE.
 	Name string
 
-	report   [8]byte
-	consumer uint16
+	report       [8]byte
+	consumer     uint16
+	mouseButtons mouse.Button
 }
 
 // NewBLEKeyboard returns a BLE (HID over GATT) keyboard that can always be
@@ -247,6 +287,20 @@ func (t *BLETxKeyboard) Init() error {
 				},
 			},
 			{
+				Handle:       &t.MouseReport,
+				UUID:         bluetooth.CharacteristicUUIDReport,
+				Value:        make([]byte, 4),
+				Flags:        bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicNotifyPermission,
+				ReadSecurity: bluetooth.SecurityEncrypted,
+				Descriptors: []bluetooth.DescriptorConfig{
+					{
+						UUID:         bluetooth.New16BitUUID(0x2908), // Report Reference
+						Value:        []byte{3, 1},                   // report ID 3, input report
+						ReadSecurity: bluetooth.SecurityEncrypted,
+					},
+				},
+			},
+			{
 				UUID:          bluetooth.CharacteristicUUIDHIDControlPoint,
 				Value:         []byte{0},
 				Flags:         bluetooth.CharacteristicWriteWithoutResponsePermission,
@@ -383,4 +437,69 @@ func (t *BLETxKeyboard) Unpair() {
 	if err != nil {
 		println("ble: remove bond failed:", err.Error())
 	}
+}
+
+// BLETxKeyboard also implements Mouser (mouse.go), notifying MouseReport
+// (report ID 3, see bleReportMap) instead of sending a USB packet. The report
+// layout mirrors machine/usb/hid/mouse's tx(): [buttons, x, y, wheel].
+
+// Move moves the mouse cursor by (vx, vy), clamped to the -127..127 range
+// that the report descriptor declares.
+func (t *BLETxKeyboard) Move(vx, vy int) {
+	if vx == 0 && vy == 0 {
+		return
+	}
+	t.sendMouse(clampMouseAxis(vx), clampMouseAxis(vy), 0)
+}
+
+// Click presses and releases the given mouse buttons.
+func (t *BLETxKeyboard) Click(btn mouse.Button) {
+	t.Press(btn)
+	t.Release(btn)
+}
+
+// Press presses the given mouse buttons.
+func (t *BLETxKeyboard) Press(btn mouse.Button) {
+	t.mouseButtons |= btn
+	t.sendMouse(0, 0, 0)
+}
+
+// Release releases the given mouse buttons.
+func (t *BLETxKeyboard) Release(btn mouse.Button) {
+	t.mouseButtons &^= btn
+	t.sendMouse(0, 0, 0)
+}
+
+// Wheel scrolls the mouse wheel by v, clamped to the -127..127 range that
+// the report descriptor declares.
+func (t *BLETxKeyboard) Wheel(v int) {
+	if v == 0 {
+		return
+	}
+	t.sendMouse(0, 0, clampMouseAxis(v))
+}
+
+// WheelDown scrolls the mouse wheel down.
+func (t *BLETxKeyboard) WheelDown() {
+	t.Wheel(-1)
+}
+
+// WheelUp scrolls the mouse wheel up.
+func (t *BLETxKeyboard) WheelUp() {
+	t.Wheel(1)
+}
+
+func (t *BLETxKeyboard) sendMouse(x, y, wheel int8) error {
+	_, err := t.MouseReport.Write([]byte{byte(t.mouseButtons), byte(x), byte(y), byte(wheel)})
+	return err
+}
+
+func clampMouseAxis(v int) int8 {
+	if v < -127 {
+		v = -127
+	}
+	if v > 127 {
+		v = 127
+	}
+	return int8(v)
 }

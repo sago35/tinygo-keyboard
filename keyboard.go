@@ -233,12 +233,15 @@ func (d *Device) Init() error {
 		offset += len(device.Combos[0]) * 2
 	}
 
-	// Restore the selected output of a SwitchableKeyboard.
+	// Restore the selected output of a SwitchableKeyboard/SwitchableMouse.
 	// 0xFF means nothing was saved (or the flash was erased): keep Default.
 	mode := rbuf[len(rbuf)-1]
 	if mode != 0xFF {
 		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
 			sk.SetOutput(int(mode))
+		}
+		if sm, ok := d.Mouse.(*SwitchableMouse); ok {
+			sm.SetOutput(int(mode))
 		}
 	}
 
@@ -569,7 +572,11 @@ func (d *Device) Tick() error {
 		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE {
 			// This branch must stay above the TypeMacroKey one: 0x778x would
 			// also match x&0xFF00 == TypeMacroKey and panic in RunMacro.
-			if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
+			// d.Keyboard and d.Mouse are switched together so that a single
+			// OU_* key moves both outputs in lockstep.
+			sk, skOK := d.Keyboard.(*SwitchableKeyboard)
+			sm, smOK := d.Mouse.(*SwitchableMouse)
+			if skOK || smOK {
 				out := OutputUSB
 				switch x {
 				case keycodes.KeyOutputUSB:
@@ -577,9 +584,20 @@ func (d *Device) Tick() error {
 				case keycodes.KeyOutputBLE:
 					out = OutputBLE
 				default:
-					out = (sk.Output() + 1) % 2
+					cur := OutputUSB
+					if skOK {
+						cur = sk.Output()
+					} else if smOK {
+						cur = sm.Output()
+					}
+					out = (cur + 1) % 2
 				}
-				sk.SetOutput(out)
+				if skOK {
+					sk.SetOutput(out)
+				}
+				if smOK {
+					sm.SetOutput(out)
+				}
 				d.flashCh <- true
 			}
 		} else if x == keycodes.KeyBluetoothUnpair {
