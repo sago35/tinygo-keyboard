@@ -1,12 +1,12 @@
 package main
 
 import (
+	"device/nrf"
 	_ "embed"
 	"fmt"
 	"log"
 	"machine"
 	"machine/usb"
-	"machine/usb/hid/mouse"
 	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
@@ -26,8 +26,6 @@ func run() error {
 	machine.InitADC()
 	ax := machine.A0
 	ay := machine.A1
-
-	m := mouse.Port()
 
 	d := keyboard.New()
 
@@ -68,9 +66,6 @@ func run() error {
 		callback(layer)
 	})
 
-	// override ctrl-h to BackSpace
-	d.OverrideCtrlH()
-
 	// Combos
 	combos := []keyboard.Combo{
 		{
@@ -93,17 +88,36 @@ func run() error {
 			Keys:      [4]keyboard.Keycode{jp.KeyT, jp.KeyB},
 			OutputKey: jp.KeyMediaBrightnessUp,
 		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyQ, jp.KeyEsc},
+			OutputKey: jp.KeyOutputUSB,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyEsc},
+			OutputKey: jp.KeyOutputBLE,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyAt, jp.KeyEsc},
+			OutputKey: jp.KeyBluetoothUnpair,
+		},
 	}
 	for i, c := range combos {
 		d.SetCombo(i, c)
 	}
 
 	loadKeyboardDef()
+	kb := keyboard.NewBLEKeyboard()
+	kb.MuteBLEOnUSB = true
+	kb.OverrideCtrlH = true // override ctrl-h to BackSpace (USB/BLE 両方)
+	d.Keyboard = kb
+	m := keyboard.NewBLEMouse(kb)
+	d.Mouse = m
 
 	err := d.Init()
 	if err != nil {
 		return err
 	}
+	nrf.USBD.USBPULLUP.Set(1) // ここで初めてホストに見せる（ID・HID とも設定済み）
 
 	cont := true
 	x := NewADCDevice(ax, 0x3000, 0xD000, true)
