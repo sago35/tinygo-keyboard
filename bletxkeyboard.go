@@ -125,6 +125,10 @@ type BLETxKeyboard struct {
 	// keyboard shows up under the same name over USB and BLE.
 	Name string
 
+	adv             *bluetooth.Advertisement
+	connected       bool
+	connectedDevice bluetooth.Device
+
 	report       [8]byte
 	consumer     uint16
 	mouseButtons mouse.Button
@@ -156,6 +160,14 @@ func (t *BLETxKeyboard) Init() error {
 	// From here on, direct NVMC access (machine.Flash) would hang: keymap
 	// persistence has to go through the SoftDevice.
 	FlashDevice = bluetooth.SDFlash{}
+
+	// Track the current connection so MuteRadio can disconnect it on demand.
+	adapter.SetConnectHandler(func(device bluetooth.Device, connected bool) {
+		t.connected = connected
+		if connected {
+			t.connectedDevice = device
+		}
+	})
 
 	// HID hosts expect bonding; Just Works needs no user interaction.
 	err := adapter.EnablePairing(bluetooth.PairingParams{
@@ -323,8 +335,8 @@ func (t *BLETxKeyboard) Init() error {
 	if name == "" {
 		name = "tinygo-keyboard-ble"
 	}
-	adv := adapter.DefaultAdvertisement()
-	err = adv.Configure(bluetooth.AdvertisementOptions{
+	t.adv = adapter.DefaultAdvertisement()
+	err = t.adv.Configure(bluetooth.AdvertisementOptions{
 		LocalName:    name,
 		ServiceUUIDs: []bluetooth.UUID{bluetooth.ServiceUUIDHumanInterfaceDevice},
 		Appearance:   961, // keyboard
@@ -332,12 +344,37 @@ func (t *BLETxKeyboard) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to config adv: %w", err)
 	}
-	if err := adv.Start(); err != nil {
+	if err := t.adv.Start(); err != nil {
 		return fmt.Errorf("failed to start adv: %w", err)
 	}
 	println("advertising as", name)
 
 	return nil
+}
+
+// MuteRadio stops advertising and disconnects the current central, if any,
+// silencing the BLE radio. Used by SwitchableKeyboard.MuteBLEOnUSB to go
+// quiet on BLE while USB is the active output. Undo with UnmuteRadio.
+func (t *BLETxKeyboard) MuteRadio() error {
+	if t.adv == nil {
+		return nil
+	}
+	// Stop advertising first: on disconnect, the SoftDevice auto-restarts
+	// advertising if it thinks it should still be advertising, so Stop must
+	// happen before Disconnect to prevent that.
+	t.adv.Stop() // best-effort: may already be stopped (e.g. while connected)
+	if t.connected {
+		return t.connectedDevice.Disconnect()
+	}
+	return nil
+}
+
+// UnmuteRadio resumes advertising after MuteRadio.
+func (t *BLETxKeyboard) UnmuteRadio() error {
+	if t.adv == nil {
+		return nil
+	}
+	return t.adv.Start()
 }
 
 func (t *BLETxKeyboard) Down(c k.Keycode) error {
