@@ -89,6 +89,19 @@ type BLETxKeyboard struct {
 	consumer uint16
 }
 
+// NewBLEKeyboard returns a BLE (HID over GATT) keyboard that can always be
+// switched to USB at runtime (see SwitchableKeyboard); it starts on BLE
+// unless a different output was saved to flash. The advertised name defaults
+// to usb.Product. To customize (advertised name, default output), construct
+// a SwitchableKeyboard with a BLETxKeyboard directly.
+func NewBLEKeyboard() *SwitchableKeyboard {
+	return &SwitchableKeyboard{
+		USB:     NewUSBKeyboard(),
+		BLE:     &BLETxKeyboard{},
+		Default: OutputBLE,
+	}
+}
+
 // Init enables the BLE stack and pairing, registers the services required by
 // the HID over GATT profile (device information, battery and HID), starts
 // advertising and fills in InputReport.

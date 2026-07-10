@@ -151,8 +151,9 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
+	// +1 = selected output of SwitchableKeyboard (see Save)
 	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
-		len(device.Combos)*len(device.Combos[0])*2)
+		len(device.Combos)*len(device.Combos[0])*2+1)
 	_, err = FlashDevice.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -230,6 +231,15 @@ func (d *Device) Init() error {
 		}
 
 		offset += len(device.Combos[0]) * 2
+	}
+
+	// Restore the selected output of a SwitchableKeyboard.
+	// 0xFF means nothing was saved (or the flash was erased): keep Default.
+	mode := rbuf[len(rbuf)-1]
+	if mode != 0xFF {
+		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
+			sk.SetOutput(int(mode))
+		}
 	}
 
 	return nil
@@ -556,6 +566,27 @@ func (d *Device) Tick() error {
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
 			FlashDevice.EraseBlocks(0, 1)
+		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE {
+			// This branch must stay above the TypeMacroKey one: 0x778x would
+			// also match x&0xFF00 == TypeMacroKey and panic in RunMacro.
+			if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
+				out := OutputUSB
+				switch x {
+				case keycodes.KeyOutputUSB:
+					out = OutputUSB
+				case keycodes.KeyOutputBLE:
+					out = OutputBLE
+				default:
+					out = (sk.Output() + 1) % 2
+				}
+				sk.SetOutput(out)
+				d.flashCh <- true
+			}
+		} else if x == keycodes.KeyBluetoothUnpair {
+			// This branch must also stay above the TypeMacroKey one (0x7792).
+			if u, ok := d.Keyboard.(interface{ Unpair() }); ok {
+				u.Unpair()
+			}
 		} else if x&0xFF00 == keycodes.TypeMacroKey {
 			no := uint8(x & 0x00FF)
 			d.RunMacro(no)
@@ -659,6 +690,9 @@ func (d *Device) Tick() error {
 				d.Keyboard.Up(keycodes.KeyWindows)
 			}
 			d.Keyboard.Up(k.Keycode(x&0x00FF | keycodes.TypeNormal))
+		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE || x == keycodes.KeyBluetoothUnpair {
+			// Output switching and unpair are handled on press; nothing to
+			// do on release.
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
@@ -853,6 +887,8 @@ func keycodeTGKtoVia(kc Keycode) Keycode {
 	case keycodes.KeyRestoreDefaultKeymap:
 		// restore default keymap for QMK
 		kc = keycodes.KeyRestoreDefaultKeymap
+	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair:
+		// QMK connection keycodes: pass through as-is
 	default:
 		switch kc & keycodes.QuantumMask {
 		case keycodes.TypeRxxx, keycodes.TypeLxxxT, keycodes.TypeRxxxT:
@@ -932,6 +968,9 @@ func keycodeViaToTGK(key Keycode) Keycode {
 		kc = 0xFF00 | (kc & 0x000F)
 	case keycodes.KeyRestoreDefaultKeymap:
 		kc = keycodes.KeyRestoreDefaultKeymap
+	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair:
+		// QMK connection keycodes: pass through as-is
+		kc = key
 	default:
 		switch key & keycodes.QuantumMask {
 		case keycodes.TypeRxxx, keycodes.TypeLxxxT, keycodes.TypeRxxxT:
