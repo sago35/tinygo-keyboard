@@ -4,6 +4,8 @@ package keyboard
 
 import (
 	k "machine/usb/hid/keyboard"
+
+	"github.com/sago35/tinygo-keyboard/keycodes"
 )
 
 // Output indices for SwitchableKeyboard.
@@ -26,8 +28,16 @@ type SwitchableKeyboard struct {
 	// (OutputUSB or OutputBLE).
 	Default int
 
-	active  int
-	pressed []k.Keycode
+	// OverrideCtrlH translates a Ctrl+H chord into Backspace on whichever
+	// output is active, the same as Device.OverrideCtrlH does for a plain
+	// USB Keyboard. It has to live here (rather than wrapping d.Keyboard)
+	// because Device.Tick reaches d.Keyboard as a concrete *SwitchableKeyboard
+	// to handle output switching and unpair.
+	OverrideCtrlH bool
+
+	active   int
+	pressed  []k.Keycode
+	override []k.Keycode
 }
 
 func (s *SwitchableKeyboard) Init() error {
@@ -69,11 +79,45 @@ func (s *SwitchableKeyboard) Down(c k.Keycode) error {
 	if out == nil {
 		return nil
 	}
+
+	// Same Ctrl+H -> Backspace translation as Keyboard.Down (keyboard.go),
+	// but routed through the active output so it works on USB and BLE alike.
+	if s.OverrideCtrlH && len(s.pressed) == 2 &&
+		s.pressed[0] == keycodes.KeyLeftCtrl && s.pressed[1] == keycodes.KeyH {
+		for _, p := range s.pressed {
+			out.Up(p)
+		}
+		s.override = append(s.override, keycodes.KeyBackspace)
+		return out.Down(keycodes.KeyBackspace)
+	}
+
+	if len(s.override) > 0 {
+		for _, p := range s.override {
+			out.Up(p)
+		}
+		s.override = s.override[:0]
+		for _, p := range s.pressed {
+			out.Down(p)
+		}
+	}
 	return out.Down(c)
 }
 
 func (s *SwitchableKeyboard) Up(c k.Keycode) error {
 	out := s.output()
+
+	if out != nil && len(s.override) > 0 {
+		for _, p := range s.override {
+			out.Up(p)
+		}
+		s.override = s.override[:0]
+		for _, p := range s.pressed {
+			// When overriding, do not press the last key again.
+			if c != p && p != s.pressed[len(s.pressed)-1] {
+				out.Down(p)
+			}
+		}
+	}
 
 	for i, p := range s.pressed {
 		if c == p {
@@ -111,6 +155,7 @@ func (s *SwitchableKeyboard) SetOutput(n int) {
 		}
 	}
 	s.pressed = s.pressed[:0]
+	s.override = s.override[:0]
 	s.active = n
 }
 
