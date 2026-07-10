@@ -118,6 +118,7 @@ type BLETxKeyboard struct {
 	InputReport    bluetooth.Characteristic
 	ConsumerReport bluetooth.Characteristic
 	MouseReport    bluetooth.Characteristic
+	BatteryLevel   bluetooth.Characteristic
 
 	// Name is the advertised device name. If empty, usb.Product is used
 	// (falling back to "tinygo-keyboard" when that is empty too), so the
@@ -127,6 +128,7 @@ type BLETxKeyboard struct {
 	report       [8]byte
 	consumer     uint16
 	mouseButtons mouse.Button
+	battery      uint8
 }
 
 // NewBLEKeyboard returns a BLE (HID over GATT) keyboard that can always be
@@ -199,14 +201,16 @@ func (t *BLETxKeyboard) Init() error {
 	}
 
 	// The battery service is also part of the HID over GATT profile. The
-	// level is fixed at 100% for now.
+	// level starts at 100% and is updated via SetBatteryLevel.
+	t.battery = 100
 	err = adapter.AddService(&bluetooth.Service{
 		UUID: bluetooth.ServiceUUIDBattery,
 		Characteristics: []bluetooth.CharacteristicConfig{
 			{
-				UUID:  bluetooth.CharacteristicUUIDBatteryLevel,
-				Value: []byte{100},
-				Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicNotifyPermission,
+				Handle: &t.BatteryLevel,
+				UUID:   bluetooth.CharacteristicUUIDBatteryLevel,
+				Value:  []byte{t.battery},
+				Flags:  bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicNotifyPermission,
 			},
 		},
 	})
@@ -426,6 +430,21 @@ func (t *BLETxKeyboard) sendConsumer() error {
 
 func (t *BLETxKeyboard) Write(b []byte) (n int, err error) {
 	return len(b), nil
+}
+
+// SetBatteryLevel updates the battery service with the remaining charge in
+// percent (0-100, larger values are clamped to 100). Subscribed centrals are
+// notified of the change. Must be called after Init.
+func (t *BLETxKeyboard) SetBatteryLevel(percent uint8) error {
+	if percent > 100 {
+		percent = 100
+	}
+	if percent == t.battery {
+		return nil
+	}
+	t.battery = percent
+	_, err := t.BatteryLevel.Write([]byte{percent})
+	return err
 }
 
 // Unpair deletes the stored bond and disconnects the connected central, if
