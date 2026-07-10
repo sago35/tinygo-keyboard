@@ -119,6 +119,16 @@ func (s *SwitchableKeyboard) Output() int {
 	return s.active
 }
 
+// SetBatteryLevel forwards the remaining charge in percent (0-100) to the
+// BLE output, if it supports it. USB has no equivalent, so the value is
+// reported regardless of the active output.
+func (s *SwitchableKeyboard) SetBatteryLevel(percent uint8) error {
+	if b, ok := s.BLE.(interface{ SetBatteryLevel(uint8) error }); ok {
+		return b.SetBatteryLevel(percent)
+	}
+	return nil
+}
+
 // Unpair forwards keycodes.KeyBluetoothUnpair handling to the BLE output, if
 // it supports it.
 func (s *SwitchableKeyboard) Unpair() {
