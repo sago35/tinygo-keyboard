@@ -294,8 +294,9 @@ func Save() error {
 	keyboards := device.GetKeyboardCount()
 
 	cnt := device.GetMaxKeyCount()
+	// +1 = selected output of SwitchableKeyboard (must match Device.Init)
 	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.MacroBuf)+
-		len(device.Combos)*len(device.Combos[0])*2)
+		len(device.Combos)*len(device.Combos[0])*2+1)
 	needed := int64(len(wbuf)) / FlashDevice.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -340,6 +341,12 @@ func Save() error {
 		wbuf[offset+8] = byte(combo[4])
 		wbuf[offset+9] = byte(combo[4] >> 8)
 		offset += len(device.Combos[0]) * 2
+	}
+
+	if sk, ok := device.Keyboard.(*SwitchableKeyboard); ok {
+		wbuf[len(wbuf)-1] = byte(sk.Output())
+	} else {
+		wbuf[len(wbuf)-1] = 0xFF
 	}
 
 	_, err = FlashDevice.WriteAt(wbuf[:], 0)
