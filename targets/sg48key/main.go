@@ -78,11 +78,11 @@ func run() error {
 			OutputKey: jp.KeyMediaMute,
 		},
 		{
-			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyX},
+			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyZ},
 			OutputKey: jp.KeyMediaVolumeDec,
 		},
 		{
-			Keys:      [4]keyboard.Keycode{jp.KeyE, jp.KeyC},
+			Keys:      [4]keyboard.Keycode{jp.KeyE, jp.KeyZ},
 			OutputKey: jp.KeyMediaVolumeInc,
 		},
 		{
