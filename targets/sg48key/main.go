@@ -1,7 +1,6 @@
 package main
 
 import (
-	"device/nrf"
 	_ "embed"
 	"fmt"
 	"log"
@@ -106,18 +105,13 @@ func run() error {
 	}
 
 	loadKeyboardDef()
-	kb := keyboard.NewBLEKeyboard()
-	kb.MuteBLEOnUSB = true
-	kb.OverrideCtrlH = true // override ctrl-h to BackSpace (USB/BLE 両方)
-	d.Keyboard = kb
-	m := keyboard.NewBLEMouse(kb)
-	d.Mouse = m
+	setupKeyboard(d)
 
 	err := d.Init()
 	if err != nil {
 		return err
 	}
-	nrf.USBD.USBPULLUP.Set(1) // ここで初めてホストに見せる（ID・HID とも設定済み）
+	enableUSB()
 
 	cont := true
 	x := NewADCDevice(ax, 0x3000, 0xD000, true)
@@ -135,7 +129,7 @@ func run() error {
 			xx := x.Get2()
 			yy := y.Get2()
 			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())
-			m.Move(int(xx), int(yy))
+			d.Mouse.Move(int(xx), int(yy))
 		}
 		cnt++
 	}
