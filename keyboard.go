@@ -403,6 +403,11 @@ func (d *Device) Tick() error {
 			if matched {
 				noneToPress = append(noneToPress, d.combosKey)
 
+				// Keys released while the combo window was open (e.g. a
+				// modifier let go mid-window) were already removed from
+				// d.pressed, so dropping them here would leave them held on
+				// the host forever. Release them normally instead.
+				pressToRelease = append(pressToRelease, d.combosReleased...)
 				d.combosReleased = d.combosReleased[:0]
 			} else {
 				for k := range d.combosPressed {
