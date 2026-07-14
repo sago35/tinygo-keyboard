@@ -180,6 +180,12 @@ func (s *SwitchableKeyboard) SetOutput(n int) {
 		return
 	}
 	if out := s.output(); out != nil {
+		// While the Ctrl+H override is active, the key actually held down on
+		// the output is the override key (Backspace), not the ones in
+		// pressed, so it has to be released too.
+		for _, p := range s.override {
+			out.Up(p)
+		}
 		for _, p := range s.pressed {
 			out.Up(p)
 		}
