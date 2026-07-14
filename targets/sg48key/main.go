@@ -131,6 +131,7 @@ func run() error {
 			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())
 			d.Mouse.Move(int(xx), int(yy))
 		}
+		tickBoard(cnt)
 		cnt++
 	}
 
