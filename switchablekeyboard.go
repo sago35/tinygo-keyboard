@@ -168,6 +168,23 @@ func (s *SwitchableKeyboard) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
+// Flush flushes both outputs, not just the active one: a report deferred on
+// BLE (see BLETxKeyboard.Flush) still has to go out after switching to USB,
+// or the BLE host would be left with a stale (e.g. pressed) state.
+func (s *SwitchableKeyboard) Flush() error {
+	if s.USB != nil {
+		if err := s.USB.Flush(); err != nil {
+			return err
+		}
+	}
+	if s.BLE != nil {
+		if err := s.BLE.Flush(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SetOutput selects the active output (OutputUSB or OutputBLE). All keys
 // currently pressed are released on the previous output first, so no key
 // stays stuck there. Keys that are physically still held are not re-sent to

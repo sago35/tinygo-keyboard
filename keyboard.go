@@ -68,6 +68,10 @@ type PortUpDowner interface {
 type UpDowner interface {
 	PortUpDowner
 	Init() error
+	// Flush resends reports whose transmission was deferred (e.g. a BLE
+	// notification that could not be queued). Device.Tick calls it every
+	// tick; outputs that never defer just return nil.
+	Flush() error
 }
 
 type State uint8
@@ -265,6 +269,10 @@ func (d *Device) GetMaxKeyCount() int {
 
 func (d *Device) Tick() error {
 	pressToRelease := d.pressToReleaseBuf[:0]
+
+	// Resend BLE reports whose notification was deferred because the
+	// SoftDevice's notification queue was full (see BLETxKeyboard.Flush).
+	d.Keyboard.Flush()
 
 	select {
 	case <-d.flashCh:
@@ -1030,6 +1038,10 @@ func (k *Keyboard) Init() error {
 	return nil
 }
 
+func (k *Keyboard) Flush() error {
+	return nil
+}
+
 func (k *Keyboard) Up(c k.Keycode) error {
 	if len(k.override) > 0 {
 		for _, p := range k.override {
@@ -1099,6 +1111,10 @@ type UartTxKeyboard struct {
 }
 
 func (k *UartTxKeyboard) Init() error {
+	return nil
+}
+
+func (k *UartTxKeyboard) Flush() error {
 	return nil
 }
 
