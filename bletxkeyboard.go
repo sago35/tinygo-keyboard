@@ -133,6 +133,21 @@ type BLETxKeyboard struct {
 	consumer     uint16
 	mouseButtons mouse.Button
 	battery      uint8
+
+	// The SoftDevice's per-connection notification queue only drains as
+	// connection events pass, so sending two reports in the same tick makes
+	// Characteristic.Write fail with bluetooth.ErrNotEnoughResources. Each
+	// report is a full snapshot of the current state, so nothing is queued:
+	// the pending flags mark which reports still have to go out and Flush
+	// (called by Device.Tick every tick) resends the then-current state.
+	// Mouse X/Y/wheel are relative rather than snapshots and accumulate in
+	// pendingX/pendingY/pendingWheel until sent.
+	pendingInput    bool
+	pendingConsumer bool
+	pendingMouse    bool
+	pendingX        int
+	pendingY        int
+	pendingWheel    int
 }
 
 // NewBLEKeyboard returns a BLE (HID over GATT) keyboard that can always be
@@ -421,8 +436,7 @@ func (t *BLETxKeyboard) Down(c k.Keycode) error {
 			return nil
 		}
 	}
-	_, err := t.InputReport.Write(t.report[:])
-	return err
+	return t.sendInput()
 }
 
 func (t *BLETxKeyboard) Up(c k.Keycode) error {
@@ -456,13 +470,50 @@ func (t *BLETxKeyboard) Up(c k.Keycode) error {
 	if !changed {
 		return nil
 	}
+	return t.sendInput()
+}
+
+func (t *BLETxKeyboard) sendInput() error {
 	_, err := t.InputReport.Write(t.report[:])
+	if err == bluetooth.ErrNotEnoughResources {
+		t.pendingInput = true
+		return nil
+	}
+	t.pendingInput = false
 	return err
 }
 
 func (t *BLETxKeyboard) sendConsumer() error {
 	_, err := t.ConsumerReport.Write([]byte{byte(t.consumer), byte(t.consumer >> 8)})
+	if err == bluetooth.ErrNotEnoughResources {
+		t.pendingConsumer = true
+		return nil
+	}
+	t.pendingConsumer = false
 	return err
+}
+
+// Flush resends reports whose notification could not be sent because the
+// SoftDevice's notification queue was full. The queue drains as connection
+// events pass, so calling this every tick (Device.Tick does) converges
+// without ever blocking the key scan.
+func (t *BLETxKeyboard) Flush() error {
+	if t.pendingInput {
+		if err := t.sendInput(); err != nil {
+			return err
+		}
+	}
+	if t.pendingConsumer {
+		if err := t.sendConsumer(); err != nil {
+			return err
+		}
+	}
+	if t.pendingMouse {
+		if err := t.sendMouse(0, 0, 0); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *BLETxKeyboard) Write(b []byte) (n int, err error) {
@@ -505,7 +556,7 @@ func (t *BLETxKeyboard) Move(vx, vy int) {
 	if vx == 0 && vy == 0 {
 		return
 	}
-	t.sendMouse(clampMouseAxis(vx), clampMouseAxis(vy), 0)
+	t.sendMouse(vx, vy, 0)
 }
 
 // Click presses and releases the given mouse buttons.
@@ -532,7 +583,7 @@ func (t *BLETxKeyboard) Wheel(v int) {
 	if v == 0 {
 		return
 	}
-	t.sendMouse(0, 0, clampMouseAxis(v))
+	t.sendMouse(0, 0, v)
 }
 
 // WheelDown scrolls the mouse wheel down.
@@ -545,9 +596,31 @@ func (t *BLETxKeyboard) WheelUp() {
 	t.Wheel(1)
 }
 
-func (t *BLETxKeyboard) sendMouse(x, y, wheel int8) error {
-	_, err := t.MouseReport.Write([]byte{byte(t.mouseButtons), byte(x), byte(y), byte(wheel)})
-	return err
+func (t *BLETxKeyboard) sendMouse(x, y, wheel int) error {
+	t.pendingX += x
+	t.pendingY += y
+	t.pendingWheel += wheel
+	// Send at most one report's worth of movement; anything beyond the
+	// -127..127 range stays pending and goes out on a following tick.
+	sx := clampMouseAxis(t.pendingX)
+	sy := clampMouseAxis(t.pendingY)
+	sw := clampMouseAxis(t.pendingWheel)
+	_, err := t.MouseReport.Write([]byte{byte(t.mouseButtons), byte(sx), byte(sy), byte(sw)})
+	if err == bluetooth.ErrNotEnoughResources {
+		t.pendingMouse = true
+		return nil
+	}
+	if err != nil {
+		// Not transient (e.g. disconnected): drop the movement.
+		t.pendingX, t.pendingY, t.pendingWheel = 0, 0, 0
+		t.pendingMouse = false
+		return err
+	}
+	t.pendingX -= int(sx)
+	t.pendingY -= int(sy)
+	t.pendingWheel -= int(sw)
+	t.pendingMouse = t.pendingX != 0 || t.pendingY != 0 || t.pendingWheel != 0
+	return nil
 }
 
 func clampMouseAxis(v int) int8 {
