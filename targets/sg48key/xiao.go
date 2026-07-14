@@ -35,3 +35,7 @@ func setupKeyboard(d *keyboard.Device) {
 // enableUSB is a no-op: on this target USB is visible from reset.
 func enableUSB() {
 }
+
+// tickBoard is a no-op: this target has no board-specific periodic work.
+func tickBoard(cnt int) {
+}
