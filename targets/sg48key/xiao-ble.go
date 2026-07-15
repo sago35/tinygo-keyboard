@@ -33,6 +33,17 @@ func init() {
 	led2.High()
 	led3.High()
 
+	// If this boot was caused by the watchdog (bit1 DOG in RESETREAS), the
+	// main loop hung and was auto-recovered: keep the red LED on for the
+	// rest of this session as a telltale. RESETREAS bits are sticky, so
+	// clear them (write 1) to tell the next reset apart. Direct register
+	// access is fine here: the SoftDevice is not enabled yet.
+	reas := nrf.POWER.RESETREAS.Get()
+	nrf.POWER.RESETREAS.Set(reas)
+	if reas&0x2 != 0 {
+		led1.Low() // red on (active low)
+	}
+
 	nrf.USBD.USBPULLUP.Set(0) // ホストにまだ見せない
 
 	p014Disable() // 分圧回路オフ (P0.31 過電圧防止)
@@ -58,6 +69,17 @@ func setupKeyboard(d *keyboard.Device) {
 // host never sees a half-configured device (VID/PID and HID are set by then).
 func enableUSB() {
 	nrf.USBD.USBPULLUP.Set(1)
+
+	// Watchdog against the known idle hang (see ai_context.md: on rare
+	// occasions sd_app_evt_wait never returns and every goroutine stops
+	// while SoftDevice interrupts keep the BLE connection alive, so the
+	// host keeps repeating the last report - e.g. a held space - until
+	// power cycle). The watchdog turns that into a ~5s outage with an
+	// automatic reconnect; tickBoard feeds it every scan. Known limit: a
+	// Vial macro with more than 5s of delays would trip it (RunMacro
+	// sleeps inside Tick).
+	machine.Watchdog.Configure(machine.WatchdogConfig{TimeoutMillis: 5000})
+	machine.Watchdog.Start()
 }
 
 // allowIdle permits the main loop's idle (slow scan) mode only on battery:
@@ -78,6 +100,8 @@ func allowIdle() bool {
 // loop, so all SAADC access stays serialized. Reading from a goroutine would
 // race the joystick on the SAADC registers.
 func tickBoard(cnt int) {
+	machine.Watchdog.Update()
+
 	switch cnt % 2000 { // 2000 ticks = 1s
 	case 0:
 		p014Enable() // divider on; settle until the read below
