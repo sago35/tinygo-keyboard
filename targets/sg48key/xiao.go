@@ -39,3 +39,9 @@ func enableUSB() {
 // tickBoard is a no-op: this target has no board-specific periodic work.
 func tickBoard(cnt int) {
 }
+
+// allowIdle disables the idle (slow scan) mode: this target is USB powered,
+// so slowing down would only add latency.
+func allowIdle() bool {
+	return false
+}
