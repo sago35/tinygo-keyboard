@@ -47,6 +47,9 @@ func init() {
 	nrf.USBD.USBPULLUP.Set(0) // ホストにまだ見せない
 
 	p014Disable() // 分圧回路オフ (P0.31 過電圧防止)
+
+	machine.P0_13.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	machine.P0_13.Low() // HICHG: 100mA 充電
 }
 
 func callback(layer int) {
