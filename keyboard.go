@@ -72,6 +72,10 @@ type UpDowner interface {
 	// notification that could not be queued). Device.Tick calls it every
 	// tick; outputs that never defer just return nil.
 	Flush() error
+	// Pending reports whether Flush still has deferred reports to resend.
+	// Outputs that never defer just return false. Device.Idle uses it to
+	// keep the fast scan cadence until everything went out.
+	Pending() bool
 }
 
 type State uint8
@@ -1025,6 +1029,35 @@ func (d *Device) Layer() int {
 	return d.layer
 }
 
+// Idle reports whether nothing needs the fast scan cadence right now: no key
+// is pressed or being debounced, no combo/tap-hold/wheel-repeat timer is
+// running, no flash save is counting down and no deferred report is waiting
+// to be resent. A main loop may then call Tick at a much slower period to
+// save power, as long as it returns to the fast cadence as soon as Idle
+// turns false: a slow scan that sees raw contact makes the input driver
+// Active (and thus the device non-idle) on the first scan, so the debounce
+// itself still resolves at the fast cadence.
+func (d *Device) Idle() bool {
+	if len(d.pressed) > 0 || len(d.tapOrHold) > 0 || d.flashCnt > 0 {
+		return false
+	}
+	if !d.combosTimer.IsZero() || len(d.combosPressed) > 0 || d.combosKey != 0xFFFFFFFF {
+		return false
+	}
+	for _, v := range d.repeat {
+		// Released wheel keys stay in the map as zero times.
+		if v.Unix() > 0 {
+			return false
+		}
+	}
+	for _, k := range d.kb {
+		if a, ok := k.(interface{ Active() bool }); ok && a.Active() {
+			return false
+		}
+	}
+	return !d.Keyboard.Pending()
+}
+
 type Keycode k.Keycode
 
 type Keyboard struct {
@@ -1040,6 +1073,10 @@ func (k *Keyboard) Init() error {
 
 func (k *Keyboard) Flush() error {
 	return nil
+}
+
+func (k *Keyboard) Pending() bool {
+	return false
 }
 
 func (k *Keyboard) Up(c k.Keycode) error {
@@ -1116,6 +1153,10 @@ func (k *UartTxKeyboard) Init() error {
 
 func (k *UartTxKeyboard) Flush() error {
 	return nil
+}
+
+func (k *UartTxKeyboard) Pending() bool {
+	return false
 }
 
 func (k *UartTxKeyboard) Up(c k.Keycode) error {
