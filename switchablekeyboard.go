@@ -14,6 +14,12 @@ const (
 	OutputBLE = 1
 )
 
+// BLEProfileCount is the number of BLE bond profiles a SwitchableKeyboard
+// can switch between (keycodes.KeyBluetoothProfile1..5). It mirrors the
+// bluetooth backend's BondSlotCount, kept as a separate constant because
+// this file also builds for USB-only targets without the BLE stack.
+const BLEProfileCount = 5
+
 // SwitchableKeyboard routes key events to one of two outputs (typically USB
 // and BLE) and can switch between them at runtime, either via SetOutput or
 // via the keycodes.KeyOutputUSB / KeyOutputBLE / KeyOutputNext keycodes
@@ -44,6 +50,7 @@ type SwitchableKeyboard struct {
 	MuteBLEOnUSB bool
 
 	active   int
+	profile  int
 	pressed  []k.Keycode
 	override []k.Keycode
 }
@@ -243,4 +250,23 @@ func (s *SwitchableKeyboard) Unpair() {
 	if u, ok := s.BLE.(interface{ Unpair() }); ok {
 		u.Unpair()
 	}
+}
+
+// SelectProfile switches the BLE output to the given bond profile (0 to
+// BLEProfileCount-1), if it supports profiles. The chosen profile is
+// remembered here regardless of the active output, so Save() can persist it
+// and Device.Init() restore it.
+func (s *SwitchableKeyboard) SelectProfile(n int) {
+	if n < 0 || n >= BLEProfileCount {
+		return
+	}
+	s.profile = n
+	if p, ok := s.BLE.(interface{ SelectProfile(int) }); ok {
+		p.SelectProfile(n)
+	}
+}
+
+// Profile returns the BLE bond profile last selected with SelectProfile.
+func (s *SwitchableKeyboard) Profile() int {
+	return s.profile
 }
