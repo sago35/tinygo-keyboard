@@ -168,6 +168,15 @@ func (s *SwitchableKeyboard) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
+// Pending reports whether either output still has deferred reports to
+// resend (see Flush).
+func (s *SwitchableKeyboard) Pending() bool {
+	if s.USB != nil && s.USB.Pending() {
+		return true
+	}
+	return s.BLE != nil && s.BLE.Pending()
+}
+
 // Flush flushes both outputs, not just the active one: a report deferred on
 // BLE (see BLETxKeyboard.Flush) still has to go out after switching to USB,
 // or the BLE host would be left with a stale (e.g. pressed) state.

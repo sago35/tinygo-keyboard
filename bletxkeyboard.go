@@ -493,6 +493,11 @@ func (t *BLETxKeyboard) sendConsumer() error {
 	return err
 }
 
+// Pending reports whether Flush still has reports to resend.
+func (t *BLETxKeyboard) Pending() bool {
+	return t.pendingInput || t.pendingConsumer || t.pendingMouse
+}
+
 // Flush resends reports whose notification could not be sent because the
 // SoftDevice's notification queue was full. The queue drains as connection
 // events pass, so calling this every tick (Device.Tick does) converges
