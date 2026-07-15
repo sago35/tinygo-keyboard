@@ -113,23 +113,64 @@ func run() error {
 	}
 	enableUSB()
 
+	// Duty-cycled scanning: scan every fastScanPeriod while anything is
+	// going on, and drop to idleScanPeriod once the device has been idle
+	// (d.Idle: no key pressed or debouncing, no combo/tap-hold/repeat/flash
+	// timer, nothing left to flush) for idleAfterTicks in a row. A slow scan
+	// that sees raw contact makes d.Idle() false on that very scan, so the
+	// debounce still resolves at the fast cadence: the first key after an
+	// idle period is delayed by at most idleScanPeriod plus the debounce.
+	//
+	// time.Sleep rather than a time.Tick ticker on purpose: the ticker keeps
+	// waking the runtime at its period even while this loop sleeps, which
+	// would defeat the idle power saving.
+	const (
+		fastScanPeriod = 500 * time.Microsecond
+		idleScanPeriod = 30 * time.Millisecond
+		idleAfterTicks = 2000 // ~1s of fast ticks before slowing down
+	)
+
 	cont := true
 	x := NewADCDevice(ax, 0x3000, 0xD000, true)
 	y := NewADCDevice(ay, 0x3000, 0xD000, true)
-	ticker := time.Tick(500 * time.Microsecond)
 	cnt := 0
+	idleFor := 0
 	for cont {
-		<-ticker
+		idle := idleFor >= idleAfterTicks
+		if idle {
+			time.Sleep(idleScanPeriod)
+		} else {
+			time.Sleep(fastScanPeriod)
+		}
 		err := d.Tick()
 		if err != nil {
 			return err
 		}
 
-		if cnt%(5*3) == 0 {
+		// While idle the joystick is read on every (slow) scan so that
+		// moving it brings the loop back to the fast cadence.
+		stickActive := false
+		if idle || cnt%(5*3) == 0 {
 			xx := x.Get2()
 			yy := y.Get2()
 			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())
 			d.Mouse.Move(int(xx), int(yy))
+			stickActive = xx != 0 || yy != 0
+		}
+
+		if d.Idle() && !stickActive {
+			if idleFor < idleAfterTicks {
+				idleFor++
+			}
+			// allowIdle (per-target) is only consulted at the slow cadence
+			// (and when about to enter it), not on every fast tick: on
+			// xiao-ble it asks the SoftDevice for VBUS so that a USB-powered
+			// keyboard keeps scanning fast.
+			if idleFor >= idleAfterTicks && !allowIdle() {
+				idleFor = 0
+			}
+		} else {
+			idleFor = 0
 		}
 		tickBoard(cnt)
 		cnt++

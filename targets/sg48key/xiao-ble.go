@@ -60,6 +60,14 @@ func enableUSB() {
 	nrf.USBD.USBPULLUP.Set(1)
 }
 
+// allowIdle permits the main loop's idle (slow scan) mode only on battery:
+// while USB power is present there is nothing to save, and development is
+// nicer with the keyboard always at the fast cadence. Only called at the
+// slow cadence, so the SoftDevice call stays off the fast path.
+func allowIdle() bool {
+	return !bluetooth.USBVBusPresent()
+}
+
 // tickBoard runs board-specific periodic work from the main loop (cnt
 // advances every 500us): once a second, measure the battery voltage and
 // report it through the BLE battery service. SetBatteryLevel only notifies
