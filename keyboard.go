@@ -159,9 +159,9 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	// +1 = selected output of SwitchableKeyboard (see Save)
+	// +2 = selected output and BLE profile of a SwitchableKeyboard (see Save)
 	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
-		len(device.Combos)*len(device.Combos[0])*2+1)
+		len(device.Combos)*len(device.Combos[0])*2+2)
 	_, err = FlashDevice.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -243,13 +243,21 @@ func (d *Device) Init() error {
 
 	// Restore the selected output of a SwitchableKeyboard/SwitchableMouse.
 	// 0xFF means nothing was saved (or the flash was erased): keep Default.
-	mode := rbuf[len(rbuf)-1]
+	// Data saved before the profile byte existed reads 0xFF there too, so it
+	// stays on the default profile.
+	mode := rbuf[len(rbuf)-2]
 	if mode != 0xFF {
 		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
 			sk.SetOutput(int(mode))
 		}
 		if sm, ok := d.Mouse.(*SwitchableMouse); ok {
 			sm.SetOutput(int(mode))
+		}
+	}
+	profile := rbuf[len(rbuf)-1]
+	if profile != 0xFF && int(profile) < BLEProfileCount {
+		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
+			sk.SelectProfile(int(profile))
 		}
 	}
 
@@ -622,6 +630,28 @@ func (d *Device) Tick() error {
 			if u, ok := d.Keyboard.(interface{ Unpair() }); ok {
 				u.Unpair()
 			}
+		} else if x >= keycodes.KeyBluetoothProfileNext && x <= keycodes.KeyBluetoothProfile5 {
+			// BT_NEXT/BT_PREV/BT_PRF1-5 (0x7790-0x7797 minus BT_UNPR, which
+			// the branch above already took). This must also stay above the
+			// TypeMacroKey one. The switch itself runs asynchronously (see
+			// BLETxKeyboard.SelectProfile); the chosen profile is persisted
+			// like the selected output.
+			if p, ok := d.Keyboard.(interface {
+				SelectProfile(int)
+				Profile() int
+			}); ok {
+				n := 0
+				switch x {
+				case keycodes.KeyBluetoothProfileNext:
+					n = (p.Profile() + 1) % BLEProfileCount
+				case keycodes.KeyBluetoothProfilePrev:
+					n = (p.Profile() + BLEProfileCount - 1) % BLEProfileCount
+				default:
+					n = int(x - keycodes.KeyBluetoothProfile1)
+				}
+				p.SelectProfile(n)
+				d.flashCh <- true
+			}
 		} else if x&0xFF00 == keycodes.TypeMacroKey {
 			no := uint8(x & 0x00FF)
 			d.RunMacro(no)
@@ -725,9 +755,10 @@ func (d *Device) Tick() error {
 				d.Keyboard.Up(keycodes.KeyWindows)
 			}
 			d.Keyboard.Up(k.Keycode(x&0x00FF | keycodes.TypeNormal))
-		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE || x == keycodes.KeyBluetoothUnpair {
-			// Output switching and unpair are handled on press; nothing to
-			// do on release.
+		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE ||
+			(x >= keycodes.KeyBluetoothProfileNext && x <= keycodes.KeyBluetoothProfile5) {
+			// Output switching, unpair and profile switching are handled on
+			// press; nothing to do on release. (The range covers BT_UNPR.)
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
@@ -922,7 +953,10 @@ func keycodeTGKtoVia(kc Keycode) Keycode {
 	case keycodes.KeyRestoreDefaultKeymap:
 		// restore default keymap for QMK
 		kc = keycodes.KeyRestoreDefaultKeymap
-	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair:
+	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair,
+		keycodes.KeyBluetoothProfileNext, keycodes.KeyBluetoothProfilePrev,
+		keycodes.KeyBluetoothProfile1, keycodes.KeyBluetoothProfile2, keycodes.KeyBluetoothProfile3,
+		keycodes.KeyBluetoothProfile4, keycodes.KeyBluetoothProfile5:
 		// QMK connection keycodes: pass through as-is
 	default:
 		switch kc & keycodes.QuantumMask {
@@ -1003,7 +1037,10 @@ func keycodeViaToTGK(key Keycode) Keycode {
 		kc = 0xFF00 | (kc & 0x000F)
 	case keycodes.KeyRestoreDefaultKeymap:
 		kc = keycodes.KeyRestoreDefaultKeymap
-	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair:
+	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair,
+		keycodes.KeyBluetoothProfileNext, keycodes.KeyBluetoothProfilePrev,
+		keycodes.KeyBluetoothProfile1, keycodes.KeyBluetoothProfile2, keycodes.KeyBluetoothProfile3,
+		keycodes.KeyBluetoothProfile4, keycodes.KeyBluetoothProfile5:
 		// QMK connection keycodes: pass through as-is
 		kc = key
 	default:

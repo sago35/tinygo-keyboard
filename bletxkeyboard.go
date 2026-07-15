@@ -7,6 +7,7 @@ import (
 	"machine/usb"
 	k "machine/usb/hid/keyboard"
 	"machine/usb/hid/mouse"
+	"runtime/volatile"
 
 	"github.com/sago35/tinygo-keyboard/keycodes"
 	"tinygo.org/x/bluetooth"
@@ -148,6 +149,16 @@ type BLETxKeyboard struct {
 	pendingX        int
 	pendingY        int
 	pendingWheel    int
+
+	// Bond profile switching runs on its own goroutine because
+	// bluetooth.SelectBondSlot blocks - it waits out the disconnect of the
+	// current central and rewrites a flash page, up to a few seconds - and
+	// stalling Device.Tick that long would starve the key scan (and trip
+	// the watchdog on targets that have one). profileTarget always holds
+	// the latest request ("latest wins"); profileSwitching marks the one
+	// worker goroutine as alive.
+	profileTarget    volatile.Register8
+	profileSwitching volatile.Register8
 }
 
 // NewBLEKeyboard returns a BLE (HID over GATT) keyboard that can always be
@@ -540,15 +551,48 @@ func (t *BLETxKeyboard) SetBatteryLevel(percent uint8) error {
 	return err
 }
 
-// Unpair deletes the stored bond and disconnects the connected central, if
-// any, so that a new central can pair. It is triggered by the
-// keycodes.KeyBluetoothUnpair (BT_UNPR) keycode.
+// Unpair deletes the stored bond of the active profile and disconnects the
+// connected central, if any, so that a new central can pair. It is triggered
+// by the keycodes.KeyBluetoothUnpair (BT_UNPR) keycode.
 func (t *BLETxKeyboard) Unpair() {
 	println("ble: unpair")
 	err := bluetooth.DefaultAdapter.RemoveBond()
 	if err != nil {
 		println("ble: remove bond failed:", err.Error())
 	}
+}
+
+// SelectProfile switches to the given bond profile (0 to
+// bluetooth.BondSlotCount-1): the central bonded to that profile can then
+// connect, while the one bonded to the previous profile is disconnected. It
+// returns immediately; the switch itself runs on a worker goroutine (see the
+// profileTarget field). When called repeatedly the latest request wins.
+func (t *BLETxKeyboard) SelectProfile(n int) {
+	if n < 0 || n >= bluetooth.BondSlotCount {
+		return
+	}
+	t.profileTarget.Set(uint8(n))
+	if t.profileSwitching.Get() != 0 {
+		// The worker is alive and rechecks profileTarget after every
+		// switch; it picks this request up. (With TinyGo's cooperative
+		// scheduler this check cannot race with the worker's exit: the
+		// worker only yields inside SelectBondSlot, and rechecks the
+		// target after it.)
+		return
+	}
+	t.profileSwitching.Set(1)
+	go func() {
+		for {
+			target := int(t.profileTarget.Get())
+			if err := bluetooth.DefaultAdapter.SelectBondSlot(target); err != nil {
+				println("ble: select profile:", err.Error())
+			}
+			if int(t.profileTarget.Get()) == target {
+				t.profileSwitching.Set(0)
+				return
+			}
+		}
+	}()
 }
 
 // BLETxKeyboard also implements Mouser (mouse.go), notifying MouseReport
