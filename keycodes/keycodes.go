@@ -95,12 +95,20 @@ const (
 
 // QMK connection keycodes. KeyOutput* switch the output of a
 // SwitchableKeyboard at runtime; KeyBluetoothUnpair deletes the stored BLE
-// bond so a new central can pair.
+// bond of the active profile so a new central can pair;
+// KeyBluetoothProfile* switch between the stored BLE bonds (profiles).
 const (
-	KeyOutputNext      = 0x7781 // OU_NEXT
-	KeyOutputUSB       = 0x7784 // OU_USB
-	KeyOutputBLE       = 0x7786 // OU_BT (QK_OUTPUT_BLUETOOTH)
-	KeyBluetoothUnpair = 0x7792 // BT_UNPR (QK_BLUETOOTH_UNPAIR)
+	KeyOutputNext           = 0x7781 // OU_NEXT
+	KeyOutputUSB            = 0x7784 // OU_USB
+	KeyOutputBLE            = 0x7786 // OU_BT (QK_OUTPUT_BLUETOOTH)
+	KeyBluetoothProfileNext = 0x7790 // BT_NEXT (QK_BLUETOOTH_PROFILE_NEXT)
+	KeyBluetoothProfilePrev = 0x7791 // BT_PREV (QK_BLUETOOTH_PROFILE_PREV)
+	KeyBluetoothUnpair      = 0x7792 // BT_UNPR (QK_BLUETOOTH_UNPAIR)
+	KeyBluetoothProfile1    = 0x7793 // BT_PRF1 (QK_BLUETOOTH_PROFILE1)
+	KeyBluetoothProfile2    = 0x7794 // BT_PRF2
+	KeyBluetoothProfile3    = 0x7795 // BT_PRF3
+	KeyBluetoothProfile4    = 0x7796 // BT_PRF4
+	KeyBluetoothProfile5    = 0x7797 // BT_PRF5
 )
 
 // from machine/usb/hid/keyboard

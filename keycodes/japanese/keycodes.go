@@ -346,4 +346,12 @@ const (
 	KeyOutputBLE  = keycodes.KeyOutputBLE
 
 	KeyBluetoothUnpair = keycodes.KeyBluetoothUnpair
+
+	KeyBluetoothProfileNext = keycodes.KeyBluetoothProfileNext
+	KeyBluetoothProfilePrev = keycodes.KeyBluetoothProfilePrev
+	KeyBluetoothProfile1    = keycodes.KeyBluetoothProfile1
+	KeyBluetoothProfile2    = keycodes.KeyBluetoothProfile2
+	KeyBluetoothProfile3    = keycodes.KeyBluetoothProfile3
+	KeyBluetoothProfile4    = keycodes.KeyBluetoothProfile4
+	KeyBluetoothProfile5    = keycodes.KeyBluetoothProfile5
 )
