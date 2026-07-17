@@ -26,6 +26,13 @@ type Device struct {
 	flashCh  chan bool
 	flashCnt int
 
+	// keymapCustomized reports that the keymap/macros/combos have been
+	// customized through Vial (or were loaded from flash where a previous
+	// Vial customization was persisted). Only then does Save mark the flash
+	// keymap as valid, so that persisting the runtime output/profile (which
+	// also calls Save) does not shadow the code-defined keymap. See Init.
+	keymapCustomized bool
+
 	kb []KBer
 
 	layer      int
@@ -159,9 +166,10 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
-	// +2 = selected output and BLE profile of a SwitchableKeyboard (see Save)
+	// +3 = selected output, BLE profile and keymap-valid flag of a
+	// SwitchableKeyboard (see Save)
 	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
-		len(device.Combos)*len(device.Combos[0])*2+2)
+		len(device.Combos)*len(device.Combos[0])*2+3)
 	_, err = FlashDevice.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
@@ -172,80 +180,90 @@ func (d *Device) Init() error {
 		return nil
 	}
 
-	offset := 4
-	for layer := 0; layer < layers; layer++ {
-		for keyboard := 0; keyboard < keyboards; keyboard++ {
-			for key := 0; key < keys; key++ {
-				kc := Keycode(rbuf[offset+2*key+0]) << 8
-				kc += Keycode(rbuf[offset+2*key+1])
-				device.SetKeycode(layer, keyboard, key, kc)
-			}
-			offset += keys * 2
-		}
-	}
+	// The keymap/macros/combos are only loaded from flash when they were
+	// actually customized through Vial (keymapValid). Otherwise the block was
+	// written just to persist the runtime output/profile (below), and loading
+	// its keymap would shadow the code-defined one.
+	keymapValid := rbuf[len(rbuf)-1] == 0x01
+	if keymapValid {
+		d.keymapCustomized = true
 
-	macroSize := len(device.MacroBuf)
-	allFF := true
-	for _, b := range rbuf[offset : offset+macroSize] {
-		if b != 0xFF {
-			allFF = false
-		}
-	}
-
-	if !allFF {
-		for i, b := range rbuf[offset : offset+macroSize] {
-			device.MacroBuf[i] = b
-		}
-		macros := bytes.SplitN(d.MacroBuf[:], []byte{0x00}, 16)
-		ofs := 0
-		for i, v := range macros {
-			d.Macros[i] = ofs + len(v)
-			ofs += len(v) + 1
-		}
-	}
-	offset += macroSize
-
-	for idx := range device.Combos {
-		skip := true
-		for i := 0; i < 10; i++ {
-			if rbuf[offset+i] != 0xFF {
-				skip = false
+		offset := 4
+		for layer := 0; layer < layers; layer++ {
+			for keyboard := 0; keyboard < keyboards; keyboard++ {
+				for key := 0; key < keys; key++ {
+					kc := Keycode(rbuf[offset+2*key+0]) << 8
+					kc += Keycode(rbuf[offset+2*key+1])
+					device.SetKeycode(layer, keyboard, key, kc)
+				}
+				offset += keys * 2
 			}
 		}
-		if skip {
-			continue
-		}
-		device.Combos[idx][0] = Keycode(rbuf[offset+0]) + Keycode(rbuf[offset+1])<<8 // key 1
-		device.Combos[idx][1] = Keycode(rbuf[offset+2]) + Keycode(rbuf[offset+3])<<8 // key 2
-		device.Combos[idx][2] = Keycode(rbuf[offset+4]) + Keycode(rbuf[offset+5])<<8 // key 3
-		device.Combos[idx][3] = Keycode(rbuf[offset+6]) + Keycode(rbuf[offset+7])<<8 // key 4
-		device.Combos[idx][4] = Keycode(rbuf[offset+8]) + Keycode(rbuf[offset+9])<<8 // Output key
 
-		// Reinitialize to 0 when reading a value (0xFFFF) from uninitialized flash.
-		if device.Combos[idx][0] == 0xFFFF {
-			device.Combos[idx][0] = 0x0000
-		}
-		if device.Combos[idx][1] == 0xFFFF {
-			device.Combos[idx][1] = 0x0000
-		}
-		if device.Combos[idx][2] == 0xFFFF {
-			device.Combos[idx][2] = 0x0000
-		}
-		if device.Combos[idx][3] == 0xFFFF {
-			device.Combos[idx][3] = 0x0000
-		}
-		if device.Combos[idx][4] == 0xFFFF {
-			device.Combos[idx][4] = 0x0000
+		macroSize := len(device.MacroBuf)
+		allFF := true
+		for _, b := range rbuf[offset : offset+macroSize] {
+			if b != 0xFF {
+				allFF = false
+			}
 		}
 
-		offset += len(device.Combos[0]) * 2
+		if !allFF {
+			for i, b := range rbuf[offset : offset+macroSize] {
+				device.MacroBuf[i] = b
+			}
+			macros := bytes.SplitN(d.MacroBuf[:], []byte{0x00}, 16)
+			ofs := 0
+			for i, v := range macros {
+				d.Macros[i] = ofs + len(v)
+				ofs += len(v) + 1
+			}
+		}
+		offset += macroSize
+
+		for idx := range device.Combos {
+			skip := true
+			for i := 0; i < 10; i++ {
+				if rbuf[offset+i] != 0xFF {
+					skip = false
+				}
+			}
+			if skip {
+				continue
+			}
+			device.Combos[idx][0] = Keycode(rbuf[offset+0]) + Keycode(rbuf[offset+1])<<8 // key 1
+			device.Combos[idx][1] = Keycode(rbuf[offset+2]) + Keycode(rbuf[offset+3])<<8 // key 2
+			device.Combos[idx][2] = Keycode(rbuf[offset+4]) + Keycode(rbuf[offset+5])<<8 // key 3
+			device.Combos[idx][3] = Keycode(rbuf[offset+6]) + Keycode(rbuf[offset+7])<<8 // key 4
+			device.Combos[idx][4] = Keycode(rbuf[offset+8]) + Keycode(rbuf[offset+9])<<8 // Output key
+
+			// Reinitialize to 0 when reading a value (0xFFFF) from uninitialized flash.
+			if device.Combos[idx][0] == 0xFFFF {
+				device.Combos[idx][0] = 0x0000
+			}
+			if device.Combos[idx][1] == 0xFFFF {
+				device.Combos[idx][1] = 0x0000
+			}
+			if device.Combos[idx][2] == 0xFFFF {
+				device.Combos[idx][2] = 0x0000
+			}
+			if device.Combos[idx][3] == 0xFFFF {
+				device.Combos[idx][3] = 0x0000
+			}
+			if device.Combos[idx][4] == 0xFFFF {
+				device.Combos[idx][4] = 0x0000
+			}
+
+			offset += len(device.Combos[0]) * 2
+		}
 	}
 
 	// Restore the selected output of a SwitchableKeyboard/SwitchableMouse.
 	// 0xFF means nothing was saved (or the flash was erased): keep Default.
 	// Data saved before the profile byte existed reads 0xFF there too, so it
-	// stays on the default profile.
-	mode := rbuf[len(rbuf)-2]
+	// stays on the default profile. These are restored regardless of
+	// keymapValid, since output/profile are persisted on every switch.
+	mode := rbuf[len(rbuf)-3]
 	if mode != 0xFF {
 		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
 			sk.SetOutput(int(mode))
@@ -254,7 +272,7 @@ func (d *Device) Init() error {
 			sm.SetOutput(int(mode))
 		}
 	}
-	profile := rbuf[len(rbuf)-1]
+	profile := rbuf[len(rbuf)-2]
 	if profile != 0xFF && int(profile) < BLEProfileCount {
 		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
 			sk.SelectProfile(int(profile))

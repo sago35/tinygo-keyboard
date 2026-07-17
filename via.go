@@ -172,6 +172,7 @@ func rxHandler2(b []byte) bool {
 		offset := (uint16(b[1]) << 8) + uint16(b[2])
 		sz := b[3]
 		copy(device.MacroBuf[offset:], txb[4:4+sz])
+		device.keymapCustomized = true
 		device.flashCh <- true
 	case viaCommandGetKeyboardValue:
 		Changed = false
@@ -190,6 +191,7 @@ func rxHandler2(b []byte) bool {
 		//fmt.Printf("XXXXXXXXX % X\n", b)
 		//Keys[b[1]][b[2]][b[3]] = Keycode((uint16(b[4]) << 8) + uint16(b[5]))
 		device.SetKeycodeVia(int(b[1]), int(b[2]), int(b[3]), Keycode((uint16(b[4])<<8)+uint16(b[5])))
+		device.keymapCustomized = true
 		device.flashCh <- true
 		//Changed = true
 	case viaCommandLightingGetValue:
@@ -268,6 +270,7 @@ func rxHandler2(b []byte) bool {
 				device.Combos[idx][2] = keycodeViaToTGK(Keycode(b[8]) + Keycode(b[9])<<8)   // key 3
 				device.Combos[idx][3] = keycodeViaToTGK(Keycode(b[10]) + Keycode(b[11])<<8) // key 4
 				device.Combos[idx][4] = keycodeViaToTGK(Keycode(b[12]) + Keycode(b[13])<<8) // Output key
+				device.keymapCustomized = true
 				device.flashCh <- true
 			default:
 				txb[0] = 0x00
@@ -294,10 +297,10 @@ func Save() error {
 	keyboards := device.GetKeyboardCount()
 
 	cnt := device.GetMaxKeyCount()
-	// +2 = selected output and BLE profile of a SwitchableKeyboard (must
-	// match Device.Init)
+	// +3 = selected output, BLE profile and keymap-valid flag of a
+	// SwitchableKeyboard (must match Device.Init)
 	wbuf := make([]byte, 4+layers*keyboards*cnt*2+len(device.MacroBuf)+
-		len(device.Combos)*len(device.Combos[0])*2+2)
+		len(device.Combos)*len(device.Combos[0])*2+3)
 	needed := int64(len(wbuf)) / FlashDevice.EraseBlockSize()
 	if needed == 0 {
 		needed = 1
@@ -345,11 +348,21 @@ func Save() error {
 	}
 
 	if sk, ok := device.Keyboard.(*SwitchableKeyboard); ok {
-		wbuf[len(wbuf)-2] = byte(sk.Output())
-		wbuf[len(wbuf)-1] = byte(sk.Profile())
+		wbuf[len(wbuf)-3] = byte(sk.Output())
+		wbuf[len(wbuf)-2] = byte(sk.Profile())
 	} else {
+		wbuf[len(wbuf)-3] = 0xFF
 		wbuf[len(wbuf)-2] = 0xFF
-		wbuf[len(wbuf)-1] = 0xFF
+	}
+
+	// Mark the keymap/macros/combos as valid only when they were customized
+	// through Vial. Otherwise this Save was triggered just to persist the
+	// output/profile above, and Device.Init must ignore the keymap in flash
+	// so the code-defined one is not shadowed.
+	if device.keymapCustomized {
+		wbuf[len(wbuf)-1] = 0x01
+	} else {
+		wbuf[len(wbuf)-1] = 0x00
 	}
 
 	_, err = FlashDevice.WriteAt(wbuf[:], 0)
