@@ -150,15 +150,20 @@ type BLETxKeyboard struct {
 	pendingY        int
 	pendingWheel    int
 
-	// Bond profile switching runs on its own goroutine because
-	// bluetooth.SelectBondSlot blocks - it waits out the disconnect of the
-	// current central and rewrites a flash page, up to a few seconds - and
-	// stalling Device.Tick that long would starve the key scan (and trip
-	// the watchdog on targets that have one). profileTarget always holds
-	// the latest request ("latest wins"); profileSwitching marks the one
+	// Bond profile switching and unpairing run on a shared worker goroutine
+	// because bluetooth.SelectBondSlot and bluetooth.RemoveBond block - a
+	// switch waits out the disconnect of the current central and rewrites a
+	// flash page, up to a few seconds - and stalling Device.Tick that long
+	// would starve the key scan (and trip the watchdog on targets that have
+	// one). Sharing one worker also orders an unpair strictly after the
+	// switch in flight: RemoveBond acts on whatever slot is active when it
+	// runs, so an unpair overtaking a switch would erase the previous
+	// profile's bond instead. profileTarget always holds the latest
+	// requested profile ("latest wins"); profileWorkerAlive marks the one
 	// worker goroutine as alive.
-	profileTarget    volatile.Register8
-	profileSwitching volatile.Register8
+	profileTarget      volatile.Register8
+	unpairRequested    volatile.Register8
+	profileWorkerAlive volatile.Register8
 }
 
 // NewBLEKeyboard returns a BLE (HID over GATT) keyboard that can always be
@@ -211,9 +216,11 @@ func (t *BLETxKeyboard) Init() error {
 		return fmt.Errorf("failed to enable pairing: %w", err)
 	}
 
-	// No AllowNewPairing here: while no bond exists, pairing is accepted
-	// anyway, and once bonded, a new central may only take over after an
-	// explicit Unpair (keycodes.KeyBluetoothUnpair).
+	// No AllowNewPairing here: the pairing window opens automatically
+	// whenever the active profile is empty (fresh flash, after an explicit
+	// Unpair via keycodes.KeyBluetoothUnpair, or when switching to an
+	// unused profile), and a bonded profile may only be taken over after
+	// unpairing it first.
 
 	// The device information service with the PnP ID characteristic is
 	// required by the HID over GATT profile.
@@ -553,13 +560,14 @@ func (t *BLETxKeyboard) SetBatteryLevel(percent uint8) error {
 
 // Unpair deletes the stored bond of the active profile and disconnects the
 // connected central, if any, so that a new central can pair. It is triggered
-// by the keycodes.KeyBluetoothUnpair (BT_UNPR) keycode.
+// by the keycodes.KeyBluetoothUnpair (BT_UNPR) keycode. It returns
+// immediately: the removal runs on the shared profile worker, strictly after
+// any profile switch already in flight, so that BT_UNPR pressed right after
+// a profile key unpairs the newly selected profile, not the one being
+// switched away from.
 func (t *BLETxKeyboard) Unpair() {
-	println("ble: unpair")
-	err := bluetooth.DefaultAdapter.RemoveBond()
-	if err != nil {
-		println("ble: remove bond failed:", err.Error())
-	}
+	t.unpairRequested.Set(1)
+	t.wakeProfileWorker()
 }
 
 // SelectProfile switches to the given bond profile (0 to
@@ -572,25 +580,42 @@ func (t *BLETxKeyboard) SelectProfile(n int) {
 		return
 	}
 	t.profileTarget.Set(uint8(n))
-	if t.profileSwitching.Get() != 0 {
-		// The worker is alive and rechecks profileTarget after every
-		// switch; it picks this request up. (With TinyGo's cooperative
-		// scheduler this check cannot race with the worker's exit: the
-		// worker only yields inside SelectBondSlot, and rechecks the
-		// target after it.)
+	t.wakeProfileWorker()
+}
+
+// wakeProfileWorker makes sure the worker goroutine that performs profile
+// switches and unpairs is running. The worker settles the profile first,
+// unpairs second, and only exits once neither request is pending. (With
+// TinyGo's cooperative scheduler the alive check cannot race with the
+// worker's exit: the worker only yields inside SelectBondSlot and
+// RemoveBond, and rechecks both requests after each.)
+func (t *BLETxKeyboard) wakeProfileWorker() {
+	if t.profileWorkerAlive.Get() != 0 {
+		// The worker rechecks the requests after every blocking call; it
+		// picks this one up.
 		return
 	}
-	t.profileSwitching.Set(1)
+	t.profileWorkerAlive.Set(1)
 	go func() {
 		for {
 			target := int(t.profileTarget.Get())
 			if err := bluetooth.DefaultAdapter.SelectBondSlot(target); err != nil {
 				println("ble: select profile:", err.Error())
 			}
-			if int(t.profileTarget.Get()) == target {
-				t.profileSwitching.Set(0)
-				return
+			if int(t.profileTarget.Get()) != target {
+				continue
 			}
+			if t.unpairRequested.Get() != 0 {
+				t.unpairRequested.Set(0)
+				println("ble: unpair")
+				if err := bluetooth.DefaultAdapter.RemoveBond(); err != nil {
+					println("ble: remove bond failed:", err.Error())
+				}
+				// RemoveBond yielded: recheck the profile target too.
+				continue
+			}
+			t.profileWorkerAlive.Set(0)
+			return
 		}
 	}()
 }
