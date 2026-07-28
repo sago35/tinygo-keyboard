@@ -124,6 +124,25 @@ func (d *SquaredMatrixKeyboard) Get() []State {
 	return d.State
 }
 
+// Active reports whether the last Get saw any key pressed, bouncing or
+// releasing. A single scan is enough for a fresh key press to show up here
+// (cycleCounter starts counting on the first scan that sees contact), so a
+// power-saving main loop can scan slowly while Device.Idle() holds and
+// return to the fast cadence before the debounce resolves.
+func (d *SquaredMatrixKeyboard) Active() bool {
+	for _, s := range d.State {
+		if s != None {
+			return true
+		}
+	}
+	for _, c := range d.cycleCounter {
+		if c != 0 {
+			return true
+		}
+	}
+	return false
+}
+
 func (d *SquaredMatrixKeyboard) Key(layer, index int) Keycode {
 	if layer >= LayerCount {
 		return 0

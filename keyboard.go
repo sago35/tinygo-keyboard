@@ -26,6 +26,13 @@ type Device struct {
 	flashCh  chan bool
 	flashCnt int
 
+	// keymapCustomized reports that the keymap/macros/combos have been
+	// customized through Vial (or were loaded from flash where a previous
+	// Vial customization was persisted). Only then does Save mark the flash
+	// keymap as valid, so that persisting the runtime output/profile (which
+	// also calls Save) does not shadow the code-defined keymap. See Init.
+	keymapCustomized bool
+
 	kb []KBer
 
 	layer      int
@@ -57,10 +64,25 @@ type KBer interface {
 	Callback(layer, index int, state State)
 }
 
-type UpDowner interface {
+// PortUpDowner is the interface satisfied by machine/usb/hid/keyboard's
+// Port(), which is used as the underlying output of Keyboard.
+type PortUpDowner interface {
 	Up(c k.Keycode) error
 	Down(c k.Keycode) error
 	Write(b []byte) (n int, err error)
+}
+
+type UpDowner interface {
+	PortUpDowner
+	Init() error
+	// Flush resends reports whose transmission was deferred (e.g. a BLE
+	// notification that could not be queued). Device.Tick calls it every
+	// tick; outputs that never defer just return nil.
+	Flush() error
+	// Pending reports whether Flush still has deferred reports to resend.
+	// Outputs that never defer just return false. Device.Idle uses it to
+	// keep the fast scan cadence until everything went out.
+	Pending() bool
 }
 
 type State uint8
@@ -73,6 +95,12 @@ const (
 )
 
 type Callback func(layer, index int, state State)
+
+// FlashDevice is the block device used to persist the keymap, macros and
+// combos. It defaults to machine.Flash. BLETxKeyboard.Init replaces it with
+// a SoftDevice-based implementation, because direct NVMC access hangs while
+// the SoftDevice is enabled.
+var FlashDevice machine.BlockDevice = machine.Flash
 
 func New() *Device {
 	kb := &Keyboard{
@@ -102,6 +130,14 @@ func New() *Device {
 	return d
 }
 
+// NewUSBKeyboard returns an UpDowner that sends reports to the USB HID port,
+// e.g. for use as SwitchableKeyboard.USB.
+func NewUSBKeyboard() *Keyboard {
+	return &Keyboard{
+		Port: k.Port(),
+	}
+}
+
 func (d *Device) OverrideCtrlH() {
 	d.Keyboard = &Keyboard{
 		Port:          k.Port(),
@@ -110,6 +146,11 @@ func (d *Device) OverrideCtrlH() {
 }
 
 func (d *Device) Init() error {
+	err := d.Keyboard.Init()
+	if err != nil {
+		return err
+	}
+
 	for _, k := range d.kb {
 		err := k.Init()
 		if err != nil {
@@ -125,85 +166,117 @@ func (d *Device) Init() error {
 	keys := d.GetMaxKeyCount()
 
 	// TODO: refactor
+	// +3 = selected output, BLE profile and keymap-valid flag of a
+	// SwitchableKeyboard (see Save)
 	rbuf := make([]byte, 4+layers*keyboards*keys*2+len(device.MacroBuf)+
-		len(device.Combos)*len(device.Combos[0])*2)
-	_, err := machine.Flash.ReadAt(rbuf, 0)
+		len(device.Combos)*len(device.Combos[0])*2+3)
+	_, err = FlashDevice.ReadAt(rbuf, 0)
 	if err != nil {
 		return err
 	}
 	sz := (int64(rbuf[0]) << 24) + (int64(rbuf[1]) << 16) + (int64(rbuf[2]) << 8) + int64(rbuf[3])
-	if sz != machine.Flash.Size() {
+	if sz != FlashDevice.Size() {
 		// No settings are saved
 		return nil
 	}
 
-	offset := 4
-	for layer := 0; layer < layers; layer++ {
-		for keyboard := 0; keyboard < keyboards; keyboard++ {
-			for key := 0; key < keys; key++ {
-				kc := Keycode(rbuf[offset+2*key+0]) << 8
-				kc += Keycode(rbuf[offset+2*key+1])
-				device.SetKeycode(layer, keyboard, key, kc)
-			}
-			offset += keys * 2
-		}
-	}
+	// The keymap/macros/combos are only loaded from flash when they were
+	// actually customized through Vial (keymapValid). Otherwise the block was
+	// written just to persist the runtime output/profile (below), and loading
+	// its keymap would shadow the code-defined one.
+	keymapValid := rbuf[len(rbuf)-1] == 0x01
+	if keymapValid {
+		d.keymapCustomized = true
 
-	macroSize := len(device.MacroBuf)
-	allFF := true
-	for _, b := range rbuf[offset : offset+macroSize] {
-		if b != 0xFF {
-			allFF = false
-		}
-	}
-
-	if !allFF {
-		for i, b := range rbuf[offset : offset+macroSize] {
-			device.MacroBuf[i] = b
-		}
-		macros := bytes.SplitN(d.MacroBuf[:], []byte{0x00}, 16)
-		ofs := 0
-		for i, v := range macros {
-			d.Macros[i] = ofs + len(v)
-			ofs += len(v) + 1
-		}
-	}
-	offset += macroSize
-
-	for idx := range device.Combos {
-		skip := true
-		for i := 0; i < 10; i++ {
-			if rbuf[offset+i] != 0xFF {
-				skip = false
+		offset := 4
+		for layer := 0; layer < layers; layer++ {
+			for keyboard := 0; keyboard < keyboards; keyboard++ {
+				for key := 0; key < keys; key++ {
+					kc := Keycode(rbuf[offset+2*key+0]) << 8
+					kc += Keycode(rbuf[offset+2*key+1])
+					device.SetKeycode(layer, keyboard, key, kc)
+				}
+				offset += keys * 2
 			}
 		}
-		if skip {
-			continue
-		}
-		device.Combos[idx][0] = Keycode(rbuf[offset+0]) + Keycode(rbuf[offset+1])<<8 // key 1
-		device.Combos[idx][1] = Keycode(rbuf[offset+2]) + Keycode(rbuf[offset+3])<<8 // key 2
-		device.Combos[idx][2] = Keycode(rbuf[offset+4]) + Keycode(rbuf[offset+5])<<8 // key 3
-		device.Combos[idx][3] = Keycode(rbuf[offset+6]) + Keycode(rbuf[offset+7])<<8 // key 4
-		device.Combos[idx][4] = Keycode(rbuf[offset+8]) + Keycode(rbuf[offset+9])<<8 // Output key
 
-		// Reinitialize to 0 when reading a value (0xFFFF) from uninitialized flash.
-		if device.Combos[idx][0] == 0xFFFF {
-			device.Combos[idx][0] = 0x0000
-		}
-		if device.Combos[idx][1] == 0xFFFF {
-			device.Combos[idx][1] = 0x0000
-		}
-		if device.Combos[idx][2] == 0xFFFF {
-			device.Combos[idx][2] = 0x0000
-		}
-		if device.Combos[idx][3] == 0xFFFF {
-			device.Combos[idx][3] = 0x0000
-		}
-		if device.Combos[idx][4] == 0xFFFF {
-			device.Combos[idx][4] = 0x0000
+		macroSize := len(device.MacroBuf)
+		allFF := true
+		for _, b := range rbuf[offset : offset+macroSize] {
+			if b != 0xFF {
+				allFF = false
+			}
 		}
 
-		offset += len(device.Combos[0]) * 2
+		if !allFF {
+			for i, b := range rbuf[offset : offset+macroSize] {
+				device.MacroBuf[i] = b
+			}
+			macros := bytes.SplitN(d.MacroBuf[:], []byte{0x00}, 16)
+			ofs := 0
+			for i, v := range macros {
+				d.Macros[i] = ofs + len(v)
+				ofs += len(v) + 1
+			}
+		}
+		offset += macroSize
+
+		for idx := range device.Combos {
+			skip := true
+			for i := 0; i < 10; i++ {
+				if rbuf[offset+i] != 0xFF {
+					skip = false
+				}
+			}
+			if skip {
+				continue
+			}
+			device.Combos[idx][0] = Keycode(rbuf[offset+0]) + Keycode(rbuf[offset+1])<<8 // key 1
+			device.Combos[idx][1] = Keycode(rbuf[offset+2]) + Keycode(rbuf[offset+3])<<8 // key 2
+			device.Combos[idx][2] = Keycode(rbuf[offset+4]) + Keycode(rbuf[offset+5])<<8 // key 3
+			device.Combos[idx][3] = Keycode(rbuf[offset+6]) + Keycode(rbuf[offset+7])<<8 // key 4
+			device.Combos[idx][4] = Keycode(rbuf[offset+8]) + Keycode(rbuf[offset+9])<<8 // Output key
+
+			// Reinitialize to 0 when reading a value (0xFFFF) from uninitialized flash.
+			if device.Combos[idx][0] == 0xFFFF {
+				device.Combos[idx][0] = 0x0000
+			}
+			if device.Combos[idx][1] == 0xFFFF {
+				device.Combos[idx][1] = 0x0000
+			}
+			if device.Combos[idx][2] == 0xFFFF {
+				device.Combos[idx][2] = 0x0000
+			}
+			if device.Combos[idx][3] == 0xFFFF {
+				device.Combos[idx][3] = 0x0000
+			}
+			if device.Combos[idx][4] == 0xFFFF {
+				device.Combos[idx][4] = 0x0000
+			}
+
+			offset += len(device.Combos[0]) * 2
+		}
+	}
+
+	// Restore the selected output of a SwitchableKeyboard/SwitchableMouse.
+	// 0xFF means nothing was saved (or the flash was erased): keep Default.
+	// Data saved before the profile byte existed reads 0xFF there too, so it
+	// stays on the default profile. These are restored regardless of
+	// keymapValid, since output/profile are persisted on every switch.
+	mode := rbuf[len(rbuf)-3]
+	if mode != 0xFF {
+		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
+			sk.SetOutput(int(mode))
+		}
+		if sm, ok := d.Mouse.(*SwitchableMouse); ok {
+			sm.SetOutput(int(mode))
+		}
+	}
+	profile := rbuf[len(rbuf)-2]
+	if profile != 0xFF && int(profile) < BLEProfileCount {
+		if sk, ok := d.Keyboard.(*SwitchableKeyboard); ok {
+			sk.SelectProfile(int(profile))
+		}
 	}
 
 	return nil
@@ -226,6 +299,10 @@ func (d *Device) GetMaxKeyCount() int {
 
 func (d *Device) Tick() error {
 	pressToRelease := d.pressToReleaseBuf[:0]
+
+	// Resend BLE reports whose notification was deferred because the
+	// SoftDevice's notification queue was full (see BLETxKeyboard.Flush).
+	d.Keyboard.Flush()
 
 	select {
 	case <-d.flashCh:
@@ -364,6 +441,11 @@ func (d *Device) Tick() error {
 			if matched {
 				noneToPress = append(noneToPress, d.combosKey)
 
+				// Keys released while the combo window was open (e.g. a
+				// modifier let go mid-window) were already removed from
+				// d.pressed, so dropping them here would leave them held on
+				// the host forever. Release them normally instead.
+				pressToRelease = append(pressToRelease, d.combosReleased...)
 				d.combosReleased = d.combosReleased[:0]
 			} else {
 				for k := range d.combosPressed {
@@ -529,7 +611,65 @@ func (d *Device) Tick() error {
 			d.Keyboard.Down(k.Keycode(x&0x00FF | keycodes.TypeNormal))
 		} else if x == keycodes.KeyRestoreDefaultKeymap {
 			// restore default keymap for QMK
-			machine.Flash.EraseBlocks(0, 1)
+			FlashDevice.EraseBlocks(0, 1)
+		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE {
+			// This branch must stay above the TypeMacroKey one: 0x778x would
+			// also match x&0xFF00 == TypeMacroKey and panic in RunMacro.
+			// d.Keyboard and d.Mouse are switched together so that a single
+			// OU_* key moves both outputs in lockstep.
+			sk, skOK := d.Keyboard.(*SwitchableKeyboard)
+			sm, smOK := d.Mouse.(*SwitchableMouse)
+			if skOK || smOK {
+				out := OutputUSB
+				switch x {
+				case keycodes.KeyOutputUSB:
+					out = OutputUSB
+				case keycodes.KeyOutputBLE:
+					out = OutputBLE
+				default:
+					cur := OutputUSB
+					if skOK {
+						cur = sk.Output()
+					} else if smOK {
+						cur = sm.Output()
+					}
+					out = (cur + 1) % 2
+				}
+				if skOK {
+					sk.SetOutput(out)
+				}
+				if smOK {
+					sm.SetOutput(out)
+				}
+				d.flashCh <- true
+			}
+		} else if x == keycodes.KeyBluetoothUnpair {
+			// This branch must also stay above the TypeMacroKey one (0x7792).
+			if u, ok := d.Keyboard.(interface{ Unpair() }); ok {
+				u.Unpair()
+			}
+		} else if x >= keycodes.KeyBluetoothProfileNext && x <= keycodes.KeyBluetoothProfile5 {
+			// BT_NEXT/BT_PREV/BT_PRF1-5 (0x7790-0x7797 minus BT_UNPR, which
+			// the branch above already took). This must also stay above the
+			// TypeMacroKey one. The switch itself runs asynchronously (see
+			// BLETxKeyboard.SelectProfile); the chosen profile is persisted
+			// like the selected output.
+			if p, ok := d.Keyboard.(interface {
+				SelectProfile(int)
+				Profile() int
+			}); ok {
+				n := 0
+				switch x {
+				case keycodes.KeyBluetoothProfileNext:
+					n = (p.Profile() + 1) % BLEProfileCount
+				case keycodes.KeyBluetoothProfilePrev:
+					n = (p.Profile() + BLEProfileCount - 1) % BLEProfileCount
+				default:
+					n = int(x - keycodes.KeyBluetoothProfile1)
+				}
+				p.SelectProfile(n)
+				d.flashCh <- true
+			}
 		} else if x&0xFF00 == keycodes.TypeMacroKey {
 			no := uint8(x & 0x00FF)
 			d.RunMacro(no)
@@ -633,6 +773,10 @@ func (d *Device) Tick() error {
 				d.Keyboard.Up(keycodes.KeyWindows)
 			}
 			d.Keyboard.Up(k.Keycode(x&0x00FF | keycodes.TypeNormal))
+		} else if x == keycodes.KeyOutputNext || x == keycodes.KeyOutputUSB || x == keycodes.KeyOutputBLE ||
+			(x >= keycodes.KeyBluetoothProfileNext && x <= keycodes.KeyBluetoothProfile5) {
+			// Output switching, unpair and profile switching are handled on
+			// press; nothing to do on release. (The range covers BT_UNPR.)
 		} else if x&0xF000 == 0xD000 {
 			switch x & 0x00FF {
 			case 0x01, 0x02, 0x04, 0x08, 0x10:
@@ -827,6 +971,11 @@ func keycodeTGKtoVia(kc Keycode) Keycode {
 	case keycodes.KeyRestoreDefaultKeymap:
 		// restore default keymap for QMK
 		kc = keycodes.KeyRestoreDefaultKeymap
+	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair,
+		keycodes.KeyBluetoothProfileNext, keycodes.KeyBluetoothProfilePrev,
+		keycodes.KeyBluetoothProfile1, keycodes.KeyBluetoothProfile2, keycodes.KeyBluetoothProfile3,
+		keycodes.KeyBluetoothProfile4, keycodes.KeyBluetoothProfile5:
+		// QMK connection keycodes: pass through as-is
 	default:
 		switch kc & keycodes.QuantumMask {
 		case keycodes.TypeRxxx, keycodes.TypeLxxxT, keycodes.TypeRxxxT:
@@ -906,6 +1055,12 @@ func keycodeViaToTGK(key Keycode) Keycode {
 		kc = 0xFF00 | (kc & 0x000F)
 	case keycodes.KeyRestoreDefaultKeymap:
 		kc = keycodes.KeyRestoreDefaultKeymap
+	case keycodes.KeyOutputNext, keycodes.KeyOutputUSB, keycodes.KeyOutputBLE, keycodes.KeyBluetoothUnpair,
+		keycodes.KeyBluetoothProfileNext, keycodes.KeyBluetoothProfilePrev,
+		keycodes.KeyBluetoothProfile1, keycodes.KeyBluetoothProfile2, keycodes.KeyBluetoothProfile3,
+		keycodes.KeyBluetoothProfile4, keycodes.KeyBluetoothProfile5:
+		// QMK connection keycodes: pass through as-is
+		kc = key
 	default:
 		switch key & keycodes.QuantumMask {
 		case keycodes.TypeRxxx, keycodes.TypeLxxxT, keycodes.TypeRxxxT:
@@ -929,13 +1084,54 @@ func (d *Device) Layer() int {
 	return d.layer
 }
 
+// Idle reports whether nothing needs the fast scan cadence right now: no key
+// is pressed or being debounced, no combo/tap-hold/wheel-repeat timer is
+// running, no flash save is counting down and no deferred report is waiting
+// to be resent. A main loop may then call Tick at a much slower period to
+// save power, as long as it returns to the fast cadence as soon as Idle
+// turns false: a slow scan that sees raw contact makes the input driver
+// Active (and thus the device non-idle) on the first scan, so the debounce
+// itself still resolves at the fast cadence.
+func (d *Device) Idle() bool {
+	if len(d.pressed) > 0 || len(d.tapOrHold) > 0 || d.flashCnt > 0 {
+		return false
+	}
+	if !d.combosTimer.IsZero() || len(d.combosPressed) > 0 || d.combosKey != 0xFFFFFFFF {
+		return false
+	}
+	for _, v := range d.repeat {
+		// Released wheel keys stay in the map as zero times.
+		if v.Unix() > 0 {
+			return false
+		}
+	}
+	for _, k := range d.kb {
+		if a, ok := k.(interface{ Active() bool }); ok && a.Active() {
+			return false
+		}
+	}
+	return !d.Keyboard.Pending()
+}
+
 type Keycode k.Keycode
 
 type Keyboard struct {
 	pressed       []k.Keycode
 	override      []k.Keycode
-	Port          UpDowner
+	Port          PortUpDowner
 	overrideCtrlH bool
+}
+
+func (k *Keyboard) Init() error {
+	return nil
+}
+
+func (k *Keyboard) Flush() error {
+	return nil
+}
+
+func (k *Keyboard) Pending() bool {
+	return false
 }
 
 func (k *Keyboard) Up(c k.Keycode) error {
@@ -1004,6 +1200,18 @@ func (k *Keyboard) Write(b []byte) (n int, err error) {
 type UartTxKeyboard struct {
 	pressed []k.Keycode
 	Uart    *machine.UART
+}
+
+func (k *UartTxKeyboard) Init() error {
+	return nil
+}
+
+func (k *UartTxKeyboard) Flush() error {
+	return nil
+}
+
+func (k *UartTxKeyboard) Pending() bool {
+	return false
 }
 
 func (k *UartTxKeyboard) Up(c k.Keycode) error {

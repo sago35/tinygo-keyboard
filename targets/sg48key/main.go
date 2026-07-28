@@ -6,7 +6,6 @@ import (
 	"log"
 	"machine"
 	"machine/usb"
-	"machine/usb/hid/mouse"
 	"time"
 
 	keyboard "github.com/sago35/tinygo-keyboard"
@@ -27,8 +26,6 @@ func run() error {
 	ax := machine.A0
 	ay := machine.A1
 
-	m := mouse.Port()
-
 	d := keyboard.New()
 
 	colPins := []machine.Pin{
@@ -47,7 +44,7 @@ func run() error {
 			jp.KeyTab, jp.KeyQ, jp.KeyW, jp.KeyE, jp.KeyR, jp.KeyT, jp.KeyY, jp.KeyU, jp.KeyI, jp.KeyO, jp.KeyP, jp.KeyAt,
 			jp.KeyLeftCtrl, jp.KeyA, jp.KeyS, jp.KeyD, jp.KeyF, jp.KeyG, jp.KeyH, jp.KeyJ, jp.KeyK, jp.KeyL, jp.KeySemicolon, jp.KeyColon,
 			jp.KeyLeftShift, jp.KeyZ, jp.KeyX, jp.KeyC, jp.KeyV, jp.KeyB, jp.KeyN, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash,
-			jp.KeyEsc, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, jp.KeySpace, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyTo1, jp.KeyPrintscreen, jp.KeyDelete,
+			jp.KeyEsc, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, jp.KeySpace, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyMod3, jp.KeyPrintscreen, jp.KeyDelete,
 		},
 		{
 			jp.KeyTab, jp.KeyQ, jp.KeyF15, jp.KeyEnd, jp.KeyF17, jp.KeyF18, jp.KeyY, jp.KeyU, jp.KeyTab, jp.KeyO, jp.WheelUp, jp.KeyAt,
@@ -61,15 +58,18 @@ func run() error {
 			jp.KeyLeftShift, jp.KeyF1, jp.KeyF2, jp.KeyF3, jp.KeyF4, jp.KeyF5, jp.KeyF6, jp.KeyF7, jp.KeyF8, jp.KeyF9, jp.KeyF10, jp.KeyF11,
 			jp.KeyEsc, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, jp.KeySpace, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyTo0, jp.KeyPrintscreen, jp.KeyF12,
 		},
+		{
+			jp.KeyOutputUSB, jp.KeyOutputBLE, jp.KeyW, jp.KeyE, jp.KeyR, jp.KeyT, jp.KeyY, jp.KeyU, jp.KeyI, jp.KeyO, jp.KeyP, jp.KeyBluetoothUnpair,
+			jp.KeyBluetoothProfile1, jp.KeyBluetoothProfile2, jp.KeyBluetoothProfile3, jp.KeyBluetoothProfile4, jp.KeyBluetoothProfile5, jp.KeyG, jp.KeyH, jp.KeyJ, jp.KeyK, jp.KeyL, jp.KeySemicolon, jp.KeyColon,
+			jp.KeyLeftShift, jp.KeyZ, jp.KeyX, jp.KeyC, jp.KeyV, jp.KeyB, jp.KeyN, jp.KeyM, jp.KeyComma, jp.KeyPeriod, jp.KeySlash, jp.KeyBackslash,
+			jp.KeyEsc, jp.KeyWindows, jp.KeyLeftAlt, jp.KeyMod1, jp.KeySpace, jp.KeySpace, jp.KeySpace, jp.KeyMod2, jp.KeyHankaku, jp.KeyMod3, jp.KeyPrintscreen, jp.KeyDelete,
+		},
 	})
 	sm.SetCallback(func(layer, index int, state keyboard.State) {
 		layer = d.Layer()
 		fmt.Printf("sm: %d %d %d\n", layer, index, state)
 		callback(layer)
 	})
-
-	// override ctrl-h to BackSpace
-	d.OverrideCtrlH()
 
 	// Combos
 	combos := []keyboard.Combo{
@@ -78,11 +78,11 @@ func run() error {
 			OutputKey: jp.KeyMediaMute,
 		},
 		{
-			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyX},
+			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyZ},
 			OutputKey: jp.KeyMediaVolumeDec,
 		},
 		{
-			Keys:      [4]keyboard.Keycode{jp.KeyE, jp.KeyC},
+			Keys:      [4]keyboard.Keycode{jp.KeyE, jp.KeyZ},
 			OutputKey: jp.KeyMediaVolumeInc,
 		},
 		{
@@ -93,36 +93,92 @@ func run() error {
 			Keys:      [4]keyboard.Keycode{jp.KeyT, jp.KeyB},
 			OutputKey: jp.KeyMediaBrightnessUp,
 		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyQ, jp.KeyEsc},
+			OutputKey: jp.KeyOutputUSB,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyW, jp.KeyEsc},
+			OutputKey: jp.KeyOutputBLE,
+		},
+		{
+			Keys:      [4]keyboard.Keycode{jp.KeyAt, jp.KeyEsc},
+			OutputKey: jp.KeyBluetoothUnpair,
+		},
 	}
 	for i, c := range combos {
 		d.SetCombo(i, c)
 	}
 
 	loadKeyboardDef()
+	setupKeyboard(d)
 
 	err := d.Init()
 	if err != nil {
 		return err
 	}
+	enableUSB()
+
+	// Duty-cycled scanning: scan every fastScanPeriod while anything is
+	// going on, and drop to idleScanPeriod once the device has been idle
+	// (d.Idle: no key pressed or debouncing, no combo/tap-hold/repeat/flash
+	// timer, nothing left to flush) for idleAfterTicks in a row. A slow scan
+	// that sees raw contact makes d.Idle() false on that very scan, so the
+	// debounce still resolves at the fast cadence: the first key after an
+	// idle period is delayed by at most idleScanPeriod plus the debounce.
+	//
+	// time.Sleep rather than a time.Tick ticker on purpose: the ticker keeps
+	// waking the runtime at its period even while this loop sleeps, which
+	// would defeat the idle power saving.
+	const (
+		fastScanPeriod = 500 * time.Microsecond
+		idleScanPeriod = 30 * time.Millisecond
+		idleAfterTicks = 2000 // ~1s of fast ticks before slowing down
+	)
 
 	cont := true
 	x := NewADCDevice(ax, 0x3000, 0xD000, true)
 	y := NewADCDevice(ay, 0x3000, 0xD000, true)
-	ticker := time.Tick(500 * time.Microsecond)
 	cnt := 0
+	idleFor := 0
 	for cont {
-		<-ticker
+		idle := idleFor >= idleAfterTicks
+		if idle {
+			time.Sleep(idleScanPeriod)
+		} else {
+			time.Sleep(fastScanPeriod)
+		}
 		err := d.Tick()
 		if err != nil {
 			return err
 		}
 
-		if cnt%(5*3) == 0 {
+		// While idle the joystick is read on every (slow) scan so that
+		// moving it brings the loop back to the fast cadence.
+		stickActive := false
+		if idle || cnt%(5*3) == 0 {
 			xx := x.Get2()
 			yy := y.Get2()
 			//fmt.Printf("%04X %04X %4d %4d %4d %4d\n", x.RawValue, y.RawValue, xx, yy, x.Get(), y.Get())
-			m.Move(int(xx), int(yy))
+			d.Mouse.Move(int(xx), int(yy))
+			stickActive = xx != 0 || yy != 0
 		}
+
+		if d.Idle() && !stickActive {
+			if idleFor < idleAfterTicks {
+				idleFor++
+			}
+			// allowIdle (per-target) is only consulted at the slow cadence
+			// (and when about to enter it), not on every fast tick: on
+			// xiao-ble it asks the SoftDevice for VBUS so that a USB-powered
+			// keyboard keeps scanning fast.
+			if idleFor >= idleAfterTicks && !allowIdle() {
+				idleFor = 0
+			}
+		} else {
+			idleFor = 0
+		}
+		tickBoard(cnt)
 		cnt++
 	}
 
