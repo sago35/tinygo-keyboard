@@ -25,4 +25,4 @@ require (
 	golang.org/x/sys v0.11.0 // indirect
 )
 
-replace tinygo.org/x/bluetooth => github.com/sago35/bluetooth v0.15.1-0.20260720115811-9f140b94656e
+replace tinygo.org/x/bluetooth => github.com/sago35/bluetooth v0.15.1-0.20260822083226-597fa3c4b688
