@@ -24,16 +24,20 @@ func (d *Device) AddMatrixKeyboard(colPins, rowPins []machine.Pin, keys [][]Keyc
 	state := make([]State, row*col)
 	cycleCnt := make([]uint8, len(state))
 
-	for c := range colPins {
-		colPins[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-	}
-	for r := range rowPins {
-		rowPins[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-	}
-
 	o := Options{}
 	for _, f := range opt {
 		f(&o)
+	}
+
+	inputMode := machine.PinInputPulldown
+	if o.InvertButtonState {
+		inputMode = machine.PinInputPullup
+	}
+	for c := range colPins {
+		colPins[c].Configure(machine.PinConfig{Mode: inputMode})
+	}
+	for r := range rowPins {
+		rowPins[r].Configure(machine.PinConfig{Mode: inputMode})
 	}
 
 	keydef := make([][]Keycode, LayerCount)
@@ -71,20 +75,27 @@ func (d *MatrixKeyboard) Callback(layer, index int, state State) {
 	}
 }
 
+// scanPins returns the pin to drive and the pin to read for one key.
+// An active low scan drives the cathode side of the diode, so the axes swap.
+func (d *MatrixKeyboard) scanPins(c, r int) (drive, read machine.Pin) {
+	if d.options.InvertDiode != d.options.InvertButtonState {
+		return d.Row[r], d.Col[c]
+	}
+	return d.Col[c], d.Row[r]
+}
+
 func (d *MatrixKeyboard) Get() []State {
+	activeLow := d.options.InvertButtonState
+	inputMode := machine.PinInputPulldown
+	if activeLow {
+		inputMode = machine.PinInputPullup
+	}
 	for c := range d.Col {
 		for r := range d.Row {
-			//d.State[r*len(d.Col)+c] = d.Row[r].Get()
-			current := false
-			if !d.options.InvertDiode {
-				d.Col[c].Configure(machine.PinConfig{Mode: machine.PinOutput})
-				d.Col[c].High()
-				current = d.Row[r].Get()
-			} else {
-				d.Row[r].Configure(machine.PinConfig{Mode: machine.PinOutput})
-				d.Row[r].High()
-				current = d.Col[c].Get()
-			}
+			drive, read := d.scanPins(c, r)
+			drive.Configure(machine.PinConfig{Mode: machine.PinOutput})
+			drive.Set(!activeLow)
+			current := read.Get() != activeLow
 			idx := r*len(d.Col) + c
 			switch d.State[idx] {
 			case None:
@@ -114,13 +125,8 @@ func (d *MatrixKeyboard) Get() []State {
 			case PressToRelease:
 				d.State[idx] = None
 			}
-			if !d.options.InvertDiode {
-				d.Col[c].Low()
-				d.Col[c].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-			} else {
-				d.Row[r].Low()
-				d.Row[r].Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-			}
+			drive.Set(activeLow)
+			drive.Configure(machine.PinConfig{Mode: inputMode})
 		}
 	}
 
