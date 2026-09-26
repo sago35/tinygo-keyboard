@@ -1,0 +1,11 @@
+{
+    "name": "tinygo-keyboard-teensy40",
+    "vendorId": "0x16C0",
+    "productId": "0x0483",
+    "matrix": {"rows": 1, "cols": 4},
+    "layouts": {
+        "keymap": [
+            ["0,0","0,1","0,2","0,3"]
+        ]
+    }
+}
