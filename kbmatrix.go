@@ -75,62 +75,101 @@ func (d *MatrixKeyboard) Callback(layer, index int, state State) {
 	}
 }
 
-// scanPins returns the pin to drive and the pin to read for one key.
-// An active low scan drives the cathode side of the diode, so the axes swap.
-func (d *MatrixKeyboard) scanPins(c, r int) (drive, read machine.Pin) {
-	if d.options.InvertDiode != d.options.InvertButtonState {
-		return d.Row[r], d.Col[c]
+// driveRows reports whether the rows are the driven axis. An active low scan
+// drives the cathode side of the diode, so the axes swap.
+func (d *MatrixKeyboard) driveRows() bool {
+	return d.options.InvertDiode != d.options.InvertButtonState
+}
+
+func (d *MatrixKeyboard) inputMode() machine.PinMode {
+	if d.options.InvertButtonState {
+		return machine.PinInputPullup
 	}
-	return d.Col[c], d.Row[r]
+	return machine.PinInputPulldown
+}
+
+// selectLine drives one line to the active level.
+func (d *MatrixKeyboard) selectLine(p machine.Pin) {
+	p.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	p.Set(!d.options.InvertButtonState)
+}
+
+// unselectLine drives the line back to the idle level, then leaves it as an input.
+func (d *MatrixKeyboard) unselectLine(p machine.Pin) {
+	p.Set(d.options.InvertButtonState)
+	p.Configure(machine.PinConfig{Mode: d.inputMode()})
+}
+
+// discharge drives the sense lines to the idle level for a moment, then returns
+// them to input. The lines start from the idle level before the next select.
+func (d *MatrixKeyboard) discharge(pins []machine.Pin) {
+	for _, p := range pins {
+		p.Configure(machine.PinConfig{Mode: machine.PinOutput})
+		p.Set(d.options.InvertButtonState)
+	}
+	mode := d.inputMode()
+	for _, p := range pins {
+		p.Configure(machine.PinConfig{Mode: mode})
+	}
+}
+
+func (d *MatrixKeyboard) read(p machine.Pin) bool {
+	return p.Get() != d.options.InvertButtonState
 }
 
 func (d *MatrixKeyboard) Get() []State {
-	activeLow := d.options.InvertButtonState
-	inputMode := machine.PinInputPulldown
-	if activeLow {
-		inputMode = machine.PinInputPullup
+	ncol := len(d.Col)
+	if d.driveRows() {
+		for r := range d.Row {
+			d.selectLine(d.Row[r])
+			for c := range d.Col {
+				d.step(r*ncol+c, d.read(d.Col[c]))
+			}
+			d.unselectLine(d.Row[r])
+			d.discharge(d.Col)
+		}
+		return d.State
 	}
 	for c := range d.Col {
+		d.selectLine(d.Col[c])
 		for r := range d.Row {
-			drive, read := d.scanPins(c, r)
-			drive.Configure(machine.PinConfig{Mode: machine.PinOutput})
-			drive.Set(!activeLow)
-			current := read.Get() != activeLow
-			idx := r*len(d.Col) + c
-			switch d.State[idx] {
-			case None:
-				if current {
-					if d.cycleCounter[idx] >= d.debounce {
-						d.State[idx] = NoneToPress
-						d.cycleCounter[idx] = 0
-					} else {
-						d.cycleCounter[idx]++
-					}
-				} else {
-					d.cycleCounter[idx] = 0
-				}
-			case NoneToPress:
-				d.State[idx] = Press
-			case Press:
-				if current {
-					d.cycleCounter[idx] = 0
-				} else {
-					if d.cycleCounter[idx] >= d.debounce {
-						d.State[idx] = PressToRelease
-						d.cycleCounter[idx] = 0
-					} else {
-						d.cycleCounter[idx]++
-					}
-				}
-			case PressToRelease:
-				d.State[idx] = None
-			}
-			drive.Set(activeLow)
-			drive.Configure(machine.PinConfig{Mode: inputMode})
+			d.step(r*ncol+c, d.read(d.Row[r]))
 		}
+		d.unselectLine(d.Col[c])
+		d.discharge(d.Row)
 	}
-
 	return d.State
+}
+
+func (d *MatrixKeyboard) step(idx int, current bool) {
+	switch d.State[idx] {
+	case None:
+		if current {
+			if d.cycleCounter[idx] >= d.debounce {
+				d.State[idx] = NoneToPress
+				d.cycleCounter[idx] = 0
+			} else {
+				d.cycleCounter[idx]++
+			}
+		} else {
+			d.cycleCounter[idx] = 0
+		}
+	case NoneToPress:
+		d.State[idx] = Press
+	case Press:
+		if current {
+			d.cycleCounter[idx] = 0
+		} else {
+			if d.cycleCounter[idx] >= d.debounce {
+				d.State[idx] = PressToRelease
+				d.cycleCounter[idx] = 0
+			} else {
+				d.cycleCounter[idx]++
+			}
+		}
+	case PressToRelease:
+		d.State[idx] = None
+	}
 }
 
 func (d *MatrixKeyboard) Key(layer, index int) Keycode {
