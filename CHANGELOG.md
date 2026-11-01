@@ -1,3 +1,16 @@
+0.9.0
+---
+
+* Replace hardcoded USB endpoint numbers with named constants for readability by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/73
+* Make index calculation customizable in SquaredMatrixKeyboard by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/74
+* board: add build tag for rp2350 so code can be build for xiao-rp2350 by @deadprogram in https://github.com/sago35/tinygo-keyboard/pull/75
+* Replace endpoint configuration with a hardcoded value by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/76
+* Update key-mapping by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/77
+* targets/sg48key, sgh60: fix joystick center drift by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/78
+* kbmatrix: add an active low scan with InvertButtonState by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/86
+* kbmatrix: select each line once and discharge the sense lines by @sago35 in https://github.com/sago35/tinygo-keyboard/pull/87
+* Update go.mod
+
 0.8.0
 ---
 
