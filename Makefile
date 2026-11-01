@@ -17,6 +17,12 @@ smoketest: FORCE
 	tinygo build -o ./out/tut-gpio.uf2        --target xiao-rp2040           --size short --stack-size 8kb ./tutorial/gpio/
 	tinygo build -o ./out/tut-gpio-vial.uf2   --target xiao-rp2040           --size short --stack-size 8kb ./tutorial/gpio-vial/
 
+# The teensy40 target needs the teensy-flash branch of tinygo-org/tinygo.
+# The tinygo-dev image used by CI does not have it yet, so it is not in smoketest.
+smoketest-teensy: FORCE
+	mkdir -p out
+	tinygo build -o ./out/teensy40.hex        --target teensy40              --size short --stack-size 8kb ./targets/teensy40/
+
 FORCE:
 
 gen-def-with-find:
@@ -33,6 +39,7 @@ gen-def:
 	go run ./cmd/gen-def/main.go ./targets/sgkb/left-0.3.0/vial.json
 	go run ./cmd/gen-def/main.go ./targets/wiokey/vial.json
 	go run ./cmd/gen-def/main.go ./targets/sgkey/vial.json
+	go run ./cmd/gen-def/main.go ./targets/teensy40/vial.json
 	go run ./cmd/gen-def/main.go ./targets/xiao-kb01/vial.json
 	go run ./cmd/gen-def/main.go ./tutorial/gpio-vial/vial.json
 

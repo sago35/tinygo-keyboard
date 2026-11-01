@@ -34,6 +34,7 @@ The following microcontrollers are supported.
 * nrf52840
 * samd51
 * samd21
+* mimxrt1062 (Teensy 4.0, requires the `teensy-flash` branch of tinygo-org/tinygo until it is merged)
 
 ## Tutorial
 
@@ -215,6 +216,16 @@ $ tinygo flash --target macropad-rp2040 --size short --stack-size 8kb ./targets/
 * schema
     * https://learn.adafruit.com/adafruit-macropad-rp2040/overview
 
+
+## Teensy 4.0
+
+A minimal 4-key GPIO keyboard for the Teensy 4.0.  
+Connect pin 2 to pin 5 to GND to press a key. Pin 0 and pin 1 (UART1) stay free for debug output.  
+USB HID and `machine.Flash` for the mimxrt1062 are only available on the `teensy-flash` branch of tinygo-org/tinygo for now.
+
+```
+$ tinygo flash --target teensy40 --size short --stack-size 8kb ./targets/teensy40/
+```
 
 ## Restore default keymap
 
